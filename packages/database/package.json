@@ -1,0 +1,22 @@
+{
+  "name": "@family-historian/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@family-historian/contracts": "workspace:*",
+    "drizzle-orm": "0.45.2",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/pg": "8.20.4"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "migrate": "tsx src/migrate.ts",
+    "verify": "tsx src/verify.ts"
+  }
+}

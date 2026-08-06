@@ -18,3 +18,4 @@ Repository bootstrap and bounded diagnostics authorized by the unattended-build 
 - Materialize the lockfile after an intentional dependency change: `corepack pnpm install --no-frozen-lockfile`; normal installs remain `sh scripts/install.sh`.
 - Create only plan-authorized repository directories before applying files: `mkdir -p <paths>`.
 - Mechanically format implementation/config files after review: `corepack pnpm exec prettier --write apps packages tests package.json pnpm-workspace.yaml tsconfig.json tsconfig.base.json tsconfig.eslint.json eslint.config.mjs compose.yaml infra`.
+- Apply local/test migrations: `corepack pnpm --filter @family-historian/database migrate`; verify schema invariants: `corepack pnpm --filter @family-historian/database verify`.

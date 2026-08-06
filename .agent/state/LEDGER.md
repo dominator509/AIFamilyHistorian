@@ -32,3 +32,8 @@
 2026-08-06T20:47:35Z | codex | EP-000 | HEARTBEAT | foundation M1 committed next; EP-000 remains leased and unverified
 2026-08-06T20:54:24Z | codex | EP-002 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok; 11 unit tests passed
 2026-08-06T20:54:24Z | codex | EP-000 | HEARTBEAT | EP-002 pure domain M1 locally complete; external preflight still open
+2026-08-06T21:16:38Z | codex | EP-003 | SIG | migrate exit 1: package-scoped pnpm cwd made process.loadEnvFile resolve packages/database/.env
+2026-08-06T21:16:42Z | codex | EP-003 | HYPOTHESIS | resolve the authorized root .env from import.meta.url in database CLIs
+2026-08-06T21:17:38Z | codex | EP-003 | SIG | migrate exit 1: migration directory resolved from package cwd as packages/database/drizzle
+2026-08-06T21:17:42Z | codex | EP-003 | HYPOTHESIS | resolve the root drizzle directory from the migrations module URL
+2026-08-06T21:24:11Z | codex | EP-003 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok

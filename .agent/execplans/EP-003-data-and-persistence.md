@@ -61,14 +61,15 @@ The verify sentinel is observed in this session, changed paths match this plan, 
 Re-enter from the first unchecked milestone after verifying the previous checkpoint. Use green tags and the rollback ladder. Never cross a completed node tag.
 
 # 11. Progress
-- [ ] M1 Implement bounded scope
+- [x] M1 Implement bounded scope
 - [ ] M2 Prove node behavior
 
 # 12. Surprises & Discoveries
-- None recorded.
+- Package-scoped pnpm scripts change the process working directory; repository-root environment and migration paths must resolve from import.meta.url.
+- Drizzle ORM 0.45.2 exposes declarations for unrelated optional database drivers that TypeScript 5.9 cannot validate without those peers.
 
 # 13. Decision Log
-- None recorded.
+- ADR-019 retains strict source checks while excluding dependency declaration internals.
 
 # 14. Outcomes & Retrospective
 - Complete only after NODE_DONE.
