@@ -37,3 +37,10 @@
 2026-08-06T21:17:38Z | codex | EP-003 | SIG | migrate exit 1: migration directory resolved from package cwd as packages/database/drizzle
 2026-08-06T21:17:42Z | codex | EP-003 | HYPOTHESIS | resolve the root drizzle directory from the migrations module URL
 2026-08-06T21:24:11Z | codex | EP-003 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
+2026-08-06T21:25:40Z | codex | EP-000 | SIG | preflight exit 1: DATABASE_URL probe failed while compose reported healthy
+2026-08-06T21:25:43Z | codex | EP-000 | HYPOTHESIS | probe failure was transient because the identical sourced database probe immediately returned exit 0
+2026-08-06T21:27:03Z | codex | EP-000 | SIG | preflight repeat exit 1: timeout-wrapped DATABASE_URL probe fails only in non-login script context
+2026-08-06T21:27:06Z | codex | EP-000 | HYPOTHESIS | Windows timeout.exe shadows GNU timeout unless preflight selects the POSIX executable explicitly
+2026-08-06T21:28:33Z | codex | EP-000 | LIVE_PROBE_PASS | DeepSeek authenticated preflight probe passed with ignored local credential
+2026-08-06T21:28:37Z | codex | EP-000 | EXTERNAL_DEFERRED | preflight now stops at DEEPGRAM_API_KEY; unrelated engineering continues
+2026-08-06T21:29:59Z | codex | EP-000 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok

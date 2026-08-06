@@ -27,3 +27,8 @@ Add a decision before introducing a new canonical name, dependency, provider pro
 - **Decision:** The shared TypeScript baseline enables `skipLibCheck` while retaining every strict check for project source.
 - **Reason:** Drizzle ORM 0.45.2 publishes declarations for optional Gel, MySQL, SingleStore, and SQLite peers. TypeScript 5.9 evaluates those unrelated declarations and reports missing optional modules and upstream interface incompatibilities even though this project imports only the PostgreSQL entry points.
 - **Consequence:** Our source remains strictly checked across every package; defects inside dependency declaration files are excluded from the build gate. Runtime PostgreSQL behavior is proven against the pinned real service.
+## ADR-020: Resolve bounded probe timeout deterministically
+
+- **Decision:** Preflight uses /usr/bin/timeout when available and otherwise accepts only a binary identifying itself as GNU coreutils.
+- **Reason:** Windows timeout.exe can shadow the POSIX utility in a non-login Git Bash process and rejects the duration/probe arguments, making healthy credentials appear invalid.
+- **Consequence:** Every credential probe remains bounded and platform tool-name collisions fail explicitly.

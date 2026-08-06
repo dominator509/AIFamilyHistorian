@@ -61,14 +61,14 @@ The verify sentinel is observed in this session, changed paths match this plan, 
 Re-enter from the first unchecked milestone after verifying the previous checkpoint. Use green tags and the rollback ladder. Never cross a completed node tag.
 
 # 11. Progress
-- [ ] M1 Implement bounded scope
+- [x] M1 Implement bounded scope
 - [ ] M2 Prove node behavior
 
 # 12. Surprises & Discoveries
-- None recorded.
+- Windows timeout.exe can shadow GNU timeout in non-login Git Bash probe execution.
 
 # 13. Decision Log
-- None recorded.
+- ADR-020 selects a verified GNU timeout binary so every provider probe remains bounded.
 
 # 14. Outcomes & Retrospective
 - Complete only after NODE_DONE.
