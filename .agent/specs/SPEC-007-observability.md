@@ -1,0 +1,3 @@
+# Spec 007 Observability
+
+Required signals: request latency and status; auth and authorization denials; upload bytes and completion; scan and derivative duration; transcription minutes and confidence; transcript correction and approval rates; fact confirmation and dispute rates; generation cache-hit and miss tokens; unsupported claim rejection; narration characters and cost; export size and duration; share access; rights and consent failures; deletion age; fixity failures; queue depth; provider latency and errors. Structured logs prohibit content. Alerts cover cross-tenant denial anomalies, public share spikes, fixity failure, deletion SLA breach, provider cost spikes, media queue saturation, malware, and unauthorized voice workflow attempts.

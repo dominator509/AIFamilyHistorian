@@ -1,0 +1,3 @@
+# Editorial Ethics Policy
+
+The product preserves the distinction between memory, evidence, interpretation, and generated prose. It does not force agreement between conflicting recollections. Direct quotations remain exact to approved source spans. Editorial cleanup that changes meaning is prohibited. Paraphrases are labeled. Composite scenes, invented dialogue, synthetic quotations, and fabricated sensory detail are prohibited. Sensitive allegations receive restricted defaults. AI uncertainty is exposed rather than concealed. Subjects and contributors can submit corrections and competing accounts without erasing prior provenance.

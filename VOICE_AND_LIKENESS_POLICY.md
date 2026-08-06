@@ -1,0 +1,3 @@
+# Voice and Likeness Policy
+
+AI Family Historian permits licensed stock narration and a living subject's verified self-voice when the provider and product verification flows are completed. It prohibits professional cloning of another person's voice, posthumous voice cloning from archive recordings, deceptive impersonation, synthetic statements presented as authentic recordings, and unauthorized likeness generation. Every generated audio asset records provider, voice license or verification reference, source text, generation time, disclosure state, approver, and revocation state. Publication and sharing stop immediately when rights are withdrawn or disputed, subject to legal retention of evidence.

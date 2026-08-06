@@ -1,0 +1,3 @@
+# Incident Response Plan
+
+Detect through alerts, reports, and integrity checks. Triage severity, affected archives, media, rights, credentials, and providers. Contain sessions, links, keys, jobs, and publication. Preserve evidence without spreading content. Notify leadership, security, privacy, counsel, insurer, and affected customers according to the decision tree and applicable deadlines. Eradicate, restore from verified backups, run fixity checks, verify access controls, document root cause, and track corrective actions. Unauthorized publication, voice generation, or share-link exposure is treated as a high-severity content incident even without account takeover.

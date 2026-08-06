@@ -1,0 +1,3 @@
+# Recording and Interview Consent Requirements
+
+Before capture, the interface identifies the recorder, archive owner, purpose, invited audience, processors, expected outputs, retention, withdrawal method, and whether AI transcription or generation is enabled. Recording begins only after affirmative consent and a persistent visible and audible state. New participants require consent before their speech is retained. Consent is versioned and bound to recording_session_id. Withdrawal stops future use and triggers the configured deletion or restriction workflow; already printed or lawfully distributed copies cannot be remotely recalled and this limitation is disclosed. Jurisdiction-specific all-party consent review is a production launch requirement.
