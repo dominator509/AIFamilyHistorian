@@ -13,3 +13,6 @@
 | Print provider is deferred until contract approval | API and rights terms vary | Automated physical fulfillment not available at first ship | Keep print artifact generation real; mark provider fulfillment optional | No |
 | Users own or license contributed media | Required business model | Infringement and takedown exposure | Counsel-approved contributor release and rights workflow | Production only |
 | No public social network | Product boundary | Growth features could create moderation burden | SPEC-000 and route audit | No |
+| Host media binaries are available | EP-000 expected direct host probes | FFmpeg, ExifTool, ImageMagick, ClamAV and OCRmyPDF are absent from the current host PATH | `ffmpeg -version`, `exiftool -ver`, `magick -version`, `clamscan --version`, `ocrmypdf --version` | No; provide pinned worker containers |
+| Host package manager matches the blueprint | Reproducible install requires pnpm 10.13.1 | Host currently resolves pnpm 9.15.0 | `pnpm --version`; enforce `packageManager` and Corepack in EP-001 | No |
+| Available disk is sufficient for local services and images | Real local dependencies and media processing require container storage | Only 28 GB is currently free on a 95 percent used volume | `df -h .`; keep images bounded and monitor before large pulls | Potentially |
