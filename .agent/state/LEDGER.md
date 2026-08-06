@@ -44,3 +44,6 @@
 2026-08-06T21:28:33Z | codex | EP-000 | LIVE_PROBE_PASS | DeepSeek authenticated preflight probe passed with ignored local credential
 2026-08-06T21:28:37Z | codex | EP-000 | EXTERNAL_DEFERRED | preflight now stops at DEEPGRAM_API_KEY; unrelated engineering continues
 2026-08-06T21:29:59Z | codex | EP-000 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
+2026-08-06T21:30:37Z | codex | EP-003 | SIG | format-check exit 1: generated apps/web/next-env.d.ts changed by Next build
+2026-08-06T21:30:40Z | codex | EP-003 | HYPOTHESIS | exclude the framework-owned generated declaration from source formatting checks
+2026-08-06T21:32:55Z | codex | EP-003 | LOCAL_VERIFICATION | format unit 12 integration 5 e2e 1 build security audit reality smoke all ok; full verify remains gated by DEEPGRAM_API_KEY
