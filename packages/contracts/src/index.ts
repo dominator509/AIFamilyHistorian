@@ -7,3 +7,6 @@ export const healthStatusSchema = z.object({
 });
 
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
+
+export * from './domain.js';
+export * from './problems.js';

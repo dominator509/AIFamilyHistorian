@@ -61,11 +61,11 @@ The verify sentinel is observed in this session, changed paths match this plan, 
 Re-enter from the first unchecked milestone after verifying the previous checkpoint. Use green tags and the rollback ladder. Never cross a completed node tag.
 
 # 11. Progress
-- [ ] M1 Implement bounded scope
+- [x] M1 Implement bounded scope
 - [ ] M2 Prove node behavior
 
 # 12. Surprises & Discoveries
-- None recorded.
+- The domain layer encodes all SPEC-001 invariants as immutable pure functions with stable SPEC-006 error codes; cross-boundary verification remains for later nodes.
 
 # 13. Decision Log
 - None recorded.

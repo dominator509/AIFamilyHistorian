@@ -30,3 +30,5 @@
 2026-08-06T20:47:34Z | codex | EP-001 | LOCAL_VERIFICATION | format unit integration e2e build security audit reality smoke all ok
 2026-08-06T20:47:35Z | codex | EP-000 | EXTERNAL_DEFERRED | preflight reaches DEEPSEEK_API_KEY after local database Redis and object storage probes pass
 2026-08-06T20:47:35Z | codex | EP-000 | HEARTBEAT | foundation M1 committed next; EP-000 remains leased and unverified
+2026-08-06T20:54:24Z | codex | EP-002 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok; 11 unit tests passed
+2026-08-06T20:54:24Z | codex | EP-000 | HEARTBEAT | EP-002 pure domain M1 locally complete; external preflight still open

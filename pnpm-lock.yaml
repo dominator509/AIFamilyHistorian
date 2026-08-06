@@ -109,6 +109,12 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/domain:
+    dependencies:
+      '@family-historian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
 packages:
 
   '@babel/helper-string-parser@7.29.7':
