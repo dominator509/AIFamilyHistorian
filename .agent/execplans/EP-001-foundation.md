@@ -64,11 +64,13 @@ The verify sentinel is observed in this session, changed paths match this plan, 
 Re-enter from the first unchecked milestone after verifying the previous checkpoint. Use green tags and the rollback ladder. Never cross a completed node tag.
 
 # 11. Progress
-- [ ] M1 Implement bounded scope
+- [x] M1 Implement bounded scope
 - [ ] M2 Prove node behavior
 
 # 12. Surprises & Discoveries
-- None recorded.
+- The host pnpm was 9.15.0; all repository commands now execute pinned pnpm 10.13.1 through Corepack.
+- Existing user-owned containers occupied common local service ports, so project services use dedicated loopback ports recorded in ADR-014.
+- Formal `verify.sh` remains externally blocked because it begins with the unchanged all-provider preflight gate.
 
 # 13. Decision Log
 - None recorded.

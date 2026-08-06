@@ -1,0 +1,60 @@
+:root {
+  color-scheme: light;
+  font-family: ui-serif, Georgia, Cambria, 'Times New Roman', serif;
+  background: #f4efe5;
+  color: #20231f;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 5rem 2rem;
+}
+h1 {
+  max-width: 15ch;
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+.eyebrow {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a3428;
+}
+.lede {
+  max-width: 42rem;
+  font-size: 1.25rem;
+  line-height: 1.65;
+}
+ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+li {
+  min-height: 44px;
+  padding: 0.9rem 1rem;
+  border: 1px solid #948a78;
+  border-radius: 0.5rem;
+  background: #fffaf1;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}

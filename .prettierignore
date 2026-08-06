@@ -1,0 +1,9 @@
+.agent/state
+.agent
+*.md
+.next
+coverage
+dist
+node_modules
+pnpm-lock.yaml
+BLUEPRINT_PACK.md

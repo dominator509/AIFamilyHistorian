@@ -1,0 +1,15 @@
+{
+  "name": "@family-historian/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@family-historian/config": "workspace:*",
+    "ioredis": "6.0.0",
+    "pino": "10.3.1"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "start": "tsx src/index.ts"
+  }
+}

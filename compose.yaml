@@ -1,0 +1,115 @@
+name: ai-family-historian
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg17
+    environment:
+      POSTGRES_DB: family_historian
+      POSTGRES_USER: family_historian
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:?generate .env first}
+    ports:
+      - '127.0.0.1:35432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U family_historian -d family_historian']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.5-alpine
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--requirepass',
+        '${LOCAL_REDIS_PASSWORD:?generate .env first}',
+      ]
+    ports:
+      - '127.0.0.1:36379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', '-a', '${LOCAL_REDIS_PASSWORD:?generate .env first}', 'ping']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  object-storage:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    command: ['server', '/data', '--console-address', ':9001']
+    environment:
+      MINIO_ROOT_USER: ${LOCAL_S3_ROOT_USER:?generate .env first}
+      MINIO_ROOT_PASSWORD: ${LOCAL_S3_ROOT_PASSWORD:?generate .env first}
+    ports:
+      - '127.0.0.1:39000:9000'
+      - '127.0.0.1:39001:9001'
+    volumes:
+      - object_storage_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://localhost:9000/minio/health/live']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  object-storage-init:
+    image: minio/mc:RELEASE.2025-07-21T05-28-08Z
+    depends_on:
+      object-storage:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${LOCAL_S3_ROOT_USER:?generate .env first}
+      MINIO_ROOT_PASSWORD: ${LOCAL_S3_ROOT_PASSWORD:?generate .env first}
+      R2_BUCKET: ${R2_BUCKET:-family-historian-local}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        mc alias set local http://object-storage:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing "local/$${R2_BUCKET}"
+        mc anonymous set none "local/$${R2_BUCKET}"
+        exec sleep 2147483647
+    healthcheck:
+      test: ['CMD-SHELL', 'mc stat local/$${R2_BUCKET} >/dev/null']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  smtp:
+    image: axllent/mailpit:v1.27.7
+    ports:
+      - '127.0.0.1:11025:1025'
+      - '127.0.0.1:18025:8025'
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  telemetry:
+    image: otel/opentelemetry-collector-contrib:0.130.1
+    command: ['--config=/etc/otelcol-contrib/config.yaml']
+    volumes:
+      - ./infra/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - '127.0.0.1:14317:4317'
+      - '127.0.0.1:14318:4318'
+      - '127.0.0.1:13134:13133'
+    healthcheck:
+      test: ['CMD', '/otelcol-contrib', 'components']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  object_storage_data:

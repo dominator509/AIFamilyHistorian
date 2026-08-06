@@ -2,21 +2,40 @@
 set -eu
 
 umask 077
-[ ! -e .env ] || { echo "local env: exists (not overwritten)"; exit 0; }
+force=false
+case "${1:-}" in
+  '') ;;
+  --force) force=true ;;
+  *) echo 'usage: generate-local-env.sh [--force]' >&2; exit 2 ;;
+esac
+[ ! -e .env ] || [ "$force" = true ] || { echo "local env: exists (not overwritten)"; exit 0; }
 
 session_secret=$(openssl rand -hex 32)
 field_key=$(openssl rand -base64 32 | tr -d '\r\n')
 download_secret=$(openssl rand -hex 32)
+postgres_password=$(openssl rand -hex 24)
+redis_password=$(openssl rand -hex 24)
+s3_user="local$(openssl rand -hex 8)"
+s3_password=$(openssl rand -hex 24)
+tmp=$(mktemp .env.XXXXXX)
+trap 'rm -f "$tmp"' EXIT
 
 {
   echo '# Local development configuration. Generated secrets are not production credentials.'
-  echo 'DATABASE_URL=postgresql://family_historian:family_historian_local@localhost:5432/family_historian'
-  echo 'REDIS_URL=redis://localhost:6379'
+  printf 'LOCAL_POSTGRES_PASSWORD=%s\n' "$postgres_password"
+  printf 'LOCAL_REDIS_PASSWORD=%s\n' "$redis_password"
+  printf 'LOCAL_S3_ROOT_USER=%s\n' "$s3_user"
+  printf 'LOCAL_S3_ROOT_PASSWORD=%s\n' "$s3_password"
+  echo 'SMTP_HOST=localhost'
+  echo 'SMTP_PORT=11025'
+  echo 'MAILPIT_HTTP_URL=http://localhost:18025'
+  printf 'DATABASE_URL=postgresql://family_historian:%s@127.0.0.1:35432/family_historian\n' "$postgres_password"
+  printf 'REDIS_URL=redis://:%s@127.0.0.1:36379\n' "$redis_password"
   echo 'R2_ACCOUNT_ID=local'
-  echo 'R2_ACCESS_KEY_ID=family_historian_local'
-  echo 'R2_SECRET_ACCESS_KEY='
+  printf 'R2_ACCESS_KEY_ID=%s\n' "$s3_user"
+  printf 'R2_SECRET_ACCESS_KEY=%s\n' "$s3_password"
   echo 'R2_BUCKET=family-historian-local'
-  echo 'R2_ENDPOINT=http://localhost:9000'
+  echo 'R2_ENDPOINT=http://127.0.0.1:39000'
   echo 'DEEPSEEK_API_KEY='
   echo 'DEEPGRAM_API_KEY='
   echo 'ELEVENLABS_API_KEY='
@@ -29,7 +48,7 @@ download_secret=$(openssl rand -hex 32)
   echo 'TURNSTILE_SECRET_KEY='
   echo 'SENTRY_DSN='
   echo 'SENTRY_AUTH_TOKEN='
-  echo 'OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318'
+  echo 'OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:14318'
   echo 'OTEL_EXPORTER_OTLP_HEADERS='
   echo 'GITHUB_TOKEN='
   echo 'GITHUB_REPOSITORY='
@@ -44,6 +63,8 @@ download_secret=$(openssl rand -hex 32)
   echo 'INSURANCE_EVIDENCE_FILE='
   echo 'DPIA_APPROVAL_FILE='
   echo 'RETENTION_APPROVAL_FILE='
-} > .env
+} > "$tmp"
+mv -f "$tmp" .env
+trap - EXIT
 
 echo 'local env: generated'

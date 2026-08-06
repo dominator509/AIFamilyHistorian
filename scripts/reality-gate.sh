@@ -9,7 +9,12 @@ SRC_DIRS="apps packages"
 hits=0
 for d in $SRC_DIRS; do
   [ -d "$d" ] || continue
-  out=$(grep -RInE -f "$PAT" "$d" 2>/dev/null | grep -vE -f "$ALLOW" || true)
+  out=$(grep -RInE \
+    --exclude-dir=node_modules \
+    --exclude-dir=.next \
+    --exclude-dir=dist \
+    --exclude-dir=coverage \
+    -f "$PAT" "$d" 2>/dev/null | grep -vE -f "$ALLOW" || true)
   if [ -n "$out" ]; then printf '%s
 ' "$out"; hits=1; fi
 done

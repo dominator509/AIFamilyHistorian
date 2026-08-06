@@ -2,3 +2,31 @@
 2026-08-06T20:01:25Z | codex | EP-000 | LEASE | discovery and toolchain; external preflight remains open
 2026-08-06T20:01:26Z | codex | EP-000 | PREFLIGHT_FAIL | exit 1: missing .env; external inventory and independent continuation authorized by operator
 2026-08-06T20:01:26Z | codex | EP-000 | CONTINUATION | EP-000 remains unverified; continuing safe independent engineering without NODE_DONE
+2026-08-06T20:09:31Z | codex | EP-000 | SIG | docker compose up timed out exit 124 after 64s during image pull or readiness
+2026-08-06T20:09:31Z | codex | EP-000 | HYPOTHESIS | containers may still be pulling or starting; inspect compose state before retry
+2026-08-06T20:11:01Z | codex | EP-000 | SIG | docker compose up exit 1: object-storage-init container name conflict
+2026-08-06T20:11:01Z | codex | EP-000 | HYPOTHESIS | the timed-out first compose process created a stopped init container after the initial state check
+2026-08-06T20:12:18Z | codex | EP-000 | SIG | local-services-check exit 1: PostgreSQL password authentication failed
+2026-08-06T20:12:18Z | codex | EP-000 | HYPOTHESIS | initial timed-out compose process initialized an empty volume with the pre-rotation local password
+2026-08-06T20:12:59Z | codex | EP-000 | SIG | docker compose up exit 1: host port 1025 already allocated
+2026-08-06T20:12:59Z | codex | EP-000 | HYPOTHESIS | another local container owns the default SMTP port; identify owner then select a project-scoped alternate host port
+2026-08-06T20:14:45Z | codex | EP-000 | SIG | local-services-check repeat: PostgreSQL password authentication failed after volume reset
+2026-08-06T20:14:45Z | codex | EP-000 | HYPOTHESIS | the localhost probe may be reaching a different process or the container received a different password; inspect port ownership first
+2026-08-06T20:20:42Z | codex | EP-000 | SIG | docker compose up exit 1: successful one-shot object-storage-init exited 0 under --wait
+2026-08-06T20:20:42Z | codex | EP-000 | HYPOTHESIS | Compose wait requires all declared services to remain healthy; keep the local bootstrap sidecar alive with a real bucket healthcheck
+2026-08-06T20:34:33Z | codex | EP-001 | SIG | lint exit 1: typed ESLint project coverage and ioredis type resolution
+2026-08-06T20:34:33Z | codex | EP-001 | HYPOTHESIS | add a dedicated lint tsconfig, use synchronous Fastify handlers, and match the installed ioredis v6 export shape
+2026-08-06T20:36:25Z | codex | EP-001 | SIG | typecheck exit 2: ioredis default import nonconstructable and missing URLPattern globals in Next types
+2026-08-06T20:36:25Z | codex | EP-001 | HYPOTHESIS | use installed named Redis export and include the URLPattern type provider required by pinned Next
+2026-08-06T20:38:36Z | codex | EP-001 | SIG | typecheck repeat: URLPattern polyfill duplicates Node globals while Next still needs Input and Options
+2026-08-06T20:38:36Z | codex | EP-001 | HYPOTHESIS | declare only the two missing standard aliases against Node URLPattern types; remove the full polyfill declaration
+2026-08-06T20:40:56Z | codex | EP-001 | SIG | format-check exit 1: Prettier attempted to rewrite immutable blueprint Markdown plus new source files
+2026-08-06T20:40:56Z | codex | EP-001 | HYPOTHESIS | exclude immutable Markdown control/spec artifacts and mechanically format only implementation/config files
+2026-08-06T20:42:59Z | codex | EP-001 | SIG | security-check exit 1: tsx compiled root test runner as CJS and rejected top-level await
+2026-08-06T20:42:59Z | codex | EP-001 | HYPOTHESIS | declare the root package as ESM, matching every workspace package and the NodeNext compiler contract
+2026-08-06T20:45:49Z | codex | EP-001 | SIG | reality-gate exit 124: recursive grep traversed generated .next and dependency trees
+2026-08-06T20:45:49Z | codex | EP-001 | HYPOTHESIS | exclude only node_modules, .next, dist and coverage while preserving complete apps/packages source scanning
+2026-08-06T20:47:34Z | codex | EP-001 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
+2026-08-06T20:47:34Z | codex | EP-001 | LOCAL_VERIFICATION | format unit integration e2e build security audit reality smoke all ok
+2026-08-06T20:47:35Z | codex | EP-000 | EXTERNAL_DEFERRED | preflight reaches DEEPSEEK_API_KEY after local database Redis and object storage probes pass
+2026-08-06T20:47:35Z | codex | EP-000 | HEARTBEAT | foundation M1 committed next; EP-000 remains leased and unverified
