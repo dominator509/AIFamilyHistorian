@@ -54,3 +54,6 @@
 2026-08-07T02:08:11Z | codex | EP-004 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
 2026-08-07T02:08:11Z | codex | EP-004 | MILESTONE_PASS | M2 verify: unit/integration/e2e/typecheck/build/lint/smoke/security audit ok; formatting clean
 2026-08-07T02:14:07Z | codex | EP-004 | M2 verify: ok unit(19) integration(7) e2e(3) build smoke security deps audit ok
+2026-08-07T02:43:06Z | codex | EP-005 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
+2026-08-07T02:43:06Z | codex | EP-005 | EXTERNAL_DEFERRED | verify blocked: preflight requires DEEPGRAM_API_KEY probe; scripts/live-fire.sh cannot run because tests/live-fire/run.ts is missing
+2026-08-07T02:44:33Z | codex | EP-005 | HEARTBEAT | M1 committed and all non-blocked EP-005 gates executed; verify still blocked by DEEPGRAM probe and live-fire runner missing

@@ -37,19 +37,20 @@ function redisProbe(rawUrl: string): Promise<void> {
   if (!rawUrl) throw new Error('REDIS_URL missing');
   const redisUrl = new URL(rawUrl);
   const protocol = redisUrl.protocol;
-  if (!['redis:', 'rediss:'].includes(protocol)) throw new Error('REDIS_URL must use redis or rediss');
+  if (!['redis:', 'rediss:'].includes(protocol))
+    throw new Error('REDIS_URL must use redis or rediss');
   const secure = protocol === 'rediss:';
   const port = Number(redisUrl.port || (secure ? 6380 : 6379));
   const socket: RedisSocket = secure
     ? connect({
-      host: redisUrl.hostname,
-      port,
-      servername: redisUrl.hostname,
-    })
+        host: redisUrl.hostname,
+        port,
+        servername: redisUrl.hostname,
+      })
     : createConnection({
-      host: redisUrl.hostname,
-      port,
-    });
+        host: redisUrl.hostname,
+        port,
+      });
   socket.setTimeout(20_000);
 
   return new Promise((resolve, reject) => {
