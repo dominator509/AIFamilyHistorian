@@ -62,3 +62,10 @@
 2026-08-07T02:53:56Z | codex | EP-005 | LOCAL_VERIFICATION | live-fire runner now provides explicit proof-blocked status instead of module-missing
 2026-08-07T03:11:37Z | codex | EP-006 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
 2026-08-07T03:11:44Z | codex | EP-006 | EXTERNAL_DEFERRED | verify blocked: preflight requires DEEPGRAM_API_KEY after local verification
+2026-08-07T04:35:16Z | codex | EP-007 | IMPLEMENTATION_CONTINUATION | live_fire_dispatcher_all_16_outcomes_pass_PDF_EPUB_billing_quota_annual_review_implemented
+2026-08-07T04:35:20Z | codex | EP-009 | IMPLEMENTATION_CONTINUATION | Dockerfile_Fly_config_release_workflow_and_local_image_build_verified
+2026-08-07T04:35:21Z | codex | EP-008 | IMPLEMENTATION_CONTINUATION | redacted_observability_metrics_and_operations_runbook_added_lint_typecheck_unit_pass
+2026-08-07T04:35:22Z | codex | EP-000 | PREFLIGHT_FAIL | missing_DEEPGRAM_API_KEY_after_all_local_verification_and_16_live_fire_proofs_pass
+2026-08-07T04:35:26Z | codex | EP-000 | HEARTBEAT | external_deferred_lease_local_image_and_operations_artifacts_verified
+2026-08-07T04:41:41Z | codex | EP-004 | IMPLEMENTATION_CONTINUATION | provider_adapters_Deepgram_ElevenLabs_Resend_Stripe_Turnstile_with_local_http_contract_tests_pass
+2026-08-07T04:44:56Z | codex | EP-009 | HEARTBEAT | provider_adapters_and_release_artifacts_committed_full_local_gates_pass_external_preflight_still_deferred
