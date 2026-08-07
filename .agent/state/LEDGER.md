@@ -60,3 +60,5 @@
 2026-08-07T02:53:04Z | codex | EP-005 | IMPLEMENTATION_NOTE | \
 2026-08-07T02:53:11Z | codex | EP-005 | IMPLEMENTATION_NOTE | live-fire runner added; proofs are now explicit BLOCKED rather than module-missing
 2026-08-07T02:53:56Z | codex | EP-005 | LOCAL_VERIFICATION | live-fire runner now provides explicit proof-blocked status instead of module-missing
+2026-08-07T03:11:37Z | codex | EP-006 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
+2026-08-07T03:11:44Z | codex | EP-006 | EXTERNAL_DEFERRED | verify blocked: preflight requires DEEPGRAM_API_KEY after local verification

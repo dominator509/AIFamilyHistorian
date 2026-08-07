@@ -25,7 +25,12 @@ import {
 } from '@family-historian/contracts';
 import type { ArchiveService, ListResourceKind } from './archive-service.js';
 import { ApiProblem } from './problems.js';
-import { verifySessionToken, type SessionPrincipal } from './session.js';
+import {
+  authorizeArchivePermission,
+  parseAuthorizationHeader,
+  verifySessionToken,
+  type SessionPrincipal,
+} from '@family-historian/auth';
 
 interface RouteDependencies {
   service: ArchiveService;
@@ -54,11 +59,9 @@ const resources: readonly ResourceDefinition[] = [
 ];
 
 function principal(request: FastifyRequest, secret: string): SessionPrincipal {
-  const header = request.headers.authorization;
-  if (!header?.startsWith('Bearer '))
-    throw new ApiProblem('AUTH_REQUIRED', 'Authentication required');
   try {
-    return verifySessionToken(secret, header.slice(7));
+    const token = parseAuthorizationHeader(request.headers.authorization);
+    return verifySessionToken(secret, token);
   } catch {
     throw new ApiProblem('AUTH_REQUIRED', 'Authentication required');
   }
@@ -71,10 +74,14 @@ function authorizeArchive(
   permission: string,
 ): SessionPrincipal {
   const value = principal(request, secret);
-  if (!value.archiveIds.includes(archiveId))
-    throw new ApiProblem('PERMISSION_DENIED', 'Archive access is not authorized');
-  if (!value.permissions.includes(permission) && !value.permissions.includes('archive:*'))
-    throw new ApiProblem('PERMISSION_DENIED', 'Required archive permission is missing');
+  try {
+    authorizeArchivePermission(value, archiveId, permission);
+  } catch (error) {
+    const code = error instanceof Error && error.message === 'PERMISSION_DENIED'
+      ? 'PERMISSION_DENIED'
+      : 'AUTH_REQUIRED';
+    throw new ApiProblem(code, 'Archive access is not authorized');
+  }
   return value;
 }
 

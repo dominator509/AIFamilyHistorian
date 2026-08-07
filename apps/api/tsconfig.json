@@ -5,6 +5,8 @@
   "references": [
     { "path": "../../packages/contracts" },
     { "path": "../../packages/config" },
+    { "path": "../../packages/auth" },
+    { "path": "../../packages/crypto" },
     { "path": "../../packages/database" },
     { "path": "../../packages/storage" }
   ]

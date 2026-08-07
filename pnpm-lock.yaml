@@ -47,12 +47,18 @@ importers:
 
   apps/api:
     dependencies:
+      '@family-historian/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@family-historian/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@family-historian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@family-historian/crypto':
+        specifier: workspace:*
+        version: link:../../packages/crypto
       '@family-historian/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -118,6 +124,15 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/auth:
+    dependencies:
+      '@family-historian/crypto':
+        specifier: workspace:*
+        version: link:../crypto
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/config:
     dependencies:
       zod:
@@ -125,6 +140,12 @@ importers:
         version: 4.4.3
 
   packages/contracts:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/crypto:
     dependencies:
       zod:
         specifier: 4.4.3
