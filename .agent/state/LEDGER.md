@@ -71,3 +71,4 @@
 2026-08-07T04:44:56Z | codex | EP-009 | HEARTBEAT | provider_adapters_and_release_artifacts_committed_full_local_gates_pass_external_preflight_still_deferred
 2026-08-07T04:45:40Z | codex | EP-010 | PRODUCTION_GATE_DEFERRED | production_readiness_exit_1_preflight_missing_DEEPGRAM_API_KEY
 2026-08-07T04:54:38Z | codex | EP-007 | IMPLEMENTATION_CONTINUATION | deterministic_candidate_extraction_explicit_markers_offsets_and_evidence_guard_verified
+2026-08-07T04:56:41Z | codex | EP-000 | PREFLIGHT_FAIL | verify_and_production_readiness_both_exit_1_missing_DEEPGRAM_API_KEY_after_local_gates_pass
