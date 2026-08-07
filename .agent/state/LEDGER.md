@@ -47,3 +47,9 @@
 2026-08-06T21:30:37Z | codex | EP-003 | SIG | format-check exit 1: generated apps/web/next-env.d.ts changed by Next build
 2026-08-06T21:30:40Z | codex | EP-003 | HYPOTHESIS | exclude the framework-owned generated declaration from source formatting checks
 2026-08-06T21:32:55Z | codex | EP-003 | LOCAL_VERIFICATION | format unit 12 integration 5 e2e 1 build security audit reality smoke all ok; full verify remains gated by DEEPGRAM_API_KEY
+2026-08-06T21:34:45Z | codex | EP-004 | IMPLEMENTATION_CONTINUATION | EP-000 lease preserved; EP-003 locally verified; beginning logically independent service-layer M1 without claiming graph completion
+2026-08-06T21:56:24Z | codex | EP-004 | SIG | e2e exit 1: idempotent replay body differed because replayed changed false to true
+2026-08-06T21:56:31Z | codex | EP-004 | HYPOTHESIS | keep replay metadata only in Idempotency-Replayed header and replay the persisted response body exactly
+2026-08-07T02:07:38Z | codex | EP-000 | HYPOTHESIS | preflight environment missing awk in runtime shell; remaining external verification unchanged
+2026-08-07T02:08:11Z | codex | EP-004 | MILESTONE_PASS | M1 install: ok lint: ok typecheck: ok
+2026-08-07T02:08:11Z | codex | EP-004 | MILESTONE_PASS | M2 verify: unit/integration/e2e/typecheck/build/lint/smoke/security audit ok; formatting clean

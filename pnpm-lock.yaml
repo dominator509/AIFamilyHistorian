@@ -41,6 +41,9 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@24.10.1)(@vitest/coverage-v8@4.1.10)(vite@8.2.1(@types/node@24.10.1)(esbuild@0.28.1)(tsx@4.23.9))
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   apps/api:
     dependencies:
@@ -50,6 +53,12 @@ importers:
       '@family-historian/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@family-historian/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@family-historian/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@fastify/cors':
         specifier: 11.3.0
         version: 11.3.0
@@ -62,6 +71,9 @@ importers:
       pino:
         specifier: 10.3.1
         version: 10.3.1
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   apps/web:
     dependencies:
@@ -97,6 +109,15 @@ importers:
         specifier: 10.3.1
         version: 10.3.1
 
+  packages/ai-gateway:
+    dependencies:
+      '@family-historian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/config:
     dependencies:
       zod:
@@ -125,11 +146,23 @@ importers:
         specifier: 8.20.4
         version: 8.20.4
 
+  packages/documents:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/domain:
     dependencies:
       '@family-historian/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/reports:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   packages/storage:
     dependencies:

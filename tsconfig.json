@@ -6,6 +6,9 @@
     { "path": "packages/domain" },
     { "path": "packages/database" },
     { "path": "packages/storage" },
+    { "path": "packages/ai-gateway" },
+    { "path": "packages/documents" },
+    { "path": "packages/reports" },
     { "path": "apps/api" },
     { "path": "apps/worker" },
     { "path": "apps/web" }

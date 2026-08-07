@@ -52,4 +52,8 @@ export const canonicalRelations = [
   'subscriptions',
   'usage_ledger',
   'workflow_runs',
+  'api_idempotency_keys',
+  'job_outbox',
+  'provider_callback_events',
+  'upload_sessions',
 ] as const;

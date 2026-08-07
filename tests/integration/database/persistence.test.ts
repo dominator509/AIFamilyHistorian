@@ -6,6 +6,7 @@ import {
   migrate,
   storeConfirmedFact,
   uuidV7,
+  withIdempotentMutation,
   withTenantTransaction,
   type DatabaseContext,
 } from '../../../packages/database/src/index.js';
@@ -81,5 +82,36 @@ describe('PostgreSQL persistence invariants', () => {
         client.query("update audit_events set outcome = 'changed' where id = $1", [auditId]),
       ),
     ).rejects.toThrow(/append-only/);
+  });
+
+  it('serializes idempotent mutations and writes exactly one audit event', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Idempotent family', 'Idempotent archive');
+    const recordingSessionId = uuidV7();
+    const descriptor = {
+      ...context,
+      idempotencyKey: `integration-${uuidV7()}`,
+      method: 'POST',
+      route: '/v1/archives/:archiveId/recording-sessions',
+      actorPseudonym: 'actor-hash',
+      action: 'recording_session.create',
+    };
+    const execute = () =>
+      withIdempotentMutation(pool, descriptor, async (client) => {
+        await client.query(
+          "insert into recording_sessions(id, organization_id, family_archive_id, status) values ($1,$2,$3,'scheduled')",
+          [recordingSessionId, context.organizationId, context.familyArchiveId],
+        );
+        return { status: 201, body: { id: recordingSessionId } };
+      });
+    expect((await execute()).replayed).toBe(false);
+    expect((await execute()).replayed).toBe(true);
+    const counts = await withTenantTransaction(pool, context, async (client) =>
+      client.query<{ sessions: string; audits: string }>(
+        "select (select count(*) from recording_sessions where id = $1)::text as sessions, (select count(*) from audit_events where action = 'recording_session.create')::text as audits",
+        [recordingSessionId],
+      ),
+    );
+    expect(counts.rows[0]).toEqual({ sessions: '1', audits: '1' });
   });
 });

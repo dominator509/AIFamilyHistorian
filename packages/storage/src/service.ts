@@ -8,7 +8,6 @@ import {
   PutObjectCommand,
   S3Client,
   UploadPartCommand,
-  type CompletedPart,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { StorageConfig } from './config.js';
@@ -87,7 +86,7 @@ export class ObjectStorage {
   public async completeMultipart(
     key: string,
     uploadId: string,
-    parts: readonly CompletedPart[],
+    parts: readonly CompletedUploadPart[],
   ): Promise<void> {
     if (parts.length === 0) throw new Error('multipart completion requires at least one part');
     await this.#client.send(
@@ -139,4 +138,10 @@ export class ObjectStorage {
   public destroy(): void {
     this.#client.destroy();
   }
+}
+
+export interface CompletedUploadPart {
+  ETag?: string;
+  PartNumber?: number;
+  ChecksumSHA256?: string;
 }

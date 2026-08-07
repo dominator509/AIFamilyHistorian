@@ -2,6 +2,9 @@ import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool, type PoolClient } from 'pg';
 import * as schema from './schema.js';
 
+export type DatabasePool = Pool;
+export type DatabaseClient = PoolClient;
+
 export interface DatabaseContext {
   readonly organizationId: string;
   readonly familyArchiveId: string;

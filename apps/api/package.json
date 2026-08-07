@@ -6,10 +6,13 @@
   "dependencies": {
     "@family-historian/config": "workspace:*",
     "@family-historian/contracts": "workspace:*",
+    "@family-historian/database": "workspace:*",
+    "@family-historian/storage": "workspace:*",
     "@fastify/cors": "11.3.0",
     "@fastify/helmet": "13.1.0",
     "fastify": "5.11.2",
-    "pino": "10.3.1"
+    "pino": "10.3.1",
+    "zod": "4.4.3"
   },
   "scripts": {
     "build": "tsc -b",
