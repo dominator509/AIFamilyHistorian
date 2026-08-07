@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit before this handoff refresh: `a653c01` (`[EP-000][M4] Record handoff heartbeat`; run `git rev-parse HEAD` to confirm the current checkpoint).
+- Current commit before this handoff refresh: `fd23627` (`[EP-000][M4] Repair preflight probe metadata`; run `git rev-parse HEAD` to confirm the current checkpoint).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
