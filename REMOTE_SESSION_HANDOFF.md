@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `sh scripts/test-unit.sh` -> `unit tests: ok` (17 files, 47 tests)
+- `sh scripts/test-unit.sh` -> `unit tests: ok` (17 files, 48 tests)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 8 tests)
 - `sh scripts/build.sh` -> `build: ok`
@@ -34,6 +34,7 @@ The following commands passed after the continuation changes:
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
 - Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
 - Multipart resume status -> API returned the provider-listed completed part number, ETag, and byte size before completion.
+- Multipart completion contract -> duplicate part numbers are rejected before any provider call.
 - `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify-20260807 .` -> image present after the reduced context build; `docker image inspect` observed `user=node` and the HTTP healthcheck; `docker compose config --quiet` passed.
 - `docker compose config --quiet` -> passed.
 - `sh scripts/local-services-check.sh` -> `local services: ok`.

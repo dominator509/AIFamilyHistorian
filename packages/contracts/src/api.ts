@@ -38,9 +38,22 @@ export const completedPartSchema = z.object({
   PartNumber: z.number().int().min(1).max(10_000),
   ChecksumSHA256: z.string().min(1).optional(),
 });
-export const completeUploadInputSchema = z.object({
-  parts: z.array(completedPartSchema).min(1).max(10_000),
-});
+export const completeUploadInputSchema = z
+  .object({
+    parts: z.array(completedPartSchema).min(1).max(10_000),
+  })
+  .superRefine((input, context) => {
+    const seen = new Set<number>();
+    input.parts.forEach((part, index) => {
+      if (seen.has(part.PartNumber))
+        context.addIssue({
+          code: 'custom',
+          path: ['parts', index, 'PartNumber'],
+          message: 'multipart part numbers must be unique',
+        });
+      seen.add(part.PartNumber);
+    });
+  });
 export const transcriptInputSchema = z.object({
   mediaAssetId: uuidSchema,
   text: z.string().min(1),

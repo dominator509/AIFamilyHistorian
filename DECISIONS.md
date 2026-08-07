@@ -56,3 +56,9 @@ Add a decision before introducing a new canonical name, dependency, provider pro
 - **Decision:** Upload status lists the provider's completed part numbers, ETags, and byte sizes while a session is initiated, using bounded paginated `ListParts` calls.
 - **Reason:** A browser or offline client must be able to resume after interruption without trusting stale local state or re-uploading every part.
 - **Consequence:** The local API E2E proves status recovery after a real MinIO PUT; hosted pagination behavior and 25 GB transfer rehearsal remain deferred.
+
+## ADR-025: Reject duplicate multipart parts at the API contract boundary
+
+- **Decision:** Completion payload validation rejects duplicate `PartNumber` values before a storage provider call.
+- **Reason:** Duplicate or ambiguous part manifests can produce provider-dependent assembly behavior and must fail closed at the trust boundary.
+- **Consequence:** Clients receive a deterministic validation problem and must submit one ETag per part number.

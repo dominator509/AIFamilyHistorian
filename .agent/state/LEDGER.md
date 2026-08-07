@@ -102,3 +102,5 @@
 2026-08-07T06:15:25Z | codex | EP-007 | LOCAL_VERIFICATION | live_fire_all_16_proofs_passed_with_streamed_multipart_fixity
 2026-08-07T06:18:48Z | codex | EP-003 | IMPLEMENTATION_CONTINUATION | multipart_status_lists_provider_parts_for_resumable_recovery_with_bounded_pagination
 2026-08-07T06:18:48Z | codex | EP-003 | LOCAL_VERIFICATION | authenticated_api_resume_status_returned_completed_part_etag_and_byte_size
+2026-08-07T06:22:43Z | codex | EP-003 | IMPLEMENTATION_CONTINUATION | multipart_contract_rejects_duplicate_part_numbers_before_provider_call
+2026-08-07T06:22:43Z | codex | EP-003 | LOCAL_VERIFICATION | foundation_contract_duplicate_part_test_lint_typecheck_passed
