@@ -195,6 +195,10 @@ async function multipartMediaIngestion(): Promise<void> {
     const head = await storage.head(key);
     assert.equal(head.byteSize, bytes.byteLength);
     assert.equal(head.expectedSha256, digest);
+    assert.deepEqual(await storage.sha256Base64(key), {
+      sha256Base64: digest,
+      byteSize: bytes.byteLength,
+    });
     assert.deepEqual(storageBytes(await storage.readBytes(key)), storageBytes(bytes));
     await storage.delete(key);
     await assert.rejects(() => storage.head(key));
