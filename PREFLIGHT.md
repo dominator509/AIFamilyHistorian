@@ -36,7 +36,7 @@ R2_SECRET_ACCESS_KEY|REQUIRED|scripts/probes/r2.sh
 R2_BUCKET|REQUIRED|-
 R2_ENDPOINT|REQUIRED|-
 DEEPSEEK_API_KEY|REQUIRED|scripts/probes/deepseek_api_key.sh
-DEEPGRAM_API_KEY|REQUIRED|scripts/probes/deepgram_api_key.sh and scripts/probes/deepgram_transcription.sh
+DEEPGRAM_API_KEY|REQUIRED|scripts/probes/deepgram_api_key.sh
 ELEVENLABS_API_KEY|OPTIONAL|scripts/probes/elevenlabs_api_key.sh
 STRIPE_SECRET_KEY|REQUIRED|scripts/probes/stripe.sh
 STRIPE_WEBHOOK_SECRET|REQUIRED|-

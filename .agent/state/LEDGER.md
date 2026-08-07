@@ -120,3 +120,5 @@
 2026-08-07T17:58:28Z | codex | EP-004 | LOCAL_VERIFICATION | deepgram_probe_lint_format_typecheck_shell_validation_passed
 2026-08-07T17:58:28Z | codex | EP-004 | COMMAND_FAILED | explicit_prettier_check_shell_probe_no_parser_supported_ts_and_repository_format_check_passed
 2026-08-07T17:59:50Z | codex | EP-004 | LOCAL_VERIFICATION | format_check_and_diff_check_passed_after_deepgram_probe_docs
+2026-08-07T18:01:48Z | codex | EP-000 | COMMAND_FAILED | preflight_machine_table_combined_probe_path_false_missing_probe_repaired_exit_1
+2026-08-07T18:01:48Z | codex | EP-000 | PREFLIGHT_ADVANCED | preflight_repaired_and_now_stops_at_missing_STRIPE_SECRET_KEY_exit_1
