@@ -88,3 +88,4 @@
 2026-08-07T05:46:26Z | codex | EP-000 | HEARTBEAT | maximum_engineering_continuation_local_gates_green_external_release_requirements_remain
 2026-08-07T05:49:24Z | codex | EP-000 | PREFLIGHT_FAILED | env_var_not_set_DEEPGRAM_API_KEY_release_gate_remains_fail_closed
 2026-08-07T05:49:41Z | codex | EP-010 | PRODUCTION_GATE_DEFERRED | preflight_stops_at_missing_DEEPGRAM_API_KEY
+2026-08-07T05:51:08Z | codex | EP-007 | MEDIA_TOOLCHAIN_DEFERRED | missing_ffmpeg_ffprobe_exiftool_magick_clamscan_ocrmypdf_media_safety_unit_plans_remain_green
