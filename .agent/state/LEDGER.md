@@ -100,3 +100,5 @@
 2026-08-07T06:09:58Z | codex | EP-003 | SURPRISE | checksum_algorithm_initiation_required_part_headers_on_minio_removed_and_replaced_by_final_stream_hash
 2026-08-07T06:13:34Z | codex | EP-007 | COMMAND_FAILED | live_fire_wrapper_invoked_from_powershell_sh_not_found_storage_and_api_tests_already_passed
 2026-08-07T06:15:25Z | codex | EP-007 | LOCAL_VERIFICATION | live_fire_all_16_proofs_passed_with_streamed_multipart_fixity
+2026-08-07T06:18:48Z | codex | EP-003 | IMPLEMENTATION_CONTINUATION | multipart_status_lists_provider_parts_for_resumable_recovery_with_bounded_pagination
+2026-08-07T06:18:48Z | codex | EP-003 | LOCAL_VERIFICATION | authenticated_api_resume_status_returned_completed_part_etag_and_byte_size

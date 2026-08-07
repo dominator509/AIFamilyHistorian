@@ -125,6 +125,17 @@ describe('authenticated archive service routes', () => {
     expect(uploaded.ok, `multipart upload failed: ${uploaded.status} ${uploadBody}`).toBe(true);
     const etag = uploaded.headers.get('etag');
     expect(etag).toBeTruthy();
+    const resumableStatus = await app.inject({
+      method: 'GET',
+      url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(resumableStatus.statusCode).toBe(200);
+    expect(resumableStatus.json()).toMatchObject({
+      id: uploadId,
+      status: 'initiated',
+      parts: [{ partNumber: 1, byteSize: bytes.byteLength }],
+    });
     const complete = await app.inject({
       method: 'POST',
       url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}/complete`,

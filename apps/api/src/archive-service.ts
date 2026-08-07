@@ -402,12 +402,25 @@ export class ArchiveService {
   public async uploadStatus(
     context: DatabaseContext,
     uploadId: string,
-  ): Promise<{ id: string; status: string; expectedByteSize: number }> {
+  ): Promise<{
+    id: string;
+    status: string;
+    expectedByteSize: number;
+    parts: readonly { partNumber: number; etag: string; byteSize: number }[];
+  }> {
     const upload = await this.upload(context, uploadId);
+    const parts =
+      upload.status === 'initiated'
+        ? await this.requireStorage().listMultipartParts(
+            upload.object_key,
+            upload.provider_upload_id,
+          )
+        : [];
     return {
       id: upload.id,
       status: upload.status,
       expectedByteSize: Number(upload.expected_byte_size),
+      parts,
     };
   }
 

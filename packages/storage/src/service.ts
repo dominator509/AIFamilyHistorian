@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListPartsCommand,
   PutObjectCommand,
   S3Client,
   UploadPartCommand,
@@ -106,6 +107,37 @@ export class ObjectStorage {
     await this.#client.send(
       new AbortMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
     );
+  }
+
+  public async listMultipartParts(
+    key: string,
+    uploadId: string,
+  ): Promise<readonly { partNumber: number; etag: string; byteSize: number }[]> {
+    const parts: { partNumber: number; etag: string; byteSize: number }[] = [];
+    let marker: string | undefined;
+    for (let page = 0; page < 100; page += 1) {
+      const response = await this.#client.send(
+        new ListPartsCommand({
+          Bucket: this.config.bucket,
+          Key: key,
+          UploadId: uploadId,
+          ...(marker === undefined ? {} : { PartNumberMarker: marker }),
+        }),
+      );
+      for (const part of response.Parts ?? []) {
+        if (part.PartNumber === undefined || !part.ETag) continue;
+        parts.push({
+          partNumber: part.PartNumber,
+          etag: part.ETag,
+          byteSize: part.Size ?? 0,
+        });
+      }
+      if (!response.IsTruncated) return Object.freeze(parts);
+      if (!response.NextPartNumberMarker)
+        throw new Error('object storage returned a truncated part list without a marker');
+      marker = String(response.NextPartNumberMarker);
+    }
+    throw new Error('object storage multipart part list exceeded the page limit');
   }
 
   public async head(
