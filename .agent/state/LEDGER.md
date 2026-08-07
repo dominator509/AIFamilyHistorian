@@ -78,3 +78,6 @@
 2026-08-07T05:30:35Z | codex | EP-009 | SIG | docker_build_exit_124_after_304_seconds
 2026-08-07T05:30:35Z | codex | EP-009 | HYPOTHESIS | missing_dockerignore_sent_generated_node_modules_dist_next_and_artifacts_into_build_context
 2026-08-07T05:35:22Z | codex | EP-009 | LOCAL_VERIFICATION | docker_context_ignore_added_image_present_user_node_healthcheck_and_compose_config_pass
+2026-08-07T05:37:21Z | codex | EP-000 | PREFLIGHT_FAIL | final_verify_and_production_readiness_both_exit_1_missing_DEEPGRAM_API_KEY
+2026-08-07T05:37:22Z | codex | EP-010 | LOCAL_VERIFICATION | format_check_passed_full_local_gate_and_handoff_refresh_clean
+2026-08-07T05:37:22Z | codex | EP-000 | HEARTBEAT | maximum_engineering_continuation_complete_external_requirements_consolidated
