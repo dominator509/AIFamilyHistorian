@@ -104,3 +104,8 @@
 2026-08-07T06:18:48Z | codex | EP-003 | LOCAL_VERIFICATION | authenticated_api_resume_status_returned_completed_part_etag_and_byte_size
 2026-08-07T06:22:43Z | codex | EP-003 | IMPLEMENTATION_CONTINUATION | multipart_contract_rejects_duplicate_part_numbers_before_provider_call
 2026-08-07T06:22:43Z | codex | EP-003 | LOCAL_VERIFICATION | foundation_contract_duplicate_part_test_lint_typecheck_passed
+2026-08-07T06:27:38Z | codex | EP-009 | COMMAND_FAILED | prettier_explicit_shell_and_env_files_no_parser_shell_syntax_passed
+2026-08-07T06:28:02Z | codex | EP-009 | COMMAND_FAILED | prettier_env_example_no_parser_docs_formatted_shell_syntax_passed
+2026-08-07T06:34:55Z | codex | EP-009 | IMPLEMENTATION_CONTINUATION | encrypted_backup_streaming_aes256_gcm_envelope_and_ignored_local_key_added
+2026-08-07T06:34:56Z | codex | EP-009 | LOCAL_VERIFICATION | encrypted_backup_20260807T063342Z_and_restore_check_schema_migrations_4_passed
+2026-08-07T06:34:56Z | codex | EP-000 | HEARTBEAT | maximum_engineering_continuation_external_preflight_still_stops_at_deepgram

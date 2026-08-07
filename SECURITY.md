@@ -22,7 +22,7 @@ High-risk claims involving crimes, abuse, parentage, health, sexuality, finances
 Secrets live only in secret managers or environment injection, never source. Logs exclude transcript text, images, prompts, names, filenames, addresses, access tokens, signed URLs, and provider payloads. Stable error codes replace sensitive values.
 
 ## Encryption and keys
-TLS in transit. Provider storage encryption plus application envelope encryption for restricted fields. Per-archive data keys wrapped by KMS. Keys rotate and are versioned. Temporary media scratch is encrypted and wiped. Backups must be encrypted and restoration-tested; the repository now provides local custom-format backup and disposable restore-check scripts, while hosted retention and production restore remain release gates.
+TLS in transit. Provider storage encryption plus application envelope encryption for restricted fields. Per-archive data keys wrapped by KMS. Keys rotate and are versioned. Temporary media scratch is encrypted and wiped. Backups must be encrypted and restoration-tested; local backups now use streaming AES-256-GCM envelopes with an ignored local key and disposable restore-check, while hosted KMS wrapping, retention, and production restore remain release gates.
 
 ## AI and prompt injection
 Uploaded content is untrusted evidence, never instruction. The gateway separates policies from source text, scans for injection patterns, constrains output to schemas, validates citations, and rejects tool or command requests embedded in documents. Prohibited content is redacted before external processing.

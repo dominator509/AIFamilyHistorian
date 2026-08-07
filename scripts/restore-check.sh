@@ -5,7 +5,7 @@ set -a
 . ./.env
 set +a
 
-backup_path="${1:?usage: sh scripts/restore-check.sh <backup.dump>}"
+backup_path="${1:?usage: sh scripts/restore-check.sh <backup.dump.enc>}"
 test -f "$backup_path"
 test -f "$backup_path.sha256"
 
@@ -25,7 +25,7 @@ trap cleanup EXIT HUP INT TERM
 
 docker compose exec -T -e PGPASSWORD="$LOCAL_POSTGRES_PASSWORD" postgres \
   createdb -U family_historian "$restore_db"
-cat "$backup_path" | docker compose exec -T postgres sh -c "cat > $container_dump"
+corepack pnpm exec tsx scripts/backup-crypto.ts decrypt "$backup_path" - | docker compose exec -T postgres sh -c "cat > $container_dump"
 docker compose exec -T -e PGPASSWORD="$LOCAL_POSTGRES_PASSWORD" postgres sh -c \
   "pg_restore --exit-on-error --no-owner --no-acl -U family_historian -d $restore_db $container_dump"
 

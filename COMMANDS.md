@@ -7,13 +7,14 @@ Repository bootstrap and bounded diagnostics authorized by the unattended-build 
 - Working tree: `git status --short --branch`; current commit: `git rev-parse HEAD`; disk: `df -h .`.
 - Tool versions: `git --version`, `node --version`, `corepack --version`, `pnpm --version`, `docker version`, `docker compose version`, `psql --version`, `ffmpeg -version`, `ffprobe -version`, `exiftool -ver`, `magick -version`, `clamscan --version`, `ocrmypdf --version`, and `python --version`.
 - Generate ignored local configuration without printing secrets: `sh scripts/generate-local-env.sh`; replace only an agent-generated local file when local service credentials must be rotated: `sh scripts/generate-local-env.sh --force`.
+- Ensure the ignored local backup-encryption key exists without rotating other local credentials: `sh scripts/ensure-local-backup-key.sh`.
 - Validate shell scripts without executing them: `sh -n scripts/*.sh scripts/probes/*.sh`.
 - Local dependency lifecycle after EP-001 materializes Compose: `docker compose up -d --wait`; inspect with `docker compose ps`; stop with `docker compose down`.
 - Reset only agent-created local development volumes when deterministic initialization is invalid and no project data exists: `docker compose down --volumes`.
 - Validate Compose without starting services: `docker compose config --quiet`.
 - Prove local dependency connectivity: `sh scripts/local-services-check.sh`.
-- Create a local PostgreSQL custom-format backup with a checksum: `sh scripts/backup.sh`.
-- Restore a supplied local backup into an isolated temporary database and run the schema smoke check: `sh scripts/restore-check.sh <backup.dump>`.
+- Create a local AES-256-GCM encrypted PostgreSQL custom-format backup with a checksum: `sh scripts/backup.sh`.
+- Restore a supplied encrypted local backup into an isolated temporary database and run the schema smoke check: `sh scripts/restore-check.sh <backup.dump.enc>`.
 - Check optional local media executables without claiming a media live-fire pass: `sh scripts/media-tools-check.sh`.
 - Run the bounded local API latency smoke (health endpoint, 100 samples): `sh scripts/performance-smoke.sh`.
 - Diagnose a local port collision without mutation: `docker ps --filter publish=<port>`.

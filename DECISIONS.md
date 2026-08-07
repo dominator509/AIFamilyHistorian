@@ -62,3 +62,9 @@ Add a decision before introducing a new canonical name, dependency, provider pro
 - **Decision:** Completion payload validation rejects duplicate `PartNumber` values before a storage provider call.
 - **Reason:** Duplicate or ambiguous part manifests can produce provider-dependent assembly behavior and must fail closed at the trust boundary.
 - **Consequence:** Clients receive a deterministic validation problem and must submit one ETag per part number.
+
+## ADR-026: Encrypt local backups with a streaming AES-GCM envelope
+
+- **Decision:** Local backup output is encrypted as a versioned AES-256-GCM stream with a random nonce and authentication tag; restore decrypts to the disposable database stream and verifies the encrypted sidecar first.
+- **Reason:** A plaintext custom-format dump with only a checksum does not satisfy the backup confidentiality requirement and can expose restricted family data in local artifacts.
+- **Consequence:** Local encrypted backup/restore is verified without buffering the full dump; production KMS wrapping, key rotation, retention, and hosted restore remain release gates.

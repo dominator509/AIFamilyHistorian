@@ -8,7 +8,7 @@
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
-- Engineering completion estimate: 86% weighted implementation completion. This is a progress estimate, not a release approval.
+- Engineering completion estimate: 88% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
 - Why `RUN_COMPLETE` was not reached: `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` both exit 1 at `env var not set: DEEPGRAM_API_KEY`. Hosted provider, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence is unavailable.
 
@@ -28,8 +28,8 @@ The following commands passed after the continuation changes:
 - `sh scripts/reality-gate.sh` -> `reality gate: ok`
 - `sh scripts/smoke-test.sh` -> `smoke test: ok`
 - `sh scripts/live-fire.sh` -> `live-fire: ok`; all sixteen proof names passed against real local services, including the authenticated DeepSeek cache/provenance proof.
-- `sh scripts/backup.sh` -> `backup: ok`; a custom-format PostgreSQL dump and SHA-256 sidecar were created under ignored `.artifacts/`.
-- `sh scripts/restore-check.sh .artifacts/backups/<verified-dump>.dump` -> `restore-check: ok`; the dump restored into a disposable database and reported `schema_migrations=4`.
+- `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260807T063342Z.dump.enc`).
+- `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260807T063342Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=4`.
 - `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.52ms` against the real Fastify health endpoint.
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
 - Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
@@ -50,7 +50,7 @@ The following commands passed after the continuation changes:
 | AI gateway | Local and authenticated nonproduction proof complete | DeepSeek adapter, policy/DLP, prompt canonicalization, structured output, provenance, usage/cache telemetry, disablement behavior | Unit, contract, authenticated DeepSeek live-fire | Production key/vendor approval and hosted retention/location evidence | Current development key must be rotated before production |
 | Transcription/narration/email/billing providers | Adapter engineering complete | Deepgram, ElevenLabs, Resend, Stripe, Turnstile HTTP adapters with bounded retries, validation, signature checks, and local protocol tests; local billing/quota domain | Provider local HTTP contract tests and all sixteen local live-fire proofs | Authenticated sandbox probes, signed webhook delivery, vendor approvals | No external delivery or payment effect was fabricated |
 | Documents and exports | Local implementation complete | Tamper-evident provenance/audit chains, portable JSONL/CSV manifest, deterministic text-first PDF/EPUB, release-gated publication bundle, explicit-marker candidate extraction, 25 GB resumable chunk manifest/part recovery planner, media quarantine/derivative command plans, no-shell worker executor with path confinement and bounded time/output | Unit and `book-pdf-epub`/`portable-export`/`evidence-extraction` live-fire | Accessible-PDF/EPUB audit and 25 GB transfer/recovery rehearsal | Advanced layout, media embedding, automatic NLP extraction, pinned media-tool fixture execution, and formal accessibility audit remain |
-| Observability/operations | Local implementation complete | Redacted structured telemetry, metric samples, OTel local sink, immutable audit events, backup/restore scripts, incident/runbook guidance | Unit, local collector/reality gates, backup and disposable restore-check | Hosted Sentry/OTLP, alert paging, production retention/restore | Hosted restore and quarterly preservation drills remain operator-owned |
+| Observability/operations | Local implementation complete | Redacted structured telemetry, metric samples, OTel local sink, immutable audit events, streaming encrypted backup/restore scripts, incident/runbook guidance | Unit, local collector/reality gates, encrypted backup and disposable restore-check | Hosted Sentry/OTLP, KMS wrapping, alert paging, production retention/restore | Hosted restore and quarterly preservation drills remain operator-owned |
 | Deployment/release | Local artifact complete | Non-root Docker image, healthcheck, Fly staging config, release workflow, manual production command | Docker build and compose config | GHCR, Fly staging smoke, DNS/certificates, production migration and rollback | No cloud mutation or auto-deploy was authorized |
 | Privacy/legal/business | Technical controls present; approvals absent | Draft privacy/terms/consent/rights/minor/voice/takedown/DPIA/retention artifacts and technical request paths | Technical policy and security tests | Counsel, vendor, insurance, DPA, data-region, data-broker, retention approvals | Cannot be marked production-ready without signed evidence |
 
@@ -84,7 +84,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 | Sentry/hosted OTLP | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | `sh scripts/probes/sentry.sh` and `sh scripts/probes/otel.sh` | `sh scripts/preflight.sh` | Yes under current gate |
 | GitHub/GHCR | `GITHUB_TOKEN`, `GITHUB_REPOSITORY` | `sh scripts/probes/github.sh` | `sh scripts/preflight.sh` and remote workflow run | Yes |
 | Fly staging/production | `FLY_API_TOKEN`, `FLY_APP_STAGING`, `FLY_APP_PRODUCTION` | `sh scripts/probes/fly.sh` | staging deploy and smoke, then manual production command | Yes |
-| Application production secrets | `SESSION_SECRET`, `FIELD_ENCRYPTION_MASTER_KEY`, `DOWNLOAD_SIGNING_SECRET` | Presence check in `sh scripts/preflight.sh` | production secret-manager injection plus readiness check | Yes |
+| Application production secrets | `SESSION_SECRET`, `FIELD_ENCRYPTION_MASTER_KEY`, `DOWNLOAD_SIGNING_SECRET`, `BACKUP_ENCRYPTION_KEY` | Presence check in `sh scripts/preflight.sh` | production secret-manager/KMS injection plus readiness check | Yes |
 | Legal/vendor/insurance/DPIA/retention | `LEGAL_APPROVAL_FILE`, `VENDOR_RISK_APPROVAL_FILE`, `INSURANCE_EVIDENCE_FILE`, `DPIA_APPROVAL_FILE`, `RETENTION_APPROVAL_FILE` | File-presence gates in `sh scripts/preflight.sh` | `sh scripts/production-readiness-check.sh` | Yes |
 | Data region and data-broker determinations | `compliance/evidence/data-region-verification.md`, `compliance/evidence/data-broker-determination.md` | `sh scripts/production-readiness-check.sh` | same command after signed artifacts exist | Yes |
 | Local media executables | `ffmpeg`, `ffprobe`, `exiftool`, `magick`, `clamscan`, `ocrmypdf`, `python` | `sh scripts/media-tools-check.sh` | install pinned tools, then rerun media fixture/live-fire checks | Yes for media release |
@@ -96,6 +96,7 @@ Run from `C:\dev\AIFamilyHistorian` using the installed Git POSIX shell on Windo
 ```text
 set PATH=C:\Program Files\Git\usr\bin;C:\Program Files\Git\cmd;%PATH%
 cd /d C:\dev\AIFamilyHistorian
+sh scripts/ensure-local-backup-key.sh
 sh scripts/preflight.sh
 sh scripts/graph-next.sh
 sh scripts/verify.sh
@@ -128,7 +129,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Known risks
 
-- Hosted transcription, narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified.
+- Hosted transcription, narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; production backup KMS wrapping and retention are also pending.
 - Actual 25 GB transfer/recovery, pinned FFmpeg/OCR/ClamAV execution, authenticated k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; the bounded 100-request health smoke, no-shell media executor, and local backup/restore now have executable rehearsals.
 - Native session signing and TOTP/recovery controls are implemented, but passkeys/WebAuthn, device management, and production MFA rollout need live verification.
 - The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.

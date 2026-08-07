@@ -19,7 +19,7 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 | OpenTelemetry | Metrics and traces | OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS | Dedicated project ingest | Provider dependent | scripts/probes/otel.sh |
 | GitHub | CI and container registry | GITHUB_TOKEN, GITHUB_REPOSITORY | Repository and packages scopes only | Plan dependent | scripts/probes/github.sh |
 | Fly.io | Staging and production runtime | FLY_API_TOKEN, FLY_APP_STAGING, FLY_APP_PRODUCTION | Deploy only to named apps | Usage based | scripts/probes/fly.sh |
-| Application secrets | Sessions, encryption, webhook state | SESSION_SECRET, FIELD_ENCRYPTION_MASTER_KEY, DOWNLOAD_SIGNING_SECRET | Random values generated locally | None | Presence only |
+| Application secrets | Sessions, encryption, webhook state, encrypted backups | SESSION_SECRET, FIELD_ENCRYPTION_MASTER_KEY, DOWNLOAD_SIGNING_SECRET, BACKUP_ENCRYPTION_KEY | Random values generated locally; production backup key must be KMS/secret-manager controlled | None | Presence only |
 | Legal launch evidence | Privacy, Terms, recording consent, releases, voice, likeness, copyright, minors, defamation review | LEGAL_APPROVAL_FILE | Signed approval artifact | Professional fee | production-readiness gate |
 | Vendor-risk evidence | DeepSeek, Deepgram, ElevenLabs, R2, Neon, Upstash, Sentry and print provider data-flow decisions | VENDOR_RISK_APPROVAL_FILE | Approved and current | Internal/professional | production-readiness gate |
 | Insurance evidence | Cyber, technology E&O, and media liability | INSURANCE_EVIDENCE_FILE | Active policy evidence | Paid | production-readiness gate |
@@ -57,6 +57,7 @@ FLY_APP_PRODUCTION|REQUIRED|-
 SESSION_SECRET|REQUIRED|-
 FIELD_ENCRYPTION_MASTER_KEY|REQUIRED|-
 DOWNLOAD_SIGNING_SECRET|REQUIRED|-
+BACKUP_ENCRYPTION_KEY|REQUIRED|-
 LEGAL_APPROVAL_FILE|REQUIRED|-
 VENDOR_RISK_APPROVAL_FILE|REQUIRED|-
 INSURANCE_EVIDENCE_FILE|REQUIRED|-
