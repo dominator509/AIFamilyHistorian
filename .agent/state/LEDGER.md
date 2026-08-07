@@ -81,3 +81,8 @@
 2026-08-07T05:37:21Z | codex | EP-000 | PREFLIGHT_FAIL | final_verify_and_production_readiness_both_exit_1_missing_DEEPGRAM_API_KEY
 2026-08-07T05:37:22Z | codex | EP-010 | LOCAL_VERIFICATION | format_check_passed_full_local_gate_and_handoff_refresh_clean
 2026-08-07T05:37:22Z | codex | EP-000 | HEARTBEAT | maximum_engineering_continuation_complete_external_requirements_consolidated
+2026-08-07T05:45:55Z | codex | EP-009 | COMMAND_FAILED | backup_restore_wrapper_exit_1 backup_succeeded_but_powershell_expanded_head_and_latest_assignment_before_posix_shell
+2026-08-07T05:46:26Z | codex | EP-010 | IMPLEMENTATION_CONTINUATION | resumable_export_planner_added_25gb_cap_chunk_manifest_and_resume_part_detection
+2026-08-07T05:46:26Z | codex | EP-010 | LOCAL_VERIFICATION | performance_smoke_100_health_requests_p95_0_91ms_and_unit_17_files_44_tests
+2026-08-07T05:46:26Z | codex | EP-009 | LOCAL_VERIFICATION | backup_restore_passed_latest_family_historian_20260807T054534Z_dump_schema_migrations_4
+2026-08-07T05:46:26Z | codex | EP-000 | HEARTBEAT | maximum_engineering_continuation_local_gates_green_external_release_requirements_remain

@@ -15,6 +15,7 @@ Repository bootstrap and bounded diagnostics authorized by the unattended-build 
 - Create a local PostgreSQL custom-format backup with a checksum: `sh scripts/backup.sh`.
 - Restore a supplied local backup into an isolated temporary database and run the schema smoke check: `sh scripts/restore-check.sh <backup.dump>`.
 - Check optional local media executables without claiming a media live-fire pass: `sh scripts/media-tools-check.sh`.
+- Run the bounded local API latency smoke (health endpoint, 100 samples): `sh scripts/performance-smoke.sh`.
 - Diagnose a local port collision without mutation: `docker ps --filter publish=<port>`.
 - Verify an exact container tag before adding it: `docker manifest inspect <image:tag>`.
 - Verify exact npm package metadata before adding it: `pnpm view <package>@<version> version`.

@@ -240,6 +240,9 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.1105.0
         version: 3.1105.0
+      '@family-historian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@family-historian/database':
         specifier: workspace:*
         version: link:../database

@@ -8,7 +8,7 @@
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
-- Engineering completion estimate: 83% weighted implementation completion. This is a progress estimate, not a release approval.
+- Engineering completion estimate: 84% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
 - Why `RUN_COMPLETE` was not reached: `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` both exit 1 at `env var not set: DEEPGRAM_API_KEY`. Hosted provider, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence is unavailable.
 
@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `sh scripts/test-unit.sh` -> `unit tests: ok` (16 files, 42 tests)
+- `sh scripts/test-unit.sh` -> `unit tests: ok` (17 files, 44 tests)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 7 tests)
 - `sh scripts/build.sh` -> `build: ok`
@@ -30,6 +30,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/live-fire.sh` -> `live-fire: ok`; all sixteen proof names passed against real local services, including the authenticated DeepSeek cache/provenance proof.
 - `sh scripts/backup.sh` -> `backup: ok`; a custom-format PostgreSQL dump and SHA-256 sidecar were created under ignored `.artifacts/`.
 - `sh scripts/restore-check.sh .artifacts/backups/<verified-dump>.dump` -> `restore-check: ok`; the dump restored into a disposable database and reported `schema_migrations=4`.
+- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.91ms` against the real Fastify health endpoint.
 - `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify-20260807 .` -> image present after the reduced context build; `docker image inspect` observed `user=node` and the HTTP healthcheck; `docker compose config --quiet` passed.
 - `docker compose config --quiet` -> passed.
 - `sh scripts/local-services-check.sh` -> `local services: ok`.
@@ -44,7 +45,7 @@ The following commands passed after the continuation changes:
 | Authentication and authorization | Local MFA hardening complete; passkey rollout pending | Signed sessions, archive permission checks, tenant boundaries, fail-closed visibility/rights checks, RFC-compatible TOTP enrollment/replay protection/recovery codes | Unit, integration, E2E; TOTP RFC-vector coverage | WebAuthn/passkey provider live-fire, device management, production secret injection | Native auth/TOTP are not a substitute for a completed Better Auth/passkey rollout |
 | AI gateway | Local and authenticated nonproduction proof complete | DeepSeek adapter, policy/DLP, prompt canonicalization, structured output, provenance, usage/cache telemetry, disablement behavior | Unit, contract, authenticated DeepSeek live-fire | Production key/vendor approval and hosted retention/location evidence | Current development key must be rotated before production |
 | Transcription/narration/email/billing providers | Adapter engineering complete | Deepgram, ElevenLabs, Resend, Stripe, Turnstile HTTP adapters with bounded retries, validation, signature checks, and local protocol tests; local billing/quota domain | Provider local HTTP contract tests and all sixteen local live-fire proofs | Authenticated sandbox probes, signed webhook delivery, vendor approvals | No external delivery or payment effect was fabricated |
-| Documents and exports | Local implementation complete | Tamper-evident provenance/audit chains, portable JSONL/CSV manifest, deterministic text-first PDF/EPUB, release-gated publication bundle, explicit-marker candidate extraction, media quarantine/derivative command plans | Unit and `book-pdf-epub`/`portable-export`/`evidence-extraction` live-fire | Accessible-PDF/EPUB audit and 25 GB resumable export rehearsal | Advanced layout, media embedding, automatic NLP extraction, actual sandboxed media-tool execution, and formal accessibility audit remain |
+| Documents and exports | Local implementation complete | Tamper-evident provenance/audit chains, portable JSONL/CSV manifest, deterministic text-first PDF/EPUB, release-gated publication bundle, explicit-marker candidate extraction, 25 GB resumable chunk manifest/part recovery planner, media quarantine/derivative command plans | Unit and `book-pdf-epub`/`portable-export`/`evidence-extraction` live-fire | Accessible-PDF/EPUB audit and 25 GB transfer/recovery rehearsal | Advanced layout, media embedding, automatic NLP extraction, actual sandboxed media-tool execution, and formal accessibility audit remain |
 | Observability/operations | Local implementation complete | Redacted structured telemetry, metric samples, OTel local sink, immutable audit events, backup/restore scripts, incident/runbook guidance | Unit, local collector/reality gates, backup and disposable restore-check | Hosted Sentry/OTLP, alert paging, production retention/restore | Hosted restore and quarterly preservation drills remain operator-owned |
 | Deployment/release | Local artifact complete | Non-root Docker image, healthcheck, Fly staging config, release workflow, manual production command | Docker build and compose config | GHCR, Fly staging smoke, DNS/certificates, production migration and rollback | No cloud mutation or auto-deploy was authorized |
 | Privacy/legal/business | Technical controls present; approvals absent | Draft privacy/terms/consent/rights/minor/voice/takedown/DPIA/retention artifacts and technical request paths | Technical policy and security tests | Counsel, vendor, insurance, DPA, data-region, data-broker, retention approvals | Cannot be marked production-ready without signed evidence |
@@ -124,7 +125,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 ## Known risks
 
 - Hosted transcription, narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified.
-- 25 GB resumable export, actual restricted FFmpeg/OCR/ClamAV execution, k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; local backup/restore now has an executable rehearsal.
+- Actual 25 GB transfer/recovery, restricted FFmpeg/OCR/ClamAV execution, authenticated k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; the bounded 100-request health smoke and local backup/restore now have executable rehearsals.
 - Native session signing and TOTP/recovery controls are implemented, but passkeys/WebAuthn, device management, and production MFA rollout need live verification.
 - The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.
 - Legal, insurance, vendor, data-region, and policy approvals are not engineering artifacts and remain fail-closed.
