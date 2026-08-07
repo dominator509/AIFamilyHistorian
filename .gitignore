@@ -6,6 +6,7 @@ node_modules/
 dist/
 *.tsbuildinfo
 coverage/
+.artifacts/
 playwright-report/
 test-results/
 .agent/state/*.log

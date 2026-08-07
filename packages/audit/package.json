@@ -1,0 +1,15 @@
+{
+  "name": "@family-historian/audit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@family-historian/provenance": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  }
+}

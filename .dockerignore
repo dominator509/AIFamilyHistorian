@@ -1,0 +1,17 @@
+.git
+.agent/state/*.log
+.agent/state/*.pid
+.artifacts
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+dist
+**/dist
+.next
+**/.next
+coverage
+playwright-report
+test-results
+*.tsbuildinfo

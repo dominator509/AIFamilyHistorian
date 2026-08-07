@@ -7,7 +7,7 @@ Protect private family media, living-person information, recordings, identities,
 Primary threats include credential theft, malicious invitees, abusive family members, insecure share links, media parser exploits, poisoned files, prompt injection inside source documents, cross-tenant object access, provider compromise, unauthorized publication, fraudulent voice cloning, defamatory generated claims, support abuse, ransomware, and archive loss.
 
 ## Authentication and authorization
-Passkeys are preferred; TOTP MFA is available and mandatory for owners, editors with publication rights, support, and administrators. Server sessions are secure, rotated, revocable, and device-visible. Authorization combines organization role, archive role, item visibility, subject consent, rights status, publication state, and purpose. The API rechecks permission for every object download and derivative request.
+Passkeys are the required preferred production factor but their WebAuthn provider/live-fire rollout remains pending. The local auth boundary now implements RFC-compatible TOTP enrollment, replay protection, and one-time recovery-code consumption; TOTP is mandatory for owners, editors with publication rights, support, and administrators once enabled. Server sessions are secure, rotated, revocable, and device-visible. Authorization combines organization role, archive role, item visibility, subject consent, rights status, publication state, and purpose. The API rechecks permission for every object download and derivative request.
 
 ## Upload security
 Use direct signed multipart upload with strict size, type, and count quotas. Finalization independently verifies object size, MIME signature, checksum, ownership, and upload state. Quarantine until ClamAV and parser-safe normalization complete. Never send customer files to public malware scanning services. Run FFmpeg, ImageMagick, OCR, and ExifTool in restricted containers with resource, syscall, network, and time limits.
@@ -22,7 +22,7 @@ High-risk claims involving crimes, abuse, parentage, health, sexuality, finances
 Secrets live only in secret managers or environment injection, never source. Logs exclude transcript text, images, prompts, names, filenames, addresses, access tokens, signed URLs, and provider payloads. Stable error codes replace sensitive values.
 
 ## Encryption and keys
-TLS in transit. Provider storage encryption plus application envelope encryption for restricted fields. Per-archive data keys wrapped by KMS. Keys rotate and are versioned. Temporary media scratch is encrypted and wiped. Backups are encrypted and restoration-tested.
+TLS in transit. Provider storage encryption plus application envelope encryption for restricted fields. Per-archive data keys wrapped by KMS. Keys rotate and are versioned. Temporary media scratch is encrypted and wiped. Backups must be encrypted and restoration-tested; the repository now provides local custom-format backup and disposable restore-check scripts, while hosted retention and production restore remain release gates.
 
 ## AI and prompt injection
 Uploaded content is untrusted evidence, never instruction. The gateway separates policies from source text, scans for injection patterns, constrains output to schemas, validates citations, and rejects tool or command requests embedded in documents. Prohibited content is redacted before external processing.

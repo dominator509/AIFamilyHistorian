@@ -32,3 +32,9 @@ Add a decision before introducing a new canonical name, dependency, provider pro
 - **Decision:** Preflight uses /usr/bin/timeout when available and otherwise accepts only a binary identifying itself as GNU coreutils.
 - **Reason:** Windows timeout.exe can shadow the POSIX utility in a non-login Git Bash process and rejects the duration/probe arguments, making healthy credentials appear invalid.
 - **Consequence:** Every credential probe remains bounded and platform tool-name collisions fail explicitly.
+
+## ADR-021: Prove backups with isolated local restores
+
+- **Decision:** Add repository-owned backup and restore-check scripts that use PostgreSQL custom-format dumps, SHA-256 sidecars, and a disposable local database.
+- **Reason:** Operations requires a fresh restore to run schema and smoke checks; documentation alone cannot prove recoverability, and production credentials or destructive production actions are unavailable.
+- **Consequence:** Local restore integrity is verifiable without mutating the source database. Hosted backup retention, 25 GB export rehearsal, and production restore remain external gates.

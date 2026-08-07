@@ -72,3 +72,9 @@
 2026-08-07T04:45:40Z | codex | EP-010 | PRODUCTION_GATE_DEFERRED | production_readiness_exit_1_preflight_missing_DEEPGRAM_API_KEY
 2026-08-07T04:54:38Z | codex | EP-007 | IMPLEMENTATION_CONTINUATION | deterministic_candidate_extraction_explicit_markers_offsets_and_evidence_guard_verified
 2026-08-07T04:56:41Z | codex | EP-000 | PREFLIGHT_FAIL | verify_and_production_readiness_both_exit_1_missing_DEEPGRAM_API_KEY_after_local_gates_pass
+2026-08-07T05:22:57Z | codex | EP-008 | IMPLEMENTATION_CONTINUATION | provenance_media_publishing_audit_packages_and_mfa_hardening_added
+2026-08-07T05:22:57Z | codex | EP-009 | LOCAL_VERIFICATION | backup_and_disposable_restore_check_passed_schema_migrations_4
+2026-08-07T05:22:58Z | codex | EP-007 | EXTERNAL_DEFERRED | media_tool_probe_missing_ffmpeg_ffprobe_exiftool_magick_clamscan_ocrmypdf
+2026-08-07T05:30:35Z | codex | EP-009 | SIG | docker_build_exit_124_after_304_seconds
+2026-08-07T05:30:35Z | codex | EP-009 | HYPOTHESIS | missing_dockerignore_sent_generated_node_modules_dist_next_and_artifacts_into_build_context
+2026-08-07T05:35:22Z | codex | EP-009 | LOCAL_VERIFICATION | docker_context_ignore_added_image_present_user_node_healthcheck_and_compose_config_pass

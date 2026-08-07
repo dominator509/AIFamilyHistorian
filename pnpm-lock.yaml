@@ -124,6 +124,12 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/audit:
+    dependencies:
+      '@family-historian/provenance':
+        specifier: workspace:*
+        version: link:../provenance
+
   packages/auth:
     dependencies:
       '@family-historian/crypto':
@@ -178,6 +184,44 @@ importers:
       '@family-historian/contracts':
         specifier: workspace:*
         version: link:../contracts
+
+  packages/media:
+    dependencies:
+      '@family-historian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/observability: {}
+
+  packages/provenance:
+    dependencies:
+      '@family-historian/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/providers:
+    dependencies:
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
+  packages/publishing:
+    dependencies:
+      '@family-historian/documents':
+        specifier: workspace:*
+        version: link:../documents
+      '@family-historian/reports':
+        specifier: workspace:*
+        version: link:../reports
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   packages/reports:
     dependencies:

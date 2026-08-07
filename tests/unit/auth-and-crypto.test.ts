@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { createHmac } from 'node:crypto';
 import {
+  acceptTotpCode,
   authorizeArchivePermission,
+  consumeRecoveryCode,
+  createTotpEnrollment,
+  generateRecoveryCodes,
   issueSessionToken,
   parseAuthorizationHeader,
   verifySessionToken,
+  verifyTotpCode,
 } from '../../packages/auth/src/index.js';
 import { decryptRestrictedText, encryptRestrictedText } from '../../packages/crypto/src/index.js';
 
@@ -46,6 +51,31 @@ describe('session principal and auth policy', () => {
     expect(() =>
       authorizeArchivePermission(value, '019fd8a1-f366-7961-b027-89cf42f5c220', 'records:write'),
     ).not.toThrow();
+  });
+
+  it('supports RFC-compatible TOTP enrollment, replay protection, and recovery codes', () => {
+    const enrollment = createTotpEnrollment({
+      userId: principal.userId,
+      label: 'owner@example.test',
+    });
+    expect(enrollment.otpauthUri).toContain('otpauth://totp/');
+    const secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ';
+    expect(verifyTotpCode(secret, '287082', 59_000)).toBe(1);
+    expect(verifyTotpCode(secret, '000000', 59_000)).toBeNull();
+    const factor = {
+      userId: principal.userId,
+      secretBase32: secret,
+      enabledAt: '2026-08-07T00:00:00.000Z',
+      lastAcceptedStep: null,
+    };
+    const accepted = acceptTotpCode(factor, '287082', 59_000);
+    expect(() => acceptTotpCode(accepted, '287082', 59_000)).toThrow('MFA_REQUIRED');
+    const recovery = generateRecoveryCodes(5);
+    const consumed = consumeRecoveryCode(recovery.set, recovery.codes[0]!);
+    expect(consumed.hashes).toHaveLength(4);
+    expect(() => consumeRecoveryCode(consumed, recovery.codes[0]!)).toThrow(
+      'RECOVERY_CODE_INVALID',
+    );
   });
 });
 

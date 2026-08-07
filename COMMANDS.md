@@ -12,6 +12,9 @@ Repository bootstrap and bounded diagnostics authorized by the unattended-build 
 - Reset only agent-created local development volumes when deterministic initialization is invalid and no project data exists: `docker compose down --volumes`.
 - Validate Compose without starting services: `docker compose config --quiet`.
 - Prove local dependency connectivity: `sh scripts/local-services-check.sh`.
+- Create a local PostgreSQL custom-format backup with a checksum: `sh scripts/backup.sh`.
+- Restore a supplied local backup into an isolated temporary database and run the schema smoke check: `sh scripts/restore-check.sh <backup.dump>`.
+- Check optional local media executables without claiming a media live-fire pass: `sh scripts/media-tools-check.sh`.
 - Diagnose a local port collision without mutation: `docker ps --filter publish=<port>`.
 - Verify an exact container tag before adding it: `docker manifest inspect <image:tag>`.
 - Verify exact npm package metadata before adding it: `pnpm view <package>@<version> version`.

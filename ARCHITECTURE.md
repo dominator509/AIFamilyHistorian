@@ -4,23 +4,23 @@
 Define the production architecture for a private family-memory capture, preservation, editing, and publication SaaS. The system must preserve source truth, rights, provenance, and portability while using external AI only as a bounded processor.
 
 ## System overview
-The launch system is a TypeScript modular monolith with independently scalable worker processes. The web client records interviews and manages archives. The API owns identity, permissions, records, rights, and workflow commands. PostgreSQL owns structured truth. R2 owns immutable original media and reproducible derivatives. Redis/BullMQ coordinates bounded jobs. Media workers run ClamAV, ExifTool, FFmpeg, ImageMagick, OCR, and packaging. The AI Policy Gateway is the only route to DeepSeek, transcription, and narration providers.
+The launch system is a TypeScript modular monolith with independently scalable worker processes. The web client records interviews and manages archives. The API owns identity, permissions, records, rights, and workflow commands. PostgreSQL owns structured truth. R2 owns immutable original media and reproducible derivatives. Redis/BullMQ coordinates bounded jobs. The media package now emits explicit, sandbox-oriented ClamAV, ExifTool, FFmpeg, ImageMagick, OCR, and packaging plans; restricted worker execution and hosted tool verification remain release work. The AI Policy Gateway is the only route to DeepSeek, transcription, and narration providers.
 
 ## Repository map
 - apps/web: customer UI, interview recorder, transcript editor, timeline, archive, publishing studio.
 - apps/api: Fastify HTTP boundary, auth, OpenAPI, commands, queries, provider webhooks.
 - apps/worker: queues for media, OCR, transcription, extraction, editorial generation, exports, deletion.
-- apps/admin: audited support, rights review, abuse review, and operations UI.
+- apps/admin: planned audited support, rights review, abuse review, and operations UI; current bounded launch keeps these controls behind API/domain gates.
 - packages/domain: entities, invariants, workflows, rights, provenance, publication state.
 - packages/contracts: canonical request, response, event, and job schemas.
 - packages/database: Drizzle schema, migrations, RLS, repositories, transaction boundaries.
 - packages/storage: object naming, multipart upload, fixity, retention, signed access.
-- packages/media: derivative plans and command builders for FFmpeg/ImageMagick/ExifTool/OCR.
+- packages/media: quarantine state machine, immutable-original checks, derivative plans, and command builders for FFmpeg/ImageMagick/ExifTool/OCR.
 - packages/ai-gateway: redaction, consent checks, prompt registry, cache families, provider adapters, output validation.
-- packages/provenance: evidence spans, quote lineage, generation lineage, manifests, checksums.
-- packages/publishing: chapter assembly, PDF, EPUB, audiobook, index and caption exports.
-- packages/permissions: RBAC plus item visibility and subject-right checks.
-- packages/audit: append-only security and content-provenance events.
+- packages/provenance: evidence spans, quote lineage, generation lineage, tamper-evident manifests, and checksums.
+- packages/publishing: release-gated chapter assembly, PDF, EPUB, narration manifests, index and export artifacts.
+- packages/permissions: domain visibility and subject-right checks (currently surfaced through `packages/domain`).
+- packages/audit: append-only, content-redacted security and provenance events.
 - tests: unit, integration, E2E, live-fire, accessibility, performance, media, privacy, security.
 
 ## Code import law

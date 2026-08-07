@@ -13,6 +13,10 @@
     { "path": "packages/reports" },
     { "path": "packages/observability" },
     { "path": "packages/providers" },
+    { "path": "packages/provenance" },
+    { "path": "packages/media" },
+    { "path": "packages/publishing" },
+    { "path": "packages/audit" },
     { "path": "apps/api" },
     { "path": "apps/worker" },
     { "path": "apps/web" }

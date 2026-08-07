@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 
 export const sessionSchema = z.object({
@@ -50,4 +50,154 @@ export function authorizeArchivePermission(
   if (!principal.archiveIds.includes(archiveId)) throw new Error('PERMISSION_DENIED');
   if (!principal.permissions.includes(permission) && !principal.permissions.includes('archive:*'))
     throw new Error('PERMISSION_DENIED');
+}
+
+export interface TotpEnrollment {
+  readonly userId: string;
+  readonly issuer: string;
+  readonly label: string;
+  readonly secretBase32: string;
+  readonly otpauthUri: string;
+}
+
+export interface TotpFactor {
+  readonly userId: string;
+  readonly secretBase32: string;
+  readonly enabledAt: string;
+  readonly lastAcceptedStep: number | null;
+}
+
+export function createTotpEnrollment(input: {
+  readonly userId: string;
+  readonly label: string;
+  readonly issuer?: string;
+}): TotpEnrollment {
+  if (!input.userId || !input.label) throw new Error('MFA_ENROLLMENT_INVALID');
+  const issuer = input.issuer ?? 'AI Family Historian';
+  const secretBase32 = encodeBase32(randomBytes(20));
+  const otpauthUri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(input.label)}?secret=${secretBase32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+  return Object.freeze({ ...input, issuer, secretBase32, otpauthUri });
+}
+
+export function verifyTotpCode(
+  secretBase32: string,
+  code: string,
+  atMilliseconds = Date.now(),
+  window = 1,
+): number | null {
+  if (!/^\d{6}$/u.test(code) || !Number.isInteger(window) || window < 0 || window > 2) return null;
+  const key = decodeBase32(secretBase32);
+  const currentStep = Math.floor(atMilliseconds / 30_000);
+  for (let offset = -window; offset <= window; offset += 1) {
+    const step = currentStep + offset;
+    if (step < 0) continue;
+    const expected = totpForStep(key, step);
+    const expectedBytes = Buffer.from(expected, 'ascii');
+    const suppliedBytes = Buffer.from(code, 'ascii');
+    if (timingSafeEqual(expectedBytes, suppliedBytes)) return step;
+  }
+  return null;
+}
+
+export function acceptTotpCode(
+  factor: TotpFactor,
+  code: string,
+  atMilliseconds = Date.now(),
+): TotpFactor {
+  const step = verifyTotpCode(factor.secretBase32, code, atMilliseconds);
+  if (step === null || (factor.lastAcceptedStep !== null && step <= factor.lastAcceptedStep))
+    throw new Error('MFA_REQUIRED');
+  return Object.freeze({ ...factor, lastAcceptedStep: step });
+}
+
+export interface RecoveryCodeSet {
+  readonly hashes: readonly string[];
+  readonly generatedAt: string;
+}
+
+export function generateRecoveryCodes(count = 10): {
+  codes: readonly string[];
+  set: RecoveryCodeSet;
+} {
+  if (!Number.isInteger(count) || count < 5 || count > 20)
+    throw new Error('RECOVERY_COUNT_INVALID');
+  const codes = Array.from({ length: count }, () =>
+    formatRecoveryCode(randomBytes(10).toString('hex')),
+  );
+  return Object.freeze({
+    codes: Object.freeze(codes),
+    set: Object.freeze({
+      hashes: Object.freeze(codes.map(hashRecoveryCode)),
+      generatedAt: new Date().toISOString(),
+    }),
+  });
+}
+
+export function consumeRecoveryCode(set: RecoveryCodeSet, code: string): RecoveryCodeSet {
+  const hash = hashRecoveryCode(code);
+  const index = set.hashes.findIndex((candidate) => candidate === hash);
+  if (index < 0) throw new Error('RECOVERY_CODE_INVALID');
+  return Object.freeze({
+    ...set,
+    hashes: Object.freeze(set.hashes.filter((_, candidateIndex) => candidateIndex !== index)),
+  });
+}
+
+export function hashRecoveryCode(code: string): string {
+  const normalized = code.replaceAll(/[-\s]/gu, '').toLowerCase();
+  if (!/^[a-f0-9]{20}$/u.test(normalized)) throw new Error('RECOVERY_CODE_INVALID');
+  return createHash('sha256').update(normalized, 'utf8').digest('hex');
+}
+
+function totpForStep(key: Buffer, step: number): string {
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(step));
+  const digest = createHmac('sha1', key).update(counter).digest();
+  const offset = digest[digest.length - 1]! & 0x0f;
+  const value =
+    ((digest[offset]! & 0x7f) << 24) |
+    ((digest[offset + 1]! & 0xff) << 16) |
+    ((digest[offset + 2]! & 0xff) << 8) |
+    (digest[offset + 3]! & 0xff);
+  return String(value % 1_000_000).padStart(6, '0');
+}
+
+function formatRecoveryCode(hex: string): string {
+  return `${hex.slice(0, 5)}-${hex.slice(5, 10)}-${hex.slice(10, 15)}-${hex.slice(15, 20)}`;
+}
+
+function encodeBase32(bytes: Buffer): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let buffer = 0;
+  let bits = 0;
+  let output = '';
+  for (const byte of bytes) {
+    buffer = (buffer << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      output += alphabet[(buffer >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits > 0) output += alphabet[(buffer << (5 - bits)) & 31];
+  return output;
+}
+
+function decodeBase32(input: string): Buffer {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const normalized = input.replaceAll(/[=\s-]/gu, '').toUpperCase();
+  let buffer = 0;
+  let bits = 0;
+  const output: number[] = [];
+  for (const character of normalized) {
+    const value = alphabet.indexOf(character);
+    if (value < 0) throw new Error('MFA_SECRET_INVALID');
+    buffer = (buffer << 5) | value;
+    bits += 5;
+    if (bits >= 8) {
+      output.push((buffer >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  return Buffer.from(output);
 }
