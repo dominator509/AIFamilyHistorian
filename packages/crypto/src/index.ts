@@ -34,10 +34,7 @@ function seal(key: Buffer, plaintext: Buffer): { ciphertext: string; iv: string;
   };
 }
 
-function open(
-  key: Buffer,
-  bundle: { ciphertext: string; iv: string; tag: string },
-): Buffer {
+function open(key: Buffer, bundle: { ciphertext: string; iv: string; tag: string }): Buffer {
   const iv = Buffer.from(bundle.iv, 'base64url');
   const decipher = createDecipheriv('aes-256-gcm', key, iv);
   decipher.setAuthTag(Buffer.from(bundle.tag, 'base64url'));

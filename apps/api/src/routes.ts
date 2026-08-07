@@ -77,9 +77,10 @@ function authorizeArchive(
   try {
     authorizeArchivePermission(value, archiveId, permission);
   } catch (error) {
-    const code = error instanceof Error && error.message === 'PERMISSION_DENIED'
-      ? 'PERMISSION_DENIED'
-      : 'AUTH_REQUIRED';
+    const code =
+      error instanceof Error && error.message === 'PERMISSION_DENIED'
+        ? 'PERMISSION_DENIED'
+        : 'AUTH_REQUIRED';
     throw new ApiProblem(code, 'Archive access is not authorized');
   }
   return value;

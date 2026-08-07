@@ -1,1 +1,5 @@
-export { issueSessionToken, verifySessionToken, type SessionPrincipal } from '@family-historian/auth';
+export {
+  issueSessionToken,
+  verifySessionToken,
+  type SessionPrincipal,
+} from '@family-historian/auth';

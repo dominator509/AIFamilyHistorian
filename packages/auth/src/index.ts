@@ -47,8 +47,7 @@ export function authorizeArchivePermission(
   archiveId: string,
   permission: string,
 ): void {
-  if (!principal.archiveIds.includes(archiveId))
-    throw new Error('PERMISSION_DENIED');
+  if (!principal.archiveIds.includes(archiveId)) throw new Error('PERMISSION_DENIED');
   if (!principal.permissions.includes(permission) && !principal.permissions.includes('archive:*'))
     throw new Error('PERMISSION_DENIED');
 }

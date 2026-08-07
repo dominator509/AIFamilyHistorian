@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { navigationSections, sectionManifests, sectionPathFor, type WorkspaceSection } from '../../apps/web/app/sections';
+import {
+  navigationSections,
+  sectionManifests,
+  sectionPathFor,
+  type WorkspaceSection,
+} from '../../apps/web/app/sections';
 
 const expectedSections: WorkspaceSection[] = [
   'archive',
@@ -56,7 +61,7 @@ describe('workspace UI manifest contract', () => {
         expect(state.title.length).toBeGreaterThan(2);
         expect(state.detail.length).toBeGreaterThan(5);
       }
-      expect((slug as WorkspaceSection)).toBeTypeOf('string');
+      expect(slug as WorkspaceSection).toBeTypeOf('string');
     }
   });
 
@@ -68,13 +73,13 @@ describe('workspace UI manifest contract', () => {
       const allText = [...textBundle, ...detailBundle].join(' ');
       expect(allText.length).toBeGreaterThan(20);
       expect(
-        allText.includes('review')
-          || allText.includes('consent')
-          || allText.includes('dispute')
-          || allText.includes('publish')
-          || allText.includes('rights')
-          || allText.includes('export')
-          || allText.includes('offline'),
+        allText.includes('review') ||
+          allText.includes('consent') ||
+          allText.includes('dispute') ||
+          allText.includes('publish') ||
+          allText.includes('rights') ||
+          allText.includes('export') ||
+          allText.includes('offline'),
       ).toBe(true);
     }
   });
