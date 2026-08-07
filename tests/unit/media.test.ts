@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { join } from 'node:path';
 import {
   assertOriginalImmutable,
   buildMediaPipelinePlan,
+  executeMediaPipelineStep,
   MediaPipelineError,
   transitionQuarantine,
   validateMediaDescriptor,
 } from '../../packages/media/src/index.js';
+import type { MediaExecutionError } from '../../packages/media/src/index.js';
 
 const descriptor = {
   id: '01900000-0000-7000-8000-000000000021',
@@ -44,5 +47,72 @@ describe('media pipeline boundaries', () => {
     expect(() => validateMediaDescriptor({ ...descriptor, kind: 'video' })).toThrow(
       'media kind does not match',
     );
+  });
+
+  it('executes an argv-only step with bounded output and object-key resolution', async () => {
+    const step = {
+      name: 'test-step',
+      tool: 'ffprobe' as const,
+      args: ['-e', "process.stdout.write('ok')", 'opaque/input', 'opaque/output'],
+      timeoutSeconds: 2,
+      inputObjectKey: 'opaque/input',
+      outputObjectKey: 'opaque/output',
+    };
+    const result = await executeMediaPipelineStep(step, {
+      cwd: process.cwd(),
+      binaries: { ffprobe: process.execPath },
+      resolveObjectKey: (key) => join(process.cwd(), 'scratch', key.split('/').at(-1)!),
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('ok');
+    expect(result.args).toContain(join(process.cwd(), 'scratch', 'input'));
+    expect(result.args).toContain(join(process.cwd(), 'scratch', 'output'));
+  });
+
+  it('maps unavailable and timed-out tools to fail-closed errors', async () => {
+    const base = {
+      name: 'test-step',
+      tool: 'ffprobe' as const,
+      args: ['-e', "process.stdout.write('ok')", 'opaque/input'],
+      timeoutSeconds: 1,
+      inputObjectKey: 'opaque/input',
+    };
+    await expect(
+      executeMediaPipelineStep(base, {
+        cwd: process.cwd(),
+        binaries: { ffprobe: 'media-tool-not-installed-for-test' },
+        resolveObjectKey: (key) => join(process.cwd(), 'scratch', key.split('/').at(-1)!),
+      }),
+    ).rejects.toMatchObject<MediaExecutionError>({ code: 'MEDIA_TOOL_UNAVAILABLE' });
+
+    await expect(
+      executeMediaPipelineStep(
+        { ...base, args: ['-e', 'setTimeout(() => {}, 5000)', 'opaque/input'] },
+        {
+          cwd: process.cwd(),
+          binaries: { ffprobe: process.execPath },
+          resolveObjectKey: (key) => join(process.cwd(), 'scratch', key.split('/').at(-1)!),
+        },
+      ),
+    ).rejects.toMatchObject<MediaExecutionError>({ code: 'MEDIA_TOOL_TIMEOUT' });
+  });
+
+  it('rejects worker paths that escape the scratch directory', async () => {
+    await expect(
+      executeMediaPipelineStep(
+        {
+          name: 'escape-test',
+          tool: 'ffprobe',
+          args: ['opaque/input'],
+          timeoutSeconds: 1,
+          inputObjectKey: 'opaque/input',
+        },
+        {
+          cwd: process.cwd(),
+          binaries: { ffprobe: process.execPath },
+          resolveObjectKey: () => '..',
+        },
+      ),
+    ).rejects.toMatchObject<MediaExecutionError>({ code: 'MEDIA_TOOL_INVALID' });
   });
 });

@@ -89,3 +89,7 @@
 2026-08-07T05:49:24Z | codex | EP-000 | PREFLIGHT_FAILED | env_var_not_set_DEEPGRAM_API_KEY_release_gate_remains_fail_closed
 2026-08-07T05:49:41Z | codex | EP-010 | PRODUCTION_GATE_DEFERRED | preflight_stops_at_missing_DEEPGRAM_API_KEY
 2026-08-07T05:51:08Z | codex | EP-007 | MEDIA_TOOLCHAIN_DEFERRED | missing_ffmpeg_ffprobe_exiftool_magick_clamscan_ocrmypdf_media_safety_unit_plans_remain_green
+2026-08-07T05:59:18Z | codex | EP-007 | COMMAND_FAILED | lint_consistent_type_imports_media_test_MediaExecutionError_type_only
+2026-08-07T06:01:57Z | codex | EP-007 | IMPLEMENTATION_CONTINUATION | media_worker_executor_added_no_shell_path_confinement_bounded_output_timeout_and_stable_error_mapping
+2026-08-07T06:01:57Z | codex | EP-007 | LOCAL_VERIFICATION | full_local_gate_suite_green_unit_17_files_47_tests_build_security_reality_live_fire_performance
+2026-08-07T06:01:58Z | codex | EP-000 | HEARTBEAT | scheduler_remains_RESUME_EP-000_external_preflight_gate_unchanged

@@ -1,3 +1,5 @@
+import { spawn } from 'node:child_process';
+import { isAbsolute, relative, resolve as resolvePath, sep } from 'node:path';
 import type { EntityId } from '@family-historian/contracts';
 import { uuidSchema } from '@family-historian/contracts';
 import { z } from 'zod';
@@ -23,6 +25,28 @@ export interface PipelineStep {
   readonly timeoutSeconds: number;
   readonly inputObjectKey: string;
   readonly outputObjectKey?: string;
+}
+
+export interface MediaToolExecutionOptions {
+  /** Absolute scratch directory owned by the media worker. */
+  readonly cwd: string;
+  /** Resolve opaque object keys into worker-local paths before execution. */
+  readonly resolveObjectKey: (objectKey: string) => string;
+  /** Override binaries for a pinned worker image or deterministic test process. */
+  readonly binaries?: Partial<Record<PipelineStep['tool'], string>>;
+  readonly env?: NodeJS.ProcessEnv;
+  readonly maxOutputBytes?: number;
+}
+
+export interface MediaToolExecutionResult {
+  readonly tool: PipelineStep['tool'];
+  readonly binary: string;
+  readonly args: readonly string[];
+  readonly exitCode: number;
+  readonly signal: NodeJS.Signals | null;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly durationMs: number;
 }
 
 const descriptorSchema = z.object({
@@ -191,6 +215,109 @@ export function buildMediaPipelinePlan(descriptor: MediaDescriptor): readonly Pi
   );
 }
 
+/**
+ * Execute one previously validated pipeline step in a worker-owned directory.
+ * The worker must resolve opaque object keys to local paths; shell interpolation
+ * is intentionally unavailable. Missing binaries, timeouts, and non-zero exits
+ * fail closed with stable error codes and bounded diagnostic output.
+ */
+export async function executeMediaPipelineStep(
+  step: PipelineStep,
+  options: MediaToolExecutionOptions,
+): Promise<MediaToolExecutionResult> {
+  if (!isAbsolute(options.cwd))
+    throw new MediaExecutionError('MEDIA_TOOL_INVALID', 'cwd must be absolute');
+  if (!Number.isInteger(step.timeoutSeconds) || step.timeoutSeconds <= 0)
+    throw new MediaExecutionError('MEDIA_TOOL_INVALID', 'step timeout must be positive');
+  const maxOutputBytes = options.maxOutputBytes ?? 64 * 1024;
+  if (!Number.isInteger(maxOutputBytes) || maxOutputBytes < 1024)
+    throw new MediaExecutionError('MEDIA_TOOL_INVALID', 'max output must be at least 1024 bytes');
+  const binary = options.binaries?.[step.tool] ?? step.tool;
+  const workerRoot = resolvePath(options.cwd);
+  const resolveWorkerPath = (objectKey: string): string => {
+    const candidate = resolvePath(options.resolveObjectKey(objectKey));
+    const relativePath = relative(workerRoot, candidate);
+    const outside =
+      relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath);
+    if (outside)
+      throw new MediaExecutionError(
+        'MEDIA_TOOL_INVALID',
+        'resolved object path escapes worker cwd',
+      );
+    return candidate;
+  };
+  const args = step.args.map((argument) => {
+    if (argument === step.inputObjectKey) return resolveWorkerPath(argument);
+    if (step.outputObjectKey !== undefined && argument === step.outputObjectKey)
+      return resolveWorkerPath(argument);
+    if (argument.includes('\u0000'))
+      throw new MediaExecutionError('MEDIA_TOOL_INVALID', 'argv contains a NUL byte');
+    return argument;
+  });
+  const started = performance.now();
+  return new Promise<MediaToolExecutionResult>((resolve, reject) => {
+    const child = spawn(binary, args, {
+      cwd: options.cwd,
+      env: { ...process.env, ...options.env },
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    let timedOut = false;
+    const append = (current: string, chunk: Buffer): string => {
+      const remaining = maxOutputBytes - Buffer.byteLength(current, 'utf8');
+      if (remaining <= 0) return current;
+      return current + chunk.subarray(0, remaining).toString('utf8');
+    };
+    child.stdout.on('data', (chunk: Buffer) => {
+      stdout = append(stdout, chunk);
+    });
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr = append(stderr, chunk);
+    });
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+      setTimeout(() => child.kill('SIGKILL'), 250).unref();
+    }, step.timeoutSeconds * 1000);
+    child.once('error', (error: NodeJS.ErrnoException) => {
+      clearTimeout(timeout);
+      if (error.code === 'ENOENT') {
+        reject(
+          new MediaExecutionError('MEDIA_TOOL_UNAVAILABLE', `${step.tool} binary is unavailable`),
+        );
+      } else {
+        reject(new MediaExecutionError('MEDIA_TOOL_FAILED', `${step.tool} could not start`));
+      }
+    });
+    child.once('close', (exitCode, signal) => {
+      clearTimeout(timeout);
+      const durationMs = performance.now() - started;
+      if (timedOut) {
+        reject(new MediaExecutionError('MEDIA_TOOL_TIMEOUT', `${step.tool} exceeded its timeout`));
+        return;
+      }
+      if (exitCode !== 0) {
+        reject(new MediaExecutionError('MEDIA_TOOL_FAILED', `${step.tool} exited unsuccessfully`));
+        return;
+      }
+      resolve(
+        Object.freeze({
+          tool: step.tool,
+          binary,
+          args: Object.freeze([...args]),
+          exitCode,
+          signal,
+          stdout,
+          stderr,
+          durationMs,
+        }),
+      );
+    });
+  });
+}
+
 export function assertOriginalImmutable(
   original: MediaDescriptor,
   candidate: MediaDescriptor,
@@ -210,5 +337,18 @@ export class MediaPipelineError extends Error {
   public constructor(message: string) {
     super(message);
     this.name = 'MediaPipelineError';
+  }
+}
+
+export type MediaExecutionErrorCode =
+  'MEDIA_TOOL_INVALID' | 'MEDIA_TOOL_UNAVAILABLE' | 'MEDIA_TOOL_TIMEOUT' | 'MEDIA_TOOL_FAILED';
+
+export class MediaExecutionError extends MediaPipelineError {
+  public constructor(
+    public readonly code: MediaExecutionErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'MediaExecutionError';
   }
 }
