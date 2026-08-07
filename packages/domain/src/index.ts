@@ -3,6 +3,7 @@ export * from './billing.js';
 export * from './consent.js';
 export * from './deletion.js';
 export * from './errors.js';
+export * from './extraction.js';
 export * from './facts.js';
 export * from './publication.js';
 export * from './preservation.js';

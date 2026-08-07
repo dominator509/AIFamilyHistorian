@@ -4,11 +4,11 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit at handoff generation: `7cf8477ccfd2ff758d2c01c7de80e2753f3b9fbb` (run `git rev-parse HEAD` to confirm the final handoff commit).
+- Current commit before this handoff refresh: `8a4b891ca13c5e496bebd41be229ca36eb63fb5f` (run `git rev-parse HEAD` to confirm the final handoff commit).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
-- Engineering completion estimate: 78% weighted implementation completion. This is a progress estimate, not a release approval.
+- Engineering completion estimate: 79% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
 - Why `RUN_COMPLETE` was not reached: `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` both exit 1 at `env var not set: DEEPGRAM_API_KEY`. Hosted provider, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence is unavailable.
 
@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `sh scripts/test-unit.sh` -> `unit tests: ok` (11 files, 32 tests)
+- `sh scripts/test-unit.sh` -> `unit tests: ok` (12 files, 33 tests)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 7 tests)
 - `sh scripts/build.sh` -> `build: ok`
@@ -42,7 +42,7 @@ The following commands passed after the continuation changes:
 | Authentication and authorization | Engineering complete locally | Signed sessions, archive permission checks, tenant boundaries, fail-closed visibility/rights checks | Unit, integration, E2E | OAuth/passkey/MFA provider live-fire and production secret injection | Native auth is not a substitute for a completed Better Auth/passkey rollout |
 | AI gateway | Local and authenticated nonproduction proof complete | DeepSeek adapter, policy/DLP, prompt canonicalization, structured output, provenance, usage/cache telemetry, disablement behavior | Unit, contract, authenticated DeepSeek live-fire | Production key/vendor approval and hosted retention/location evidence | Current development key must be rotated before production |
 | Transcription/narration/email/billing providers | Adapter engineering complete | Deepgram, ElevenLabs, Resend, Stripe, Turnstile HTTP adapters with bounded retries, validation, signature checks, and local protocol tests; local billing/quota domain | Provider local HTTP contract tests and all sixteen local live-fire proofs | Authenticated sandbox probes, signed webhook delivery, vendor approvals | No external delivery or payment effect was fabricated |
-| Documents and exports | Local implementation complete | Portable JSONL/CSV manifest, deterministic text-first PDF, EPUB package, fixity hashes | Unit and `book-pdf-epub`/`portable-export` live-fire | Accessible-PDF/EPUB audit and restore from a 25 GB archive | Advanced layout, media embedding, and formal accessibility audit remain |
+| Documents and exports | Local implementation complete | Portable JSONL/CSV manifest, deterministic text-first PDF, EPUB package, fixity hashes, explicit-marker candidate extraction with source offsets and human-confirmation status | Unit and `book-pdf-epub`/`portable-export`/`evidence-extraction` live-fire | Accessible-PDF/EPUB audit and restore from a 25 GB archive | Advanced layout, media embedding, automatic NLP extraction, and formal accessibility audit remain |
 | Observability/operations | Local implementation complete | Redacted structured telemetry, metric samples, OTel local sink, incident/runbook guidance | Unit, local collector and reality gates | Hosted Sentry/OTLP, backup/restore and alert paging | Restore and quarterly preservation drills remain operator-owned |
 | Deployment/release | Local artifact complete | Non-root Docker image, healthcheck, Fly staging config, release workflow, manual production command | Docker build and compose config | GHCR, Fly staging smoke, DNS/certificates, production migration and rollback | No cloud mutation or auto-deploy was authorized |
 | Privacy/legal/business | Technical controls present; approvals absent | Draft privacy/terms/consent/rights/minor/voice/takedown/DPIA/retention artifacts and technical request paths | Technical policy and security tests | Counsel, vendor, insurance, DPA, data-region, data-broker, retention approvals | Cannot be marked production-ready without signed evidence |
@@ -123,7 +123,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 - Hosted transcription, narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified.
 - Full backup/restore, 25 GB resumable export, media parser isolation, FFmpeg/OCR/ClamAV, k6 performance, and formal WCAG/PDF/EPUB audits remain unproven.
 - Native session signing is implemented, but passkeys/TOTP/recovery/device-management requirements need a dedicated production rollout and live verification.
-- The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete.
+- The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.
 - Legal, insurance, vendor, data-region, and policy approvals are not engineering artifacts and remain fail-closed.
 
 ## Final operator checklist

@@ -20,6 +20,8 @@ import {
   createDisputedClaim,
   createGeneratedChapterRevision,
   createQuotation,
+  assertCandidateEvidence,
+  extractAnnotatedCandidates,
   quotaSnapshot,
   startSubscription,
   transitionSubscription,
@@ -209,18 +211,21 @@ function storageBytes(value: Uint8Array): string {
 }
 
 function evidenceExtraction(): void {
-  // The implemented, fail-closed portion of extraction is evidence confirmation.
-  // Provider-backed candidate extraction remains a separate worker capability.
-  const evidenceId = id();
+  const sourceId = id();
+  const revisionId = id();
+  const sourceText = 'Interview note: [PERSON: Ada] moved to [PLACE: Halifax] in [DATE: 1984].';
+  const candidates = extractAnnotatedCandidates({ text: sourceText, sourceId, revisionId });
+  assert.equal(candidates.length, 3);
+  assert.equal(candidates[0]?.status, 'candidate');
+  for (const candidate of candidates) assertCandidateEvidence(candidate, sourceText);
   const fact = confirmFact({
     id: id(),
     text: 'The family moved in 1984.',
     confirmerId: id(),
     confirmedAt: '2026-08-06T00:00:00.000Z',
-    evidence: [{ id: id(), sourceId: id(), revisionId: id(), startOffset: 0, endOffset: 12 }],
+    evidence: [{ id: id(), sourceId, revisionId, startOffset: 58, endOffset: 70 }],
   });
   assert.equal(fact.evidence.length, 1);
-  assert.ok(evidenceId);
   expectDomainCode(() => confirmFact({ ...fact, evidence: [] }), 'EVIDENCE_MISSING');
 }
 
