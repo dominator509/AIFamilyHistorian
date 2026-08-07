@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit before this handoff refresh: pending final commit (run `git rev-parse HEAD` to confirm the current checkpoint).
+- Current commit before this handoff refresh: `71580817e1736409ac75325d360a7d5b2b7c0c33` (run `git rev-parse HEAD` to confirm the current checkpoint).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
@@ -30,7 +30,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/live-fire.sh` -> `live-fire: ok`; all sixteen proof names passed against real local services, including the authenticated DeepSeek cache/provenance proof.
 - `sh scripts/backup.sh` -> `backup: ok`; a custom-format PostgreSQL dump and SHA-256 sidecar were created under ignored `.artifacts/`.
 - `sh scripts/restore-check.sh .artifacts/backups/<verified-dump>.dump` -> `restore-check: ok`; the dump restored into a disposable database and reported `schema_migrations=4`.
-- `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify .` -> image build passed; image digest observed as `sha256:75a829fb79ae6e9a2cf97c667987a3319e358269e9246e5c42b6a4580c903159`.
+- `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify-20260807 .` -> image present after the reduced context build; `docker image inspect` observed `user=node` and the HTTP healthcheck; `docker compose config --quiet` passed.
 - `docker compose config --quiet` -> passed.
 - `sh scripts/local-services-check.sh` -> `local services: ok`.
 
@@ -82,6 +82,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 | Application production secrets | `SESSION_SECRET`, `FIELD_ENCRYPTION_MASTER_KEY`, `DOWNLOAD_SIGNING_SECRET` | Presence check in `sh scripts/preflight.sh` | production secret-manager injection plus readiness check | Yes |
 | Legal/vendor/insurance/DPIA/retention | `LEGAL_APPROVAL_FILE`, `VENDOR_RISK_APPROVAL_FILE`, `INSURANCE_EVIDENCE_FILE`, `DPIA_APPROVAL_FILE`, `RETENTION_APPROVAL_FILE` | File-presence gates in `sh scripts/preflight.sh` | `sh scripts/production-readiness-check.sh` | Yes |
 | Data region and data-broker determinations | `compliance/evidence/data-region-verification.md`, `compliance/evidence/data-broker-determination.md` | `sh scripts/production-readiness-check.sh` | same command after signed artifacts exist | Yes |
+| Local media executables | `ffmpeg`, `ffprobe`, `exiftool`, `magick`, `clamscan`, `ocrmypdf`, `python` | `sh scripts/media-tools-check.sh` | install pinned tools, then rerun media fixture/live-fire checks | Yes for media release |
 
 ## Commands to resume
 
