@@ -93,3 +93,8 @@
 2026-08-07T06:01:57Z | codex | EP-007 | IMPLEMENTATION_CONTINUATION | media_worker_executor_added_no_shell_path_confinement_bounded_output_timeout_and_stable_error_mapping
 2026-08-07T06:01:57Z | codex | EP-007 | LOCAL_VERIFICATION | full_local_gate_suite_green_unit_17_files_47_tests_build_security_reality_live_fire_performance
 2026-08-07T06:01:58Z | codex | EP-000 | HEARTBEAT | scheduler_remains_RESUME_EP-000_external_preflight_gate_unchanged
+2026-08-07T06:07:58Z | codex | EP-003 | COMMAND_FAILED | authenticated_multipart_e2e_signed_put_assertion_exit_1_upload_response_not_ok_status_unobserved
+2026-08-07T06:08:33Z | codex | EP-003 | DIAGNOSTIC | checksum_algorithm_on_multipart_initiate_requires_unsigned_upload_part_checksum_header_minio_400
+2026-08-07T06:09:57Z | codex | EP-003 | IMPLEMENTATION_CONTINUATION | streamed_sha256_fixity_verification_added_to_completed_multipart_objects
+2026-08-07T06:09:57Z | codex | EP-003 | LOCAL_VERIFICATION | authenticated_multipart_api_e2e_signed_put_completion_streamed_fixity_and_persistence_passed
+2026-08-07T06:09:58Z | codex | EP-003 | SURPRISE | checksum_algorithm_initiation_required_part_headers_on_minio_removed_and_replaced_by_final_stream_hash

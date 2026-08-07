@@ -461,6 +461,12 @@ export class ArchiveService {
             'CHECKSUM_MISMATCH',
             'Completed object checksum metadata does not match',
           );
+        const actual = await storage.sha256Base64(upload.object_key);
+        if (
+          actual.byteSize !== Number(upload.expected_byte_size) ||
+          actual.sha256Base64 !== upload.expected_sha256_base64
+        )
+          throw new ApiProblem('CHECKSUM_MISMATCH', 'Completed object bytes do not match checksum');
         const originalObjectId = uuidV7();
         await client.query(
           "insert into original_objects(id, organization_id, family_archive_id, media_asset_id, object_key, content_type, byte_size, sha256, quarantine_status) values ($1,$2,$3,$4,$5,$6,$7,$8,'pending')",

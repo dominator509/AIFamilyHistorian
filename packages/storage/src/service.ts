@@ -9,6 +9,7 @@ import {
   S3Client,
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
+import { createHash } from 'node:crypto';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { StorageConfig } from './config.js';
 
@@ -36,7 +37,6 @@ export class ObjectStorage {
         Bucket: this.config.bucket,
         Key: key,
         ContentType: contentType,
-        ChecksumAlgorithm: 'SHA256',
         Metadata: { 'expected-sha256': sha256Base64 },
       }),
     );
@@ -129,6 +129,23 @@ export class ObjectStorage {
     );
     if (!response.Body) throw new Error('object body is missing');
     return response.Body.transformToByteArray();
+  }
+
+  /** Stream an object once to verify its actual bytes without buffering the payload. */
+  public async sha256Base64(key: string): Promise<{ sha256Base64: string; byteSize: number }> {
+    const response = await this.#client.send(
+      new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
+    );
+    const body = response.Body as AsyncIterable<Uint8Array> | undefined;
+    if (!body || typeof body[Symbol.asyncIterator] !== 'function')
+      throw new Error('object body is not streamable');
+    const hash = createHash('sha256');
+    let byteSize = 0;
+    for await (const chunk of body) {
+      hash.update(chunk);
+      byteSize += chunk.byteLength;
+    }
+    return { sha256Base64: hash.digest('base64'), byteSize };
   }
 
   public async delete(key: string): Promise<void> {

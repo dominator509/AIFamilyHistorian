@@ -24,6 +24,10 @@ describe('S3-compatible object storage', () => {
       byteSize: bytes.byteLength,
       expectedSha256: checksum,
     });
+    await expect(storage.sha256Base64(key)).resolves.toEqual({
+      sha256Base64: checksum,
+      byteSize: bytes.byteLength,
+    });
     const replacement = new TextEncoder().encode('mutated');
     const replacementChecksum = createHash('sha256').update(replacement).digest('base64');
     await expect(

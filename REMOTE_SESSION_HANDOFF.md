@@ -21,7 +21,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
 - `sh scripts/test-unit.sh` -> `unit tests: ok` (17 files, 47 tests)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
-- `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 7 tests)
+- `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 8 tests)
 - `sh scripts/build.sh` -> `build: ok`
 - `sh scripts/security-check.sh` -> `security check: ok`
 - `sh scripts/dependency-audit.sh` -> `dependency audit: ok`
@@ -32,6 +32,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/restore-check.sh .artifacts/backups/<verified-dump>.dump` -> `restore-check: ok`; the dump restored into a disposable database and reported `schema_migrations=4`.
 - `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.52ms` against the real Fastify health endpoint.
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
+- Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
 - `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify-20260807 .` -> image present after the reduced context build; `docker image inspect` observed `user=node` and the HTTP healthcheck; `docker compose config --quiet` passed.
 - `docker compose config --quiet` -> passed.
 - `sh scripts/local-services-check.sh` -> `local services: ok`.
@@ -41,7 +42,7 @@ The following commands passed after the continuation changes:
 | Subsystem | Status | Completed behavior | Tests passing | External verification remaining | Known risks |
 |---|---|---|---|---|---|
 | Repository/toolchain | Engineering complete locally | Pinned Node/pnpm workspace, migrations, scripts, CI definition, formatting and type gates | All local gates above | Hosted CI runner | Remote CI secrets and runner policy are unverified |
-| Domain and persistence | Engineering complete locally | Tenant-scoped PostgreSQL, RLS, idempotency, immutable originals, evidence-linked facts, consent, rights, deletion, publication hashes, local backup/restore rehearsal | Database integration, unit invariants, archive-membership/deletion proofs, disposable restore-check | Neon/Upstash/R2 hosted probes; production backup retention/restore | Full production schema scale and hosted restore drill remain unproven |
+| Domain and persistence | Engineering complete locally | Tenant-scoped PostgreSQL, RLS, idempotency, immutable originals, evidence-linked facts, consent, rights, deletion, publication hashes, signed multipart API uploads with streamed SHA-256 fixity, local backup/restore rehearsal | Database integration, storage integration, authenticated multipart API E2E, unit invariants, archive-membership/deletion proofs, disposable restore-check | Neon/Upstash/R2 hosted probes; production backup retention/restore | Full production schema scale, large-object transfer cost, and hosted restore drill remain unproven |
 | API and web client | Engineering complete locally | Fastify health/auth/archive routes, idempotent mutations, private-by-default UI workflow | API E2E, web E2E, smoke | Staging URL and browser accessibility/performance audit | Product surface is intentionally bounded relative to the full blueprint |
 | Authentication and authorization | Local MFA hardening complete; passkey rollout pending | Signed sessions, archive permission checks, tenant boundaries, fail-closed visibility/rights checks, RFC-compatible TOTP enrollment/replay protection/recovery codes | Unit, integration, E2E; TOTP RFC-vector coverage | WebAuthn/passkey provider live-fire, device management, production secret injection | Native auth/TOTP are not a substitute for a completed Better Auth/passkey rollout |
 | AI gateway | Local and authenticated nonproduction proof complete | DeepSeek adapter, policy/DLP, prompt canonicalization, structured output, provenance, usage/cache telemetry, disablement behavior | Unit, contract, authenticated DeepSeek live-fire | Production key/vendor approval and hosted retention/location evidence | Current development key must be rotated before production |

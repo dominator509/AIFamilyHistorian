@@ -44,3 +44,9 @@ Add a decision before introducing a new canonical name, dependency, provider pro
 - **Decision:** The media package executes only prevalidated argv plans, resolves opaque keys inside an absolute scratch directory, bounds output and runtime, and maps unavailable or failed tools to stable errors.
 - **Reason:** This prevents shell injection, path escape, unbounded parser output, and silent success while keeping the production tool boundary replaceable.
 - **Consequence:** Local executor behavior is unit-tested with a real child process; pinned FFmpeg/OCR/ClamAV/ImageMagick/ExifTool availability and fixture live-fire remain deferred.
+
+## ADR-023: Verify completed multipart bytes by streaming the object
+
+- **Decision:** Multipart initiation stores the expected SHA-256 as metadata but does not require an upload-part checksum header; completion streams the assembled object through SHA-256 and compares the actual digest and byte count before creating the immutable original record.
+- **Reason:** Clients can obtain signed part URLs without a second checksum-signing protocol, while metadata alone cannot prove the bytes that the object store assembled.
+- **Consequence:** Local MinIO storage and authenticated API E2E now prove the signed upload and fixity path; hosted R2 behavior and large-object transfer costs remain deferred.

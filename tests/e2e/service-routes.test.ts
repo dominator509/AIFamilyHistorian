@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ArchiveService } from '../../apps/api/src/archive-service.js';
 import { createApp } from '../../apps/api/src/app.js';
@@ -9,14 +10,16 @@ import {
   uuidV7,
   withTenantTransaction,
 } from '../../packages/database/src/index.js';
+import { ObjectStorage, parseStorageConfig } from '../../packages/storage/src/index.js';
 
 if (!process.env.DATABASE_URL) process.loadEnvFile('.env');
 const sessionSecret = process.env.SESSION_SECRET ?? '';
 const encryptionKey = process.env.FIELD_ENCRYPTION_MASTER_KEY ?? '';
 const pool = createPool();
+const storage = new ObjectStorage(parseStorageConfig(process.env));
 const context = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
 const userId = uuidV7();
-const service = new ArchiveService(pool, encryptionKey);
+const service = new ArchiveService(pool, encryptionKey, storage);
 const app = await createApp({ service, sessionSecret });
 const token = issueSessionToken(sessionSecret, {
   userId,
@@ -32,6 +35,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await app.close();
+  storage.destroy();
   await pool.end();
 });
 
@@ -77,5 +81,70 @@ describe('authenticated archive service routes', () => {
     });
     expect(listed.statusCode).toBe(200);
     expect(listed.json()).toMatchObject({ items: [{ id: firstBody.id }] });
+  });
+
+  it('completes a signed multipart upload and verifies streamed object fixity', async () => {
+    const media = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/media`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `media-${uuidV7()}`,
+      },
+      payload: { mediaType: 'audio', visibility: 'owner_only', rightsStatus: 'verified' },
+    });
+    expect(media.statusCode).toBe(201);
+    const mediaId = media.json<{ id: string }>().id;
+    const bytes = new TextEncoder().encode('authenticated multipart fixity fixture');
+    const sha256Hex = createHash('sha256').update(bytes).digest('hex');
+    const begin = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/uploads`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `upload-${uuidV7()}`,
+      },
+      payload: {
+        mediaAssetId: mediaId,
+        contentType: 'audio/wav',
+        byteSize: bytes.byteLength,
+        sha256Hex,
+      },
+    });
+    expect(begin.statusCode).toBe(201);
+    const uploadId = begin.json<{ id: string }>().id;
+    const signed = await app.inject({
+      method: 'GET',
+      url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}/parts/1`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(signed.statusCode).toBe(200);
+    const signedUrl = signed.json<{ url: string }>().url;
+    const uploaded = await fetch(signedUrl, { method: 'PUT', body: bytes });
+    const uploadBody = await uploaded.text();
+    expect(uploaded.ok, `multipart upload failed: ${uploaded.status} ${uploadBody}`).toBe(true);
+    const etag = uploaded.headers.get('etag');
+    expect(etag).toBeTruthy();
+    const complete = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}/complete`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `complete-${uuidV7()}`,
+      },
+      payload: { parts: [{ ETag: etag, PartNumber: 1 }] },
+    });
+    expect(complete.statusCode).toBe(200);
+    expect(complete.json()).toMatchObject({ id: uploadId, status: 'completed' });
+
+    const persisted = await withTenantTransaction(pool, context, async (client) =>
+      client.query<{ object_key: string; sha256: string }>(
+        'select object_key, sha256 from original_objects where media_asset_id = $1',
+        [mediaId],
+      ),
+    );
+    expect(persisted.rows).toHaveLength(1);
+    expect(persisted.rows[0]?.sha256).toBe(sha256Hex);
+    await storage.delete(persisted.rows[0]!.object_key);
   });
 });
