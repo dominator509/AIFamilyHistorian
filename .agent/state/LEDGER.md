@@ -86,3 +86,5 @@
 2026-08-07T05:46:26Z | codex | EP-010 | LOCAL_VERIFICATION | performance_smoke_100_health_requests_p95_0_91ms_and_unit_17_files_44_tests
 2026-08-07T05:46:26Z | codex | EP-009 | LOCAL_VERIFICATION | backup_restore_passed_latest_family_historian_20260807T054534Z_dump_schema_migrations_4
 2026-08-07T05:46:26Z | codex | EP-000 | HEARTBEAT | maximum_engineering_continuation_local_gates_green_external_release_requirements_remain
+2026-08-07T05:49:24Z | codex | EP-000 | PREFLIGHT_FAILED | env_var_not_set_DEEPGRAM_API_KEY_release_gate_remains_fail_closed
+2026-08-07T05:49:41Z | codex | EP-010 | PRODUCTION_GATE_DEFERRED | preflight_stops_at_missing_DEEPGRAM_API_KEY
