@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit before this handoff refresh: `71580817e1736409ac75325d360a7d5b2b7c0c33` (run `git rev-parse HEAD` to confirm the current checkpoint).
+- Current commit before this handoff refresh: `4edee53a45976b73724393f863238453a520e59c` (run `git rev-parse HEAD` to confirm the current checkpoint).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
