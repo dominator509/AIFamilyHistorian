@@ -10,7 +10,7 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 | Upstash Redis | Queues, locks, limits, exact-result cache | REDIS_URL | One isolated database | Paid or free tier | scripts/probes/redis_url.sh |
 | Cloudflare R2 | Originals, derivatives, exports | R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_ENDPOINT | Object read/write/delete only for project bucket | Usage based | scripts/probes/r2.sh |
 | DeepSeek | Interview planning and editorial generation | DEEPSEEK_API_KEY | API inference only | Usage based | scripts/probes/deepseek_api_key.sh |
-| Deepgram | Primary transcription | DEEPGRAM_API_KEY | Speech-to-text only | Usage based | scripts/probes/deepgram_api_key.sh |
+| Deepgram | Primary transcription | DEEPGRAM_API_KEY | Speech-to-text only | Usage based | scripts/probes/deepgram_api_key.sh; authenticated sample proof: scripts/probes/deepgram_transcription.sh |
 | ElevenLabs | Optional stock narration and verified self-voice | ELEVENLABS_API_KEY | Text-to-speech and permitted voice endpoints only | Usage based | scripts/probes/elevenlabs_api_key.sh |
 | Stripe | Billing live-fire | STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID | Test mode during build | Usage based | scripts/probes/stripe.sh |
 | Resend | Invitations and job notices | RESEND_API_KEY, EMAIL_FROM | Sending domain only | Usage based | scripts/probes/resend.sh |
@@ -36,7 +36,7 @@ R2_SECRET_ACCESS_KEY|REQUIRED|scripts/probes/r2.sh
 R2_BUCKET|REQUIRED|-
 R2_ENDPOINT|REQUIRED|-
 DEEPSEEK_API_KEY|REQUIRED|scripts/probes/deepseek_api_key.sh
-DEEPGRAM_API_KEY|REQUIRED|scripts/probes/deepgram_api_key.sh
+DEEPGRAM_API_KEY|REQUIRED|scripts/probes/deepgram_api_key.sh and scripts/probes/deepgram_transcription.sh
 ELEVENLABS_API_KEY|OPTIONAL|scripts/probes/elevenlabs_api_key.sh
 STRIPE_SECRET_KEY|REQUIRED|scripts/probes/stripe.sh
 STRIPE_WEBHOOK_SECRET|REQUIRED|-

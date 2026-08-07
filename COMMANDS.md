@@ -7,6 +7,7 @@ Repository bootstrap and bounded diagnostics authorized by the unattended-build 
 - Working tree: `git status --short --branch`; current commit: `git rev-parse HEAD`; disk: `df -h .`.
 - Tool versions: `git --version`, `node --version`, `corepack --version`, `pnpm --version`, `docker version`, `docker compose version`, `psql --version`, `ffmpeg -version`, `ffprobe -version`, `exiftool -ver`, `magick -version`, `clamscan --version`, `ocrmypdf --version`, and `python --version`.
 - Generate ignored local configuration without printing secrets: `sh scripts/generate-local-env.sh`; replace only an agent-generated local file when local service credentials must be rotated: `sh scripts/generate-local-env.sh --force`.
+- Validate authenticated Deepgram transcription against the documented sample fixture after exporting `.env`: `sh scripts/probes/deepgram_transcription.sh`.
 - Ensure the ignored local backup-encryption key exists without rotating other local credentials: `sh scripts/ensure-local-backup-key.sh`.
 - Validate shell scripts without executing them: `sh -n scripts/*.sh scripts/probes/*.sh`.
 - Local dependency lifecycle after EP-001 materializes Compose: `docker compose up -d --wait`; inspect with `docker compose ps`; stop with `docker compose down`.

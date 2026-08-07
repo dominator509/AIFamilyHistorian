@@ -113,3 +113,10 @@
 2026-08-07T06:43:05Z | codex | EP-000 | COMMAND_FAILED | preflight_missing_DEEPGRAM_API_KEY_exit_1
 2026-08-07T06:43:36Z | codex | EP-010 | COMMAND_FAILED | production_readiness_missing_DEEPGRAM_API_KEY_exit_1
 2026-08-07T06:44:06Z | codex | EP-000 | HEARTBEAT | maximum_engineering_complete_local_gates_passed_external_requirements_consolidated_in_handoff
+2026-08-07T17:53:54Z | codex | EP-000 | EXTERNAL_VERIFIED | deepgram_authenticated_projects_probe_passed_new_local_credential
+2026-08-07T17:53:54Z | codex | EP-000 | EXTERNAL_VERIFIED | deepseek_authenticated_probe_passed_new_local_credential
+2026-08-07T17:53:54Z | codex | EP-000 | PREFLIGHT_ADVANCED | preflight_now_stops_at_missing_STRIPE_SECRET_KEY_exit_1
+2026-08-07T17:58:27Z | codex | EP-004 | EXTERNAL_VERIFIED | deepgram_projects_probe_and_authenticated_sample_transcription_request_id_present_characters_136
+2026-08-07T17:58:28Z | codex | EP-004 | LOCAL_VERIFICATION | deepgram_probe_lint_format_typecheck_shell_validation_passed
+2026-08-07T17:58:28Z | codex | EP-004 | COMMAND_FAILED | explicit_prettier_check_shell_probe_no_parser_supported_ts_and_repository_format_check_passed
+2026-08-07T17:59:50Z | codex | EP-004 | LOCAL_VERIFICATION | format_check_and_diff_check_passed_after_deepgram_probe_docs

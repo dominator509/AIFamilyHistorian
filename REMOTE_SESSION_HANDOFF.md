@@ -10,7 +10,7 @@
 - Graph status: `RESUME EP-000`
 - Engineering completion estimate: 88% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
-- Why `RUN_COMPLETE` was not reached: `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` both exit 1 at `env var not set: DEEPGRAM_API_KEY`. Hosted provider, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence is unavailable.
+- Why `RUN_COMPLETE` was not reached: Deepgram and DeepSeek authenticated probes now pass, but `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` advance to `env var not set: STRIPE_SECRET_KEY`. Hosted billing, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
 
 ## Verified local evidence
 
@@ -28,6 +28,9 @@ The following commands passed after the continuation changes:
 - `sh scripts/reality-gate.sh` -> `reality gate: ok`
 - `sh scripts/smoke-test.sh` -> `smoke test: ok`
 - `sh scripts/live-fire.sh` -> `live-fire: ok`; all sixteen proof names passed against real local services, including the authenticated DeepSeek cache/provenance proof.
+- `sh scripts/probes/deepgram_api_key.sh` -> authenticated Deepgram projects probe passed.
+- `sh scripts/probes/deepgram_transcription.sh` -> authenticated sample transcription passed (`request_id` observed; 136 transcript characters); no provider audio or transcript was persisted.
+- `sh scripts/probes/deepseek_api_key.sh` -> authenticated DeepSeek probe passed with the newly supplied local credential; production rotation and vendor approval remain required.
 - `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260807T063342Z.dump.enc`).
 - `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260807T063342Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=4`.
 - `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.52ms` against the real Fastify health endpoint.
@@ -58,11 +61,11 @@ The following commands passed after the continuation changes:
 
 | Node | Status | Reason |
 |---|---|---|
-| EP-000 | In progress; externally unverified | Scheduler lease preserved; preflight stops at missing `DEEPGRAM_API_KEY`. |
+| EP-000 | In progress; externally unverified | Scheduler lease preserved; preflight now advances to missing `STRIPE_SECRET_KEY`. |
 | EP-001 | Engineering complete; externally unverified | Foundation and toolchain gates passed locally; graph dependency remains EP-000. |
 | EP-002 | Engineering complete; externally unverified | Domain invariants and tests passed locally; graph dependency remains EP-000. |
 | EP-003 | Engineering complete; externally unverified | Migrations, RLS, storage and persistence tests passed locally; hosted probes remain. |
-| EP-004 | Engineering continuation complete; externally unverified | API/service layer and provider adapters pass local tests; hosted provider probes remain. |
+| EP-004 | Engineering continuation complete; externally unverified | API/service layer and provider adapters pass local tests; authenticated Deepgram sample transcription now passes, while other hosted provider probes remain. |
 | EP-005 | Engineering continuation complete; externally unverified | UI/E2E and all live-fire dispatchers pass locally; graph lease remains EP-000. |
 | EP-006 | Engineering complete; externally unverified | Auth/security gates pass locally; OAuth/passkey/provider evidence remains. |
 | EP-007 | Engineering continuation complete; externally unverified | All 16 live-fire proofs and local regression gates pass; full verify cannot start. |
@@ -76,7 +79,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 
 | Requirement | Variables/artifact | Exact probe | Validation after supply | Production blocked |
 |---|---|---|---|---|
-| Deepgram transcription | `DEEPGRAM_API_KEY` | `sh scripts/probes/deepgram_api_key.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes under current gate |
+| Deepgram transcription | `DEEPGRAM_API_KEY` | `sh scripts/probes/deepgram_api_key.sh` and `sh scripts/probes/deepgram_transcription.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes under current gate |
 | Cloudflare R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT` | `sh scripts/probes/r2.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
 | Stripe sandbox | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` | `sh scripts/probes/stripe.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
 | Resend delivery | `RESEND_API_KEY`, `EMAIL_FROM` | `sh scripts/probes/resend.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
@@ -129,7 +132,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Known risks
 
-- Hosted transcription, narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; production backup KMS wrapping and retention are also pending.
+- Hosted narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; Deepgram authenticated sample transcription passed, but production vendor approval, retention/location review, and end-to-end media workflow proof remain; production backup KMS wrapping and retention are also pending.
 - Actual 25 GB transfer/recovery, pinned FFmpeg/OCR/ClamAV execution, authenticated k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; the bounded 100-request health smoke, no-shell media executor, and local backup/restore now have executable rehearsals.
 - Native session signing and TOTP/recovery controls are implemented, but passkeys/WebAuthn, device management, and production MFA rollout need live verification.
 - The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.
@@ -137,8 +140,8 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Final operator checklist
 
-1. Supply and probe `DEEPGRAM_API_KEY`; rerun `sh scripts/preflight.sh`.
-2. Supply real R2, Stripe, Resend, Turnstile, Sentry/OTLP, GitHub, and Fly credentials; run each named probe and the full verify gate.
+1. Supply Stripe test-mode credentials; rerun `sh scripts/preflight.sh` and `sh scripts/probes/stripe.sh`.
+2. Supply real R2, Resend, Turnstile, Sentry/OTLP, GitHub, and Fly credentials; run each named probe and the full verify gate.
 3. Obtain and place the signed legal/vendor/insurance/DPIA/retention/data-region/data-broker artifacts outside Git; rerun production readiness.
 4. Run the GitHub release workflow, deploy staging, run health/live-fire smoke, and complete a restore and rollback drill.
 5. Rotate the local development DeepSeek key and inject production-scoped secrets only after vendor approval.

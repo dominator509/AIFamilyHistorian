@@ -100,6 +100,8 @@
 - `scripts/preflight.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 - `scripts/probes/database_url.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 - `scripts/probes/deepgram_api_key.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
+- `scripts/probes/deepgram_transcription.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
+- `scripts/probes/deepgram_transcription.ts` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 - `scripts/probes/deepseek_api_key.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 - `scripts/probes/elevenlabs_api_key.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 - `scripts/probes/fly.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
@@ -122,4 +124,4 @@
 - `scripts/typecheck.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 - `scripts/verify.sh` - L5 - Project blueprint, control, specification, execution, verification, legal, or operational artifact.
 
-TOTAL FILES: 122
+TOTAL FILES: 124
