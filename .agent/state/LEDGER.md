@@ -69,3 +69,4 @@
 2026-08-07T04:35:26Z | codex | EP-000 | HEARTBEAT | external_deferred_lease_local_image_and_operations_artifacts_verified
 2026-08-07T04:41:41Z | codex | EP-004 | IMPLEMENTATION_CONTINUATION | provider_adapters_Deepgram_ElevenLabs_Resend_Stripe_Turnstile_with_local_http_contract_tests_pass
 2026-08-07T04:44:56Z | codex | EP-009 | HEARTBEAT | provider_adapters_and_release_artifacts_committed_full_local_gates_pass_external_preflight_still_deferred
+2026-08-07T04:45:40Z | codex | EP-010 | PRODUCTION_GATE_DEFERRED | production_readiness_exit_1_preflight_missing_DEEPGRAM_API_KEY
