@@ -148,6 +148,10 @@ The API now exposes `POST /v1/session/logout`. It verifies the current bearer to
 
 The opt-in local worker profile runs the dedicated worker image read-only, drops all Linux capabilities, enables `no-new-privileges`, confines writable space to a 1 GiB `noexec`/`nosuid` `/tmp`, and applies 2 GiB memory, 2 CPU, and 256 PID ceilings. The Fly worker configuration declares the matching 2 CPU/2 GiB VM and graceful SIGTERM timeout. The worker still needs internal database, Redis, and object-storage network access; production network-policy, syscall-profile, and hosted cgroup evidence remain release gates.
 
+### ADR-047: Make the security baseline behavior-backed
+
+The repository security gate now verifies the API’s redaction/body/helmet/CORS controls, worker sandbox declarations, non-root worker image, valid-versus-mismatched media signatures, and revocable session identifiers. This remains a deterministic local gate rather than a substitute for hosted syscall, network, identity, or secret-manager verification.
+
 ### ADR-043: Serialize cost-capacity decisions inside the database transaction
 
 Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.

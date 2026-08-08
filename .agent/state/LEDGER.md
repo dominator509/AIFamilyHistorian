@@ -209,3 +209,4 @@
 2026-08-08T13:45:00Z | codex | HARDENING-27 | HARDENING_PASS | worker_profile_read_only_capability_drop_no_new_privileges_tmpfs_pid_memory_cpu_and_fly_vm_limits_compose_config_and_worker_sandbox_tests_passed
 2026-08-08T13:50:00Z | codex | HARDENING-27 | COMMAND_FAILED | combined_full_gates_and_worker_image_build_timed_out_exit_124_after_300s_rerun_as_bounded_individual_commands_and_docker_build_diagnostic
 2026-08-08T13:55:00Z | codex | HARDENING-27 | HARDENING_PASS | isolated_worker_profile_compose_config_worker_image_nonroot_media_tool_probe_full_local_gates_reality_smoke_perf_livefire_backup_restore_passed
+2026-08-08T14:00:00Z | codex | HARDENING-28 | HARDENING_PASS | security_gate_now_runs_behavioral_api_media_session_and_worker_sandbox_assertions_security_check_typecheck_unit76_passed
