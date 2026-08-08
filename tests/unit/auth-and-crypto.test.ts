@@ -114,4 +114,17 @@ describe('restricted text envelope encryption', () => {
     };
     expect(() => decryptRestrictedText(masterKey, JSON.stringify(tampered))).toThrow();
   });
+
+  it('derives an archive-scoped wrapping key and rejects cross-archive opens', () => {
+    const masterKey = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+    const encrypted = encryptRestrictedText(masterKey, 'archive-private note', 'archive-a');
+    expect(JSON.parse(encrypted)).toMatchObject({ v: 2, scope: 'archive-a' });
+    expect(decryptRestrictedText(masterKey, encrypted, 'archive-a')).toBe('archive-private note');
+    expect(() => decryptRestrictedText(masterKey, encrypted, 'archive-b')).toThrow(
+      'field encryption scope does not match',
+    );
+    expect(() => decryptRestrictedText(masterKey, encrypted)).toThrow(
+      'field encryption scope does not match',
+    );
+  });
 });

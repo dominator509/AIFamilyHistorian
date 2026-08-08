@@ -255,7 +255,11 @@ export class ArchiveService {
                 context.familyArchiveId,
                 mutation.input.mediaAssetId,
                 mutation.input.status,
-                encryptRestrictedText(this.fieldEncryptionMasterKey, mutation.input.text),
+                encryptRestrictedText(
+                  this.fieldEncryptionMasterKey,
+                  mutation.input.text,
+                  context.familyArchiveId,
+                ),
                 mutation.input.status === 'approved' ? new Date() : null,
               ],
             );
@@ -270,7 +274,11 @@ export class ArchiveService {
               'insert into people(id, organization_id, family_archive_id, display_name_encrypted, is_living, visibility) values ($1,$2,$3,$4,$5,$6)',
               [
                 ...scope,
-                encryptRestrictedText(this.fieldEncryptionMasterKey, mutation.input.displayName),
+                encryptRestrictedText(
+                  this.fieldEncryptionMasterKey,
+                  mutation.input.displayName,
+                  context.familyArchiveId,
+                ),
                 mutation.input.isLiving,
                 mutation.input.visibility,
               ],
@@ -301,7 +309,11 @@ export class ArchiveService {
                 mutation.input.datePrecision,
                 mutation.input.occurredOn ?? null,
                 mutation.input.description
-                  ? encryptRestrictedText(this.fieldEncryptionMasterKey, mutation.input.description)
+                  ? encryptRestrictedText(
+                      this.fieldEncryptionMasterKey,
+                      mutation.input.description,
+                      context.familyArchiveId,
+                    )
                   : null,
                 mutation.input.visibility,
               ],
@@ -320,7 +332,11 @@ export class ArchiveService {
               'insert into confirmed_facts(id, organization_id, family_archive_id, encrypted_text, confirmer_id, status) values ($1,$2,$3,$4,$5,$6)',
               [
                 ...scope,
-                encryptRestrictedText(this.fieldEncryptionMasterKey, mutation.input.text),
+                encryptRestrictedText(
+                  this.fieldEncryptionMasterKey,
+                  mutation.input.text,
+                  context.familyArchiveId,
+                ),
                 mutation.input.confirmerId,
                 mutation.input.status,
               ],
@@ -338,7 +354,11 @@ export class ArchiveService {
               'insert into chapters(id, organization_id, family_archive_id, title_encrypted) values ($1,$2,$3,$4)',
               [
                 ...scope,
-                encryptRestrictedText(this.fieldEncryptionMasterKey, mutation.input.title),
+                encryptRestrictedText(
+                  this.fieldEncryptionMasterKey,
+                  mutation.input.title,
+                  context.familyArchiveId,
+                ),
               ],
             );
             break;

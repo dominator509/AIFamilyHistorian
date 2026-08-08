@@ -169,3 +169,7 @@ Upload active-count/byte reservations and archive outbox-capacity checks now acq
 The API now exposes explicit server-side session registration, inventory, rotation, self/admin revocation, and revoke-all operations backed by PostgreSQL. Session rows store only signed-claim metadata, hashed user-agent/IP metadata, timestamps, and revocation state; raw bearer tokens and identifying headers are never persisted. Rotation locks and revokes the predecessor before inserting a same-principal replacement in one transaction. Existing signed bearer sessions remain compatible until the identity provider adopts registration, while registered-row revocations are checked at the request hook and fail closed.
 
 Native Better Auth/passkey/Argon2id issuance and the provider-owned migration of all legacy sessions remain separate release gates; this boundary deliberately avoids making unregistered legacy tokens unavailable during rollout.
+
+### ADR-051: Derive restricted-field wrapping keys per archive
+
+Restricted-field envelopes now use a versioned archive scope in the wrapping-key derivation (`HMAC-SHA256(master, family-historian:field-key:v1:<archive>)`) before generating a random per-value data key. Version 1/global envelopes remain readable for migration compatibility, while archive writes emit version 2 scoped envelopes and decryption rejects a mismatched archive scope. This provides local tenant key separation without claiming to replace production KMS wrapping, rotation, or escrow evidence.
