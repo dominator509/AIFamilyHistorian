@@ -131,3 +131,4 @@
 2026-08-08T04:34:25Z | codex | EP-004 | COMMAND_FAILED | resend_domain_status_diagnostic_shell_quoting_exit_1_probe_itself_passed
 2026-08-08T05:13:55Z | codex | HARDENING-1 | HARDENING_PASS | R2 authenticated bucket probe; production storage endpoint validation; strict bearer parsing; focused tests 9 passed; typecheck passed
 2026-08-08T05:20:02Z | codex | HARDENING-2 | HARDENING_PASS | Telemetry provider-secret redaction strengthened; Sentry probe now requires authenticated API token; lint format build and 3 focused tests passed
+2026-08-08T05:27:35Z | codex | HARDENING-3 | HARDENING_PASS | Media subprocess environment reduced to OS runtime variables; regression proves provider secret isolation; media tests 7, lint and typecheck passed

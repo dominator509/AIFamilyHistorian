@@ -69,6 +69,35 @@ describe('media pipeline boundaries', () => {
     expect(result.args).toContain(join(process.cwd(), 'scratch', 'output'));
   });
 
+  it('does not inherit provider secrets into media subprocesses', async () => {
+    const previous = process.env.DEEPSEEK_API_KEY;
+    process.env.DEEPSEEK_API_KEY = 'secret-that-must-not-cross-media-boundary';
+    try {
+      const result = await executeMediaPipelineStep(
+        {
+          name: 'env-boundary',
+          tool: 'ffprobe',
+          args: [
+            '-e',
+            "process.stdout.write(process.env.DEEPSEEK_API_KEY ?? 'absent')",
+            'opaque/input',
+          ],
+          timeoutSeconds: 2,
+          inputObjectKey: 'opaque/input',
+        },
+        {
+          cwd: process.cwd(),
+          binaries: { ffprobe: process.execPath },
+          resolveObjectKey: (key) => join(process.cwd(), 'scratch', key.split('/').at(-1)!),
+        },
+      );
+      expect(result.stdout).toBe('absent');
+    } finally {
+      if (previous === undefined) delete process.env.DEEPSEEK_API_KEY;
+      else process.env.DEEPSEEK_API_KEY = previous;
+    }
+  });
+
   it('maps unavailable and timed-out tools to fail-closed errors', async () => {
     const base = {
       name: 'test-step',

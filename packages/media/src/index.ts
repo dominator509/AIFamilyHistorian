@@ -255,10 +255,18 @@ export async function executeMediaPipelineStep(
     return argument;
   });
   const started = performance.now();
+  const childEnv: NodeJS.ProcessEnv = {
+    ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
+    ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
+    ...(process.env.WINDIR ? { WINDIR: process.env.WINDIR } : {}),
+    ...(process.env.TEMP ? { TEMP: process.env.TEMP } : {}),
+    ...(process.env.TMP ? { TMP: process.env.TMP } : {}),
+    ...options.env,
+  };
   return new Promise<MediaToolExecutionResult>((resolve, reject) => {
     const child = spawn(binary, args, {
       cwd: options.cwd,
-      env: { ...process.env, ...options.env },
+      env: childEnv,
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
