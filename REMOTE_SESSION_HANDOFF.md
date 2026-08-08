@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit: `8e041897653925f278f690712f740a8ee42e96d9` (six hardening passes complete).
+- Current code checkpoint: `cfcbd4d8b34c158479a3560d4412e3ec9d841f1f` (hardening pass seven); this handoff document is refreshed in the following docs-only commit.
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
@@ -19,9 +19,9 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `pnpm test:unit` -> 18 files, 53 tests passed (including strict bearer, storage production endpoint, telemetry-secret, and media subprocess isolation regressions)
+- `pnpm test:unit` -> 20 files, 63 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder, and fixed-window limiter regressions)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
-- `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 8 tests)
+- `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 9 tests)
 - `sh scripts/build.sh` -> `build: ok`
 - `sh scripts/security-check.sh` -> `security check: ok`
 - `sh scripts/dependency-audit.sh` -> `dependency audit: ok`
@@ -34,7 +34,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/probes/resend.sh` -> authenticated Resend domains probe passed; verified sender and recipient delivery remain required.
 - `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260807T063342Z.dump.enc`).
 - `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260807T063342Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=4`.
-- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.52ms` against the real Fastify health endpoint.
+- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.61ms` against the real Fastify health endpoint.
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
 - Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
 - Multipart resume status -> API returned the provider-listed completed part number, ETag, and byte size before completion.
