@@ -375,9 +375,14 @@ export class ArchiveService {
             await this.enqueue(client, context, 'privacy.request', id, mutation.input);
             break;
           case 'billing':
+            if (mutation.input.status !== 'trialing')
+              throw new ApiProblem(
+                'PERMISSION_DENIED',
+                'Subscription status changes require a verified provider event',
+              );
             await client.query(
               'insert into subscriptions(id, organization_id, plan_code, status) values ($1,$2,$3,$4)',
-              [id, context.organizationId, mutation.input.planCode, mutation.input.status],
+              [id, context.organizationId, mutation.input.planCode, 'trialing'],
             );
             break;
         }

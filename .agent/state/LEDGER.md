@@ -184,3 +184,7 @@
 2026-08-08T11:12:00Z | codex | HARDENING-20 | COMMAND_FAILED | integration_exit_1_archive_partition_uuid_validator_rejected_uuidv7_7_failures_20_tests
 2026-08-08T11:20:00Z | codex | HARDENING-20 | HARDENING_PASS | derivative_recipe_unique_constraint_fixity_checked_conflict_safe_worker_archive_partition_uuidv7_integration20_unit69_e2e10_build_security_audit_passed
 2026-08-08T11:21:00Z | codex | HARDENING-20 | LOCAL_VERIFICATION | database_migrate_verify_and_encrypted_backup_restore_check_passed_schema_migrations_8
+2026-08-08T11:22:00Z | codex | HARDENING-21 | COMMAND_FAILED | billing_boundary_integration_idempotency_key_too_short_21_tests_1_failed_fixed_fixture_only
+2026-08-08T11:24:00Z | codex | HARDENING-21 | COMMAND_FAILED | full_gate_format_exit_1_billing_fixture_needs_prettier_other_gates_passed
+2026-08-08T11:26:00Z | codex | HARDENING-21 | HARDENING_PASS | provider_authoritative_billing_status_catalog_plan_enum_subscription_constraints_one_current_subscription_unit69_integration22_e2e10_build_security_audit_passed
+2026-08-08T11:27:00Z | codex | HARDENING-21 | LOCAL_VERIFICATION | database_migrate_verify_schema_migrations_9_format_gate_passed

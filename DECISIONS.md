@@ -121,3 +121,7 @@ Every API-enqueued job checks the tenant-scoped outbox before insertion and reje
 ### ADR-039: Make derivative recipes immutable and partitionable
 
 Derivative persistence now has a database-enforced unique key on `(original_object_id, recipe_version)`. Worker writes use conflict-safe insertion and compare SHA-256 fixity before treating an existing or concurrent row as idempotent; a digest mismatch is terminal rather than silently accepted. The dispatcher also supports validated UUID archive partitions for independently scaled pools and tenant-isolated worker tests; the default production worker remains unpartitioned until deployment topology is explicitly configured.
+
+### ADR-040: Keep billing state provider-authoritative
+
+Billing input accepts only the catalog plan codes, and the API may create only a `trialing` subscription. `active`, `past_due`, and `cancelled` transitions require a verified provider event; PostgreSQL enforces the plan/status vocabulary and permits only one current subscription per organization. Local entitlement and domain tests remain available, while signed webhook delivery and reconciliation are still external release work.
