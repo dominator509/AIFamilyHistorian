@@ -31,7 +31,7 @@ describe('billing trust boundary', () => {
         input: { planCode: 'self_service', status: 'active' },
       }),
     ).rejects.toMatchObject<ApiProblem>({ code: 'PERMISSION_DENIED' });
-    const rows = await pool.query(
+    const rows = await pool.query<{ count: number }>(
       'select count(*)::int as count from subscriptions where organization_id = $1',
       [context.organizationId],
     );

@@ -10,6 +10,7 @@
     "@family-historian/crypto": "workspace:*",
     "@family-historian/database": "workspace:*",
     "@family-historian/storage": "workspace:*",
+    "@family-historian/providers": "workspace:*",
     "@fastify/cors": "11.3.0",
     "@fastify/helmet": "13.1.0",
     "fastify": "5.11.2",

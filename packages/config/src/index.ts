@@ -44,6 +44,7 @@ export const runtimeEnvironmentSchema = z
     SESSION_SECRET: secret,
     FIELD_ENCRYPTION_MASTER_KEY: secret,
     DOWNLOAD_SIGNING_SECRET: secret,
+    STRIPE_WEBHOOK_SECRET: z.string().default(''),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV === 'production' && value.HOST === '127.0.0.1') {
@@ -96,6 +97,12 @@ export const runtimeEnvironmentSchema = z
             message: 'production secrets must contain sufficient character diversity',
           });
       }
+      if (!value.STRIPE_WEBHOOK_SECRET.trim())
+        context.addIssue({
+          code: 'custom',
+          path: ['STRIPE_WEBHOOK_SECRET'],
+          message: 'production requires a Stripe webhook secret',
+        });
     }
   });
 

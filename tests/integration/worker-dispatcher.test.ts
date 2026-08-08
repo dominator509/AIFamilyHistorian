@@ -228,7 +228,7 @@ describe('SQL outbox worker dispatcher', () => {
     const dispatcher = new OutboxDispatcher({
       pool,
       logger,
-      handlers: new Map([[jobType, async () => undefined]]),
+      handlers: new Map([[jobType, () => Promise.resolve()]]),
       jobTypes: [jobType],
       archiveIds: [first.familyArchiveId],
       pollMilliseconds: 50,

@@ -10,7 +10,7 @@ afterEach(async () => {
 describe('CORS boundary', () => {
   it('allows only an explicitly configured origin', async () => {
     const app = await createApp({
-      service: { ready: async () => true } as never,
+      service: { ready: () => Promise.resolve(true) } as never,
       sessionSecret: 's'.repeat(32),
       corsAllowedOrigins: ['https://app.example.com'],
     });

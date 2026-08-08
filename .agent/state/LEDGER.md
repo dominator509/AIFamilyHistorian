@@ -190,3 +190,11 @@
 2026-08-08T11:27:00Z | codex | HARDENING-21 | LOCAL_VERIFICATION | database_migrate_verify_schema_migrations_9_format_gate_passed
 2026-08-08T11:30:00Z | codex | HARDENING-22 | COMMAND_FAILED | security_check_exit_1_static_baseline_expected_removed_origin_false_cors_control
 2026-08-08T11:33:00Z | codex | HARDENING-22 | HARDENING_PASS | strict_cors_origin_allowlist_https_production_validation_unit72_integration22_e2e10_build_security_audit_passed
+2026-08-08T12:00:00Z | codex | HARDENING-23 | COMMAND_FAILED | explicit_prettier_write_included_sql_and_shell_files_without_supported_parsers_code_files_formatted
+2026-08-08T12:05:00Z | codex | HARDENING-23 | COMMAND_FAILED | integration_suite_exit_1_applied_migration_changed_0003_due_trailing_blank_line_drift_restoring_immutable_migration
+2026-08-08T12:10:00Z | codex | HARDENING-23 | COMMAND_FAILED | webhook_integration_fixture_ids_used_underscores_rejected_by_stripe_event_schema_two_tests_failed_corrected_fixture_shape
+2026-08-08T12:15:00Z | codex | HARDENING-23 | COMMAND_FAILED | full_integration_replay_fixture_reused_global_stripe_event_ids_across_runs_and_tenants_test_isolation_collision_corrected_with_tenant_scoped_fixture_ids
+2026-08-08T12:20:00Z | codex | HARDENING-23 | COMMAND_FAILED | lint_gate_found_existing_test_query_any_and_no_await_fixture_callbacks_fixed_with_explicit_query_type_and_promise_resolve
+2026-08-08T12:25:00Z | codex | HARDENING-23 | COMMAND_FAILED | migration_verify_passed_but_powershell_could_not_launch_sh_for_backup_restore_retrying_explicit_git_bash_sh
+2026-08-08T12:30:00Z | codex | HARDENING-23 | COMMAND_FAILED | ad_hoc_node_dotenv_schema_diagnostic_missing_root_dotenv_module_migration_and_backup_commands_remained_valid
+2026-08-08T12:35:00Z | codex | HARDENING-23 | HARDENING_PASS | durable_signature_verified_stripe_callback_ingestion_append_only_payload_hash_replay_guard_tenant_metadata_schema_10_unit72_integration25_e2e10_build_security_audit_lint_format_reality_smoke_performance_p95_0.95ms_backup_restore_passed

@@ -42,7 +42,7 @@ trap 'rm -f "$tmp"' EXIT
   echo 'DEEPGRAM_API_KEY='
   echo 'ELEVENLABS_API_KEY='
   echo 'STRIPE_SECRET_KEY='
-  echo 'STRIPE_WEBHOOK_SECRET='
+  echo 'STRIPE_WEBHOOK_SECRET=whsec_local-test-only'
   echo 'STRIPE_PRICE_ID='
   echo 'RESEND_API_KEY='
   echo "EMAIL_FROM='Family Historian <noreply@example.invalid>'"

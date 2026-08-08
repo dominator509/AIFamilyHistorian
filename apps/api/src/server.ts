@@ -20,6 +20,7 @@ const app = await createApp({
   service: new ArchiveService(pool, environment.FIELD_ENCRYPTION_MASTER_KEY, storage),
   sessionSecret: environment.SESSION_SECRET,
   corsAllowedOrigins: parseCorsOrigins(environment.CORS_ALLOWED_ORIGINS),
+  stripeWebhookSecret: environment.STRIPE_WEBHOOK_SECRET,
   rateLimiter: new RedisFixedWindowRateLimiter(redis, {
     limit: 120,
     windowMilliseconds: 60_000,

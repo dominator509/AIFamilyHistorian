@@ -85,6 +85,43 @@ export class ArchiveService {
     }
   }
 
+  public async recordStripeWebhook(
+    context: DatabaseContext,
+    input: {
+      eventId: string;
+      eventType: string;
+      payload: Record<string, unknown>;
+      payloadSha256: string;
+    },
+  ): Promise<{ replayed: boolean }> {
+    return withTenantTransaction(this.pool, context, async (client) => {
+      const inserted = await client.query(
+        `insert into provider_callback_events
+          (id, organization_id, family_archive_id, provider, provider_event_id, event_type, payload, payload_sha256, signature_verified)
+         values ($1,$2,$3,'stripe',$4,$5,$6::jsonb,$7,true)
+         on conflict (provider, provider_event_id) do nothing
+         returning id`,
+        [
+          uuidV7(),
+          context.organizationId,
+          context.familyArchiveId,
+          input.eventId,
+          input.eventType,
+          JSON.stringify(input.payload),
+          input.payloadSha256,
+        ],
+      );
+      if (inserted.rowCount === 1) return { replayed: false };
+      const existing = await client.query<{ payload_sha256: string }>(
+        'select payload_sha256 from provider_callback_events where provider = $1 and provider_event_id = $2',
+        ['stripe', input.eventId],
+      );
+      if (existing.rows[0]?.payload_sha256 !== input.payloadSha256)
+        throw new ApiProblem('VALIDATION_FAILED', 'Stripe event replay has a different payload');
+      return { replayed: true };
+    });
+  }
+
   public async getArchive(context: DatabaseContext): Promise<{ id: string; name: string } | null> {
     return withTenantTransaction(this.pool, context, async (client) => {
       const result = await client.query<{ id: string; name: string }>(

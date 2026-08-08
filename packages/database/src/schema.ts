@@ -384,6 +384,31 @@ export const auditEvents = pgTable('audit_events', {
   occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
 });
 
+export const providerCallbackEvents = pgTable(
+  'provider_callback_events',
+  {
+    id: uuid('id').primaryKey(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    familyArchiveId: uuid('family_archive_id').references(() => familyArchives.id),
+    provider: text('provider').notNull(),
+    providerEventId: text('provider_event_id').notNull(),
+    eventType: text('event_type').notNull(),
+    payload: jsonb('payload').notNull(),
+    payloadSha256: text('payload_sha256').notNull(),
+    signatureVerified: boolean('signature_verified').notNull(),
+    receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp('processed_at', { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex('provider_callback_events_provider_event_idx').on(
+      table.provider,
+      table.providerEventId,
+    ),
+  ],
+);
+
 export const provenanceEvents = pgTable('provenance_events', {
   id: uuid('id').primaryKey(),
   organizationId: uuid('organization_id')

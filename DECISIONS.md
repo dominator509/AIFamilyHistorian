@@ -129,3 +129,9 @@ Billing input accepts only the catalog plan codes, and the API may create only a
 ### ADR-041: Require an explicit production CORS allowlist
 
 Runtime configuration now parses comma-separated origin-only URLs, rejects wildcards and non-HTTPS production origins, and fails production startup when the allowlist is empty. Fastify receives only that exact allowlist with credentials disabled; local development retains same-origin behavior until an origin is explicitly configured.
+
+### ADR-042: Persist verified Stripe webhooks before reconciliation
+
+The API captures the exact JSON request bytes, verifies the Stripe signature within the documented five-minute tolerance, requires organization and archive UUIDs in the signed event metadata, and inserts an append-only tenant-scoped callback row keyed by `(provider, provider_event_id)`. Duplicate delivery is acknowledged only when the payload hash matches; a same-ID/different-payload replay is rejected. Subscription state is not mutated by ingestion; a separate reconciler must consume the durable event and apply provider-authoritative billing transitions.
+
+This keeps signature verification, replay protection, tenant isolation, and auditability at the network boundary while leaving signed sandbox delivery and downstream reconciliation as explicit external release gates.

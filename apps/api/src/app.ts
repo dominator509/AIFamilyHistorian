@@ -1,6 +1,6 @@
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { healthStatusSchema } from '@family-historian/contracts';
 import {
   FixedWindowRateLimiter,
@@ -19,6 +19,7 @@ export interface AppDependencies {
   rateLimiter?: RateLimiter;
   sessionRevocationStore?: SessionRevocationStore;
   corsAllowedOrigins?: readonly string[];
+  stripeWebhookSecret?: string;
 }
 
 export async function createApp(dependencies?: AppDependencies): Promise<FastifyInstance> {
@@ -29,6 +30,17 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
     },
     bodyLimit: 1_048_576,
     requestIdHeader: 'x-request-id',
+  });
+
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (request, body, done) => {
+    const rawBody = String(body);
+    (request as FastifyRequest & { rawBody?: string }).rawBody = rawBody;
+    try {
+      done(null, JSON.parse(rawBody));
+    } catch {
+      done(new Error('invalid JSON'));
+    }
   });
 
   await app.register(helmet, { global: true });

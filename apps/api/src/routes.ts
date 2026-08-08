@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import type { z } from 'zod';
+import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import {
   archiveParamsSchema,
   billingInputSchema,
@@ -22,7 +23,9 @@ import {
   uploadInputSchema,
   uploadParamsSchema,
   uploadPartParamsSchema,
+  uuidSchema,
 } from '@family-historian/contracts';
+import { ProviderAdapterError, verifyStripeWebhookSignature } from '@family-historian/providers';
 import type { ArchiveService, ListResourceKind } from './archive-service.js';
 import { ApiProblem } from './problems.js';
 import {
@@ -35,7 +38,14 @@ import {
 interface RouteDependencies {
   service: ArchiveService;
   sessionSecret: string;
+  stripeWebhookSecret?: string;
 }
+
+const stripeWebhookEventSchema = z.object({
+  id: z.string().regex(/^evt_[A-Za-z0-9]+$/u),
+  type: z.string().min(1).max(200),
+  data: z.object({ object: z.record(z.string(), z.unknown()) }),
+});
 
 type ResourceDefinition = {
   kind: ListResourceKind;
@@ -94,6 +104,50 @@ function idempotencyKey(request: FastifyRequest): string {
 }
 
 export function registerV1Routes(app: FastifyInstance, dependencies: RouteDependencies): void {
+  app.post('/v1/webhooks/stripe', async (request, reply) => {
+    const rawBody = (request as FastifyRequest & { rawBody?: string }).rawBody;
+    const signature = request.headers['stripe-signature'];
+    if (typeof rawBody !== 'string' || typeof signature !== 'string')
+      throw new ApiProblem(
+        'VALIDATION_FAILED',
+        'Stripe webhook payload and signature are required',
+      );
+    if (!dependencies.stripeWebhookSecret)
+      throw new ApiProblem(
+        'PROVIDER_UNAVAILABLE',
+        'Stripe webhook verification is not configured',
+        true,
+      );
+    try {
+      verifyStripeWebhookSignature(rawBody, signature, dependencies.stripeWebhookSecret);
+    } catch (error) {
+      if (error instanceof ProviderAdapterError)
+        throw new ApiProblem('VALIDATION_FAILED', 'Stripe webhook signature is invalid');
+      throw error;
+    }
+    const parsed = stripeWebhookEventSchema.safeParse(request.body);
+    if (!parsed.success)
+      throw new ApiProblem('VALIDATION_FAILED', 'Stripe webhook payload is invalid');
+    const metadata = parsed.data.data.object.metadata as Record<string, unknown> | undefined;
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata))
+      throw new ApiProblem('VALIDATION_FAILED', 'Stripe webhook metadata is required');
+    const organizationId = uuidSchema.safeParse(metadata.organization_id);
+    const familyArchiveId = uuidSchema.safeParse(metadata.family_archive_id);
+    if (!organizationId.success || !familyArchiveId.success)
+      throw new ApiProblem('VALIDATION_FAILED', 'Stripe webhook tenant metadata is invalid');
+    const result = await dependencies.service.recordStripeWebhook(
+      { organizationId: organizationId.data, familyArchiveId: familyArchiveId.data },
+      {
+        eventId: parsed.data.id,
+        eventType: parsed.data.type,
+        payload: parsed.data,
+        payloadSha256: createHash('sha256').update(rawBody, 'utf8').digest('hex'),
+      },
+    );
+    if (result.replayed) reply.header('Idempotency-Replayed', 'true');
+    return reply.status(200).send({ status: 'accepted', eventId: parsed.data.id });
+  });
+
   app.get('/v1/archives', async (request) => {
     const value = principal(request, dependencies.sessionSecret);
     const archives = (

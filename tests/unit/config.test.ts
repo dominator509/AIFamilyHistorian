@@ -11,6 +11,7 @@ const base = {
   SESSION_SECRET: 'replace-with-at-least-32-random-bytes',
   FIELD_ENCRYPTION_MASTER_KEY: 'replace-with-32-byte-base64-key',
   DOWNLOAD_SIGNING_SECRET: 'replace-with-at-least-32-random-bytes',
+  STRIPE_WEBHOOK_SECRET: 'whsec_replace',
 };
 
 describe('runtime configuration', () => {
@@ -25,6 +26,7 @@ describe('runtime configuration', () => {
         SESSION_SECRET: 'session-secret-0123456789-abcdefghijklmnopqrstuvwxyz',
         FIELD_ENCRYPTION_MASTER_KEY: 'field-key-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ',
         DOWNLOAD_SIGNING_SECRET: 'download-secret-0123456789-!@#$%^&*()',
+        STRIPE_WEBHOOK_SECRET: 'whsec_production-secret',
       }).NODE_ENV,
     ).toBe('production');
   });
