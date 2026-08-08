@@ -140,6 +140,10 @@ This keeps signature verification, replay protection, tenant isolation, and audi
 
 Multipart completion now reads at most a bounded 4 KiB prefix from object storage and compares recognized magic bytes with the declared MIME type before hashing and creating an immutable original row. Text payloads are admitted only for explicitly safe UTF-8 text types; unknown or mismatched signatures fail closed as `MEDIA_UNSAFE`. The prefix check is intentionally independent of the streamed SHA-256 fixity check and does not buffer large media objects.
 
+### ADR-045: Make bearer logout an explicit revocation operation
+
+The API now exposes `POST /v1/session/logout`. It verifies the current bearer token, requires a session identifier and the configured Redis-backed revocation store, and revokes only that session until its signed expiry. The route returns no body and fails closed when the revocation dependency is unavailable; administrative device/session inventory and server-side membership revalidation remain separate release gates.
+
 ### ADR-043: Serialize cost-capacity decisions inside the database transaction
 
 Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.

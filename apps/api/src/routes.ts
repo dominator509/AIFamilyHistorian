@@ -31,6 +31,7 @@ import { ApiProblem } from './problems.js';
 import {
   authorizeArchivePermission,
   parseAuthorizationHeader,
+  type SessionRevocationStore,
   verifySessionToken,
   type SessionPrincipal,
 } from '@family-historian/auth';
@@ -38,6 +39,7 @@ import {
 interface RouteDependencies {
   service: ArchiveService;
   sessionSecret: string;
+  sessionRevocationStore?: SessionRevocationStore;
   stripeWebhookSecret?: string;
 }
 
@@ -104,6 +106,16 @@ function idempotencyKey(request: FastifyRequest): string {
 }
 
 export function registerV1Routes(app: FastifyInstance, dependencies: RouteDependencies): void {
+  app.post('/v1/session/logout', async (request, reply) => {
+    const value = principal(request, dependencies.sessionSecret);
+    if (!value.sessionId)
+      throw new ApiProblem('AUTH_REQUIRED', 'Session does not support revocation');
+    if (!dependencies.sessionRevocationStore)
+      throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Session revocation is not configured', true);
+    await dependencies.sessionRevocationStore.revoke(value.sessionId, value.expiresAt);
+    return reply.status(204).send();
+  });
+
   app.post('/v1/webhooks/stripe', async (request, reply) => {
     const rawBody = (request as FastifyRequest & { rawBody?: string }).rawBody;
     const signature = request.headers['stripe-signature'];

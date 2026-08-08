@@ -81,4 +81,47 @@ describe('API principal and archive rate scopes', () => {
       await app.close();
     }
   });
+
+  it('revokes the current bearer session through the logout endpoint', async () => {
+    const revoked = new Set<string>();
+    const sessionRevocationStore: SessionRevocationStore = {
+      isRevoked: (sessionId) => Promise.resolve(revoked.has(sessionId)),
+      revoke: (sessionId) => {
+        revoked.add(sessionId);
+        return Promise.resolve();
+      },
+    };
+    const token = issueSessionToken('l'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000051',
+      organizationId: '01900000-0000-7000-8000-000000000052',
+      archiveIds: ['01900000-0000-7000-8000-000000000053'],
+      permissions: ['archive:*'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    const app = await createApp({
+      service: { ready: () => Promise.resolve(true), list: () => Promise.resolve([]) } as never,
+      sessionSecret: 'l'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionRevocationStore,
+    });
+    try {
+      const logout = await app.inject({
+        method: 'POST',
+        url: '/v1/session/logout',
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(logout.statusCode).toBe(204);
+      expect(revoked.size).toBe(1);
+      const after = await app.inject({
+        method: 'GET',
+        url: '/v1/archives',
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(after.statusCode).toBe(401);
+    } finally {
+      await app.close();
+    }
+  });
 });
