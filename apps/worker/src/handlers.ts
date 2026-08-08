@@ -528,8 +528,8 @@ async function ensureFixity(
 ): Promise<void> {
   const digest = Buffer.from(actual.sha256Base64, 'base64').toString('hex');
   const existing = await client.query(
-    "select 1 from fixity_records where object_kind = 'original' and object_id = $1 and digest = $2 limit 1",
-    [objectId, digest],
+    "select 1 from fixity_records where organization_id = $1 and family_archive_id = $2 and object_kind = 'original' and object_id = $3 and digest = $4 limit 1",
+    [organizationId, familyArchiveId, objectId, digest],
   );
   if (existing.rowCount === 1) return;
   await client.query(
@@ -549,8 +549,8 @@ async function storeDerivative(
   contentType: string,
 ): Promise<void> {
   const existing = await client.query<{ id: string; sha256: string }>(
-    'select id, sha256 from derivative_objects where original_object_id = $1 and recipe_version = $2 limit 1',
-    [originalObjectId, recipeVersion],
+    'select id, sha256 from derivative_objects where organization_id = $1 and family_archive_id = $2 and original_object_id = $3 and recipe_version = $4 limit 1',
+    [organizationId, familyArchiveId, originalObjectId, recipeVersion],
   );
   const objectKey = derivativeObjectKey(originalObjectId, recipeVersion);
   const digest = createHash('sha256').update(bytes).digest('hex');
@@ -597,8 +597,8 @@ async function storeDerivative(
   );
   if (inserted.rowCount !== 1) {
     const concurrent = await client.query<{ sha256: string }>(
-      'select sha256 from derivative_objects where original_object_id = $1 and recipe_version = $2 limit 1',
-      [originalObjectId, recipeVersion],
+      'select sha256 from derivative_objects where organization_id = $1 and family_archive_id = $2 and original_object_id = $3 and recipe_version = $4 limit 1',
+      [organizationId, familyArchiveId, originalObjectId, recipeVersion],
     );
     if (concurrent.rows[0]?.sha256 !== digest)
       throw new WorkerJobError(

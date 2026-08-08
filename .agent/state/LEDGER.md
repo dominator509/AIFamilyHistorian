@@ -232,3 +232,4 @@
 2026-08-08T16:40:00Z | codex | HARDENING-38 | HARDENING_PASS | deepseek_circuit_breaker_bounded_threshold_cooldown_fetch_injection_contract_test2_typecheck_format_passed
 2026-08-08T16:45:00Z | codex | HARDENING-37_38 | COMMAND_FAILED | full_gate_lint_require_await_rejected_async_fetch_fixtures_without_await_exit_1_fix_return_promise
 2026-08-08T16:55:00Z | codex | HARDENING-37_38 | HARDENING_PASS | provider_and_deepseek_circuit_breakers_full_unit79_integration31_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_0.74ms_livefire16_encrypted_backup_restore_schema_migrations11_passed
+2026-08-08T17:00:00Z | codex | HARDENING-39 | LOCAL_VERIFICATION | worker_fixity_and_derivative_idempotency_lookups_now_include_organization_and_archive_scope; full regression suite pending
