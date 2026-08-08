@@ -193,3 +193,7 @@ The local infrastructure integration test now accepts `LOCAL_TELEMETRY_HEALTH_UR
 ### ADR-056: Route host-blocked live-fire proofs through the internal runner
 
 The live-fire wrapper detects a healthy local worker image and Compose PostgreSQL service, then runs only the database- and object-storage-dependent proofs in a disposable test container on `family_historian_internal`. All other proofs continue through the normal host runner, and the fallback remains unchanged when the local image or services are unavailable. The production worker service is never reconfigured or attached to an external network by this helper.
+
+### ADR-057: Discover the Compose internal network by label
+
+The live-fire helper now discovers the active `family_historian_internal` network from Docker’s Compose label instead of assuming the project-name prefix. This preserves the same worker-image and service-DNS boundary across fresh clones and alternate `COMPOSE_PROJECT_NAME` values.

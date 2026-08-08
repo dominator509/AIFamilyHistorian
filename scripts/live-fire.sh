@@ -7,8 +7,12 @@ deferred=0
 internal_runner=0
 worker_image="${WORKER_IMAGE:-family-historian-worker:local}"
 repo_root=$(pwd -W 2>/dev/null || pwd)
+internal_network=''
 internal_db=''
 if [ -f .env ] && docker image inspect "$worker_image" >/dev/null 2>&1 && docker compose exec -T postgres true </dev/null >/dev/null 2>&1; then
+  internal_network=$(docker network ls --filter label=com.docker.compose.network=family_historian_internal --format '{{.Name}}' | awk 'NR == 1 { print; exit }')
+fi
+if [ -n "$internal_network" ]; then
   internal_runner=1
   set -a
   . ./.env
@@ -23,7 +27,7 @@ run_proof() {
     archive-membership|multipart-media-ingestion)
       if [ "$internal_runner" -eq 1 ]; then
         MSYS_NO_PATHCONV=1 docker run --rm \
-          --network ai-family-historian_family_historian_internal \
+          --network "$internal_network" \
           --env-file .env \
           -v "$repo_root/.env:/app/.env:ro" \
           -v "$repo_root/drizzle:/app/drizzle:ro" \

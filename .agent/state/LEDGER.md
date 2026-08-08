@@ -264,3 +264,4 @@
 2026-08-08T23:20:00Z | codex | HARDENING-45 | COMMAND_FAILED | live_fire_wrapper_exit_1_host_blocked_archive_membership_and_multipart_proofs_before_internal_dispatch
 2026-08-08T23:21:00Z | codex | HARDENING-45 | FIX_APPLIED | live_fire_wrapper_detects_local_worker_image_and_healthy_compose_postgres_then_dispatches_only_database_and_object_storage_proofs_to_disposable_internal_runner
 2026-08-08T23:31:24Z | codex | HARDENING-45 | HARDENING_PASS | live_fire_all_16_proofs_passed_internal_runner_for_archive_and_multipart_host_runner_for_remaining_proofs_format_typecheck_lint_security_shell_syntax_secret_scan_passed
+2026-08-08T23:35:02Z | codex | HARDENING-46 | HARDENING_PASS | live_fire_internal_runner_discovers_family_historian_internal_network_by_compose_label_all_16_proofs_passed_shell_syntax_passed
