@@ -34,7 +34,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/probes/resend.sh` -> authenticated Resend domains probe passed; verified sender and recipient delivery remain required.
 - `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260808T073145Z.dump.enc`).
 - `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260808T081259Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=6`.
-- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.52ms` against the real Fastify health endpoint.
+- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=1.48ms` against the real Fastify health endpoint.
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
 - Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
 - Multipart resume status -> API returned the provider-listed completed part number, ETag, and byte size before completion.
@@ -147,7 +147,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Final operator checklist
 
-1. Implement and verify the remaining worker job families (privacy, export, transcription, narration, deletion), then run representative real-object fixtures through `worker-runtime`.
+1. Implement and verify remaining worker fulfillment families (privacy, export, transcription, narration synthesis, and deletion), then run representative real-object fixtures through `worker-runtime`.
 2. Supply Turnstile site/secret keys; rerun `sh scripts/preflight.sh` and `sh scripts/probes/turnstile.sh`.
 3. Verify the Resend sender domain and run a real recipient delivery proof; complete signed Stripe webhook delivery with a reachable endpoint or Stripe CLI forwarding.
 4. Obtain and place the signed legal/vendor/insurance/DPIA/retention/data-region/data-broker artifacts outside Git; rerun production readiness.
