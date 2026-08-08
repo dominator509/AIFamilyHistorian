@@ -3,8 +3,98 @@ import { createApp } from '../../apps/api/src/app.js';
 import { issueSessionToken } from '../../apps/api/src/session.js';
 import type { RateLimiter } from '../../packages/auth/src/rate-limit.js';
 import type { SessionRevocationStore } from '../../packages/auth/src/session-revocation.js';
+import type {
+  SessionPrincipal,
+  SessionStore,
+  StoredSession,
+} from '../../packages/auth/src/session-store.js';
 
 describe('API principal and archive rate scopes', () => {
+  it('supports explicit server-side registration, rotation, inventory, and self-revocation', async () => {
+    const records = new Map<string, StoredSession>();
+    const sessionStore: SessionStore = {
+      ensure: (value) => {
+        const now = new Date().toISOString();
+        const stored: StoredSession = {
+          ...value,
+          sessionId: value.sessionId!,
+          createdAt: records.get(value.sessionId!)?.createdAt ?? now,
+          lastSeenAt: now,
+          revokedAt: records.get(value.sessionId!)?.revokedAt ?? null,
+          deviceLabel: 'test device',
+        };
+        records.set(value.sessionId!, stored);
+        return Promise.resolve(stored);
+      },
+      rotate: (currentSessionId) => {
+        const current = records.get(currentSessionId);
+        if (!current) return Promise.reject(new Error('AUTH_REQUIRED'));
+        records.set(currentSessionId, { ...current, revokedAt: new Date().toISOString() });
+        return Promise.resolve();
+      },
+      revoke: (sessionId) => {
+        const current = records.get(sessionId);
+        if (current) records.set(sessionId, { ...current, revokedAt: new Date().toISOString() });
+        return Promise.resolve();
+      },
+      revokeAllForUser: (userId, exceptSessionId) => {
+        let count = 0;
+        for (const [sessionId, current] of records) {
+          if (current.userId === userId && sessionId !== exceptSessionId && !current.revokedAt) {
+            records.set(sessionId, { ...current, revokedAt: new Date().toISOString() });
+            count += 1;
+          }
+        }
+        return Promise.resolve(count);
+      },
+      listForUser: (userId) =>
+        Promise.resolve([...records.values()].filter((item) => item.userId === userId)),
+      find: (sessionId) => Promise.resolve(records.get(sessionId) ?? null),
+    };
+    const sessionSecret = 'inventory'.repeat(4);
+    const principal: Omit<SessionPrincipal, 'sessionId'> = {
+      userId: '01900000-0000-7000-8000-000000000091',
+      organizationId: '01900000-0000-7000-8000-000000000092',
+      archiveIds: ['01900000-0000-7000-8000-000000000093'],
+      permissions: ['people:read'],
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+    };
+    const token = issueSessionToken(sessionSecret, principal);
+    const app = await createApp({
+      service: { ready: () => Promise.resolve(true), list: () => Promise.resolve([]) } as never,
+      sessionSecret,
+      sessionStore,
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+    });
+    try {
+      const headers = { authorization: `Bearer ${token}` };
+      expect(
+        (await app.inject({ method: 'POST', url: '/v1/session/register', headers })).statusCode,
+      ).toBe(204);
+      const inventory = await app.inject({ method: 'GET', url: '/v1/session', headers });
+      expect(inventory.statusCode).toBe(200);
+      expect(inventory.body).toMatch(/"items":\s*\[/u);
+      const rotated = await app.inject({ method: 'POST', url: '/v1/session/rotate', headers });
+      expect(rotated.statusCode).toBe(200);
+      expect(rotated.body).toMatch(/"token":"v1\./u);
+      const oldSessionId = [...records.keys()][0]!;
+      expect(records.get(oldSessionId)?.revokedAt).toEqual(expect.any(String));
+      const rotatedToken = /"token":"([^"]+)"/u.exec(rotated.body)?.[1];
+      expect(rotatedToken).toBeTypeOf('string');
+      if (!rotatedToken) throw new Error('rotation token missing');
+      const logout = await app.inject({
+        method: 'POST',
+        url: '/v1/session/logout',
+        headers: { authorization: `Bearer ${rotatedToken}` },
+      });
+      expect(logout.statusCode).toBe(204);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('consumes authenticated principal and archive keys in addition to source IP', async () => {
     const keys: string[] = [];
     const rateLimiter: RateLimiter = {

@@ -5,6 +5,7 @@ import { createPool } from '@family-historian/database';
 import { ObjectStorage, parseStorageConfig } from '@family-historian/storage';
 import { ArchiveService } from './archive-service.js';
 import { createApp } from './app.js';
+import { PostgresSessionStore } from './session-store.js';
 
 const environment = parseRuntimeEnvironment(process.env);
 const pool = createPool(environment.DATABASE_URL);
@@ -27,6 +28,7 @@ const app = await createApp({
     windowMilliseconds: 60_000,
   }),
   sessionRevocationStore: new RedisSessionRevocationStore(redis),
+  sessionStore: new PostgresSessionStore(pool),
   sessionMembershipChecker: (context, userId) => service.isArchiveMember(context, userId),
 });
 

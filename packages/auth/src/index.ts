@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export * from './rate-limit.js';
 export * from './session-revocation.js';
+export * from './session-store.js';
 
 export const sessionSchema = z.object({
   sessionId: z.uuid().optional(),

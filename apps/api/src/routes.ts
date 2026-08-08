@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
   archiveParamsSchema,
@@ -30,8 +30,10 @@ import type { ArchiveService, ListResourceKind } from './archive-service.js';
 import { ApiProblem } from './problems.js';
 import {
   authorizeArchivePermission,
+  issueSessionToken,
   parseAuthorizationHeader,
   type SessionRevocationStore,
+  type SessionStore,
   verifySessionToken,
   type SessionPrincipal,
 } from '@family-historian/auth';
@@ -40,6 +42,7 @@ interface RouteDependencies {
   service: ArchiveService;
   sessionSecret: string;
   sessionRevocationStore?: SessionRevocationStore;
+  sessionStore?: SessionStore;
   sessionMembershipChecker?: (
     context: { organizationId: string; familyArchiveId: string },
     userId: string,
@@ -124,14 +127,136 @@ function idempotencyKey(request: FastifyRequest): string {
   return idempotencyKeySchema.parse(value);
 }
 
+function sessionMetadata(request: FastifyRequest): {
+  userAgent?: string;
+  ipAddress?: string;
+} {
+  const userAgent = request.headers['user-agent'];
+  return {
+    ...(typeof userAgent === 'string' ? { userAgent } : {}),
+    ...(request.ip ? { ipAddress: request.ip } : {}),
+  };
+}
+
+function requireSessionStore(dependencies: RouteDependencies): SessionStore {
+  if (!dependencies.sessionStore)
+    throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Server-side sessions are not configured', true);
+  return dependencies.sessionStore;
+}
+
+async function sessionStoreOperation<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (error instanceof ApiProblem) throw error;
+    if (error instanceof Error && error.message === 'AUTH_REQUIRED')
+      throw new ApiProblem('AUTH_REQUIRED', 'Session is not active');
+    throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Session store is unavailable', true);
+  }
+}
+
 export function registerV1Routes(app: FastifyInstance, dependencies: RouteDependencies): void {
+  app.post('/v1/session/register', async (request, reply) => {
+    const value = principal(request, dependencies.sessionSecret);
+    const store = requireSessionStore(dependencies);
+    const stored = await sessionStoreOperation(() => store.ensure(value, sessionMetadata(request)));
+    if (!stored) throw new ApiProblem('AUTH_REQUIRED', 'Session is not active');
+    return reply.status(204).send();
+  });
+
+  app.get('/v1/session', async (request) => {
+    const value = principal(request, dependencies.sessionSecret);
+    const store = requireSessionStore(dependencies);
+    const sessions = await sessionStoreOperation(() => store.listForUser(value.userId));
+    return {
+      items: sessions.map((session) => ({
+        sessionId: session.sessionId,
+        deviceLabel: session.deviceLabel,
+        createdAt: session.createdAt,
+        lastSeenAt: session.lastSeenAt,
+        expiresAt: session.expiresAt,
+        revokedAt: session.revokedAt,
+        current: session.sessionId === value.sessionId,
+      })),
+    };
+  });
+
+  app.post('/v1/session/rotate', async (request) => {
+    const value = principal(request, dependencies.sessionSecret);
+    if (!value.sessionId)
+      throw new ApiProblem('AUTH_REQUIRED', 'Session does not support rotation');
+    const store = requireSessionStore(dependencies);
+    const now = Math.floor(Date.now() / 1000);
+    const replacement = {
+      ...value,
+      sessionId: randomUUID(),
+      expiresAt: now + 24 * 60 * 60,
+    };
+    await sessionStoreOperation(() =>
+      store.rotate(value.sessionId!, replacement, sessionMetadata(request)),
+    );
+    await dependencies.sessionRevocationStore?.revoke(value.sessionId, value.expiresAt);
+    return {
+      token: issueSessionToken(dependencies.sessionSecret, replacement),
+      sessionId: replacement.sessionId,
+      expiresAt: replacement.expiresAt,
+    };
+  });
+
+  app.post('/v1/session/revoke/:sessionId', async (request, reply) => {
+    const value = principal(request, dependencies.sessionSecret);
+    if (!value.sessionId)
+      throw new ApiProblem('AUTH_REQUIRED', 'Session does not support revocation');
+    const target = uuidSchema.parse((request.params as { sessionId?: unknown }).sessionId);
+    const store = requireSessionStore(dependencies);
+    const session = await sessionStoreOperation(() => store.find(target));
+    if (!session || session.userId !== value.userId)
+      throw new ApiProblem('AUTH_REQUIRED', 'Session is not available');
+    if (
+      target !== value.sessionId &&
+      !value.permissions.includes('sessions:admin') &&
+      !value.permissions.includes('archive:*')
+    )
+      throw new ApiProblem('PERMISSION_DENIED', 'Session administration permission is required');
+    await sessionStoreOperation(() =>
+      store.revoke(target, target === value.sessionId ? 'self' : 'administrative'),
+    );
+    await dependencies.sessionRevocationStore?.revoke(target, session.expiresAt);
+    return reply.status(204).send();
+  });
+
+  app.post('/v1/session/revoke-all', async (request) => {
+    const value = principal(request, dependencies.sessionSecret);
+    if (!value.sessionId)
+      throw new ApiProblem('AUTH_REQUIRED', 'Session does not support revocation');
+    const store = requireSessionStore(dependencies);
+    const sessions = await sessionStoreOperation(() => store.listForUser(value.userId));
+    const count = await sessionStoreOperation(() =>
+      store.revokeAllForUser(value.userId, value.sessionId),
+    );
+    if (dependencies.sessionRevocationStore) {
+      await Promise.all(
+        sessions
+          .filter((session) => session.sessionId !== value.sessionId && !session.revokedAt)
+          .map((session) =>
+            dependencies.sessionRevocationStore!.revoke(session.sessionId, session.expiresAt),
+          ),
+      );
+    }
+    return { revoked: count };
+  });
+
   app.post('/v1/session/logout', async (request, reply) => {
     const value = principal(request, dependencies.sessionSecret);
     if (!value.sessionId)
       throw new ApiProblem('AUTH_REQUIRED', 'Session does not support revocation');
-    if (!dependencies.sessionRevocationStore)
+    if (!dependencies.sessionRevocationStore && !dependencies.sessionStore)
       throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Session revocation is not configured', true);
-    await dependencies.sessionRevocationStore.revoke(value.sessionId, value.expiresAt);
+    await dependencies.sessionRevocationStore?.revoke(value.sessionId, value.expiresAt);
+    if (dependencies.sessionStore)
+      await sessionStoreOperation(() =>
+        dependencies.sessionStore!.revoke(value.sessionId!, 'self'),
+      );
     return reply.status(204).send();
   });
 

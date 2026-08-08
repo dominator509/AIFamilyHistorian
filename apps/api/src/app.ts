@@ -6,6 +6,7 @@ import {
   FixedWindowRateLimiter,
   parseAuthorizationHeader,
   type SessionRevocationStore,
+  type SessionStore,
   type RateLimiter,
   verifySessionToken,
 } from '@family-historian/auth';
@@ -18,6 +19,7 @@ export interface AppDependencies {
   sessionSecret: string;
   rateLimiter?: RateLimiter;
   sessionRevocationStore?: SessionRevocationStore;
+  sessionStore?: SessionStore;
   sessionMembershipChecker?: (
     context: { organizationId: string; familyArchiveId: string },
     userId: string,
@@ -73,6 +75,11 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
           // Invalid bearer tokens remain an auth failure at the route boundary.
         }
         if (session) {
+          if (dependencies?.sessionStore && session.sessionId) {
+            const stored = await dependencies.sessionStore.find(session.sessionId);
+            if (stored && (stored.revokedAt || stored.expiresAt <= Math.floor(Date.now() / 1000)))
+              throw new ApiProblem('AUTH_REQUIRED', 'Session is no longer active');
+          }
           if (
             dependencies?.sessionRevocationStore &&
             session.sessionId &&

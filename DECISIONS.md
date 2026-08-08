@@ -163,3 +163,9 @@ The deployment runbook now derives the immutable GHCR image from `GITHUB_REPOSIT
 ### ADR-043: Serialize cost-capacity decisions inside the database transaction
 
 Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.
+
+### ADR-050: Add opt-in PostgreSQL session inventory and atomic rotation
+
+The API now exposes explicit server-side session registration, inventory, rotation, self/admin revocation, and revoke-all operations backed by PostgreSQL. Session rows store only signed-claim metadata, hashed user-agent/IP metadata, timestamps, and revocation state; raw bearer tokens and identifying headers are never persisted. Rotation locks and revokes the predecessor before inserting a same-principal replacement in one transaction. Existing signed bearer sessions remain compatible until the identity provider adopts registration, while registered-row revocations are checked at the request hook and fail closed.
+
+Native Better Auth/passkey/Argon2id issuance and the provider-owned migration of all legacy sessions remain separate release gates; this boundary deliberately avoids making unregistered legacy tokens unavailable during rollout.
