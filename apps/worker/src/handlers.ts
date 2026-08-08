@@ -16,7 +16,11 @@ import {
   type MediaKind,
   type MediaToolExecutionOptions,
 } from '@family-historian/media';
-import { derivativeObjectKey, type ObjectStorage } from '@family-historian/storage';
+import {
+  derivativeObjectKey,
+  ObjectStorageLimitError,
+  type ObjectStorage,
+} from '@family-historian/storage';
 import { WorkerJobError, type WorkerJobHandler } from './dispatcher.js';
 
 const mediaPayloadSchema = z.object({
@@ -349,7 +353,11 @@ async function handleMediaScan(
     const workDir = await mkdtemp(join(tmpdir(), 'family-historian-worker-'));
     try {
       const originalPath = join(workDir, 'original.bin');
-      const actual = await options.storage.downloadToFile(original.object_key, originalPath);
+      const actual = await options.storage.downloadToFile(
+        original.object_key,
+        originalPath,
+        Number(original.byte_size),
+      );
       const expectedBase64 = Buffer.from(original.sha256, 'hex').toString('base64');
       if (actual.byteSize !== Number(original.byte_size) || actual.sha256Base64 !== expectedBase64)
         throw new WorkerJobError(
@@ -450,7 +458,12 @@ async function handleMediaScan(
       })
       .catch(() => undefined);
     if (error instanceof WorkerJobError) throw error;
-    const code = error instanceof MediaExecutionError ? error.code : 'MEDIA_SCAN_FAILED';
+    const code =
+      error instanceof ObjectStorageLimitError
+        ? 'MEDIA_INPUT_TOO_LARGE'
+        : error instanceof MediaExecutionError
+          ? error.code
+          : 'MEDIA_SCAN_FAILED';
     const retryable =
       code === 'MEDIA_TOOL_TIMEOUT' || code === 'MEDIA_TOOL_FAILED' || code === 'MEDIA_SCAN_FAILED';
     throw new WorkerJobError('media scan failed', code, retryable);

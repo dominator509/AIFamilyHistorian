@@ -16,6 +16,13 @@ import { finished } from 'node:stream/promises';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { StorageConfig } from './config.js';
 
+export class ObjectStorageLimitError extends Error {
+  public constructor(message: string) {
+    super(message);
+    this.name = 'ObjectStorageLimitError';
+  }
+}
+
 export class ObjectStorage {
   readonly #client: S3Client;
   public constructor(private readonly config: StorageConfig) {
@@ -184,7 +191,10 @@ export class ObjectStorage {
   public async downloadToFile(
     key: string,
     destinationPath: string,
+    maxBytes?: number,
   ): Promise<{ sha256Base64: string; byteSize: number }> {
+    if (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1))
+      throw new RangeError('object download byte ceiling is invalid');
     const response = await this.#client.send(
       new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
     );
@@ -196,6 +206,8 @@ export class ObjectStorage {
     let byteSize = 0;
     try {
       for await (const chunk of body) {
+        if (maxBytes !== undefined && byteSize + chunk.byteLength > maxBytes)
+          throw new ObjectStorageLimitError('object exceeds the download byte ceiling');
         hash.update(chunk);
         byteSize += chunk.byteLength;
         if (!output.write(chunk))

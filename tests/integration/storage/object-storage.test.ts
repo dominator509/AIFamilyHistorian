@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   ObjectStorage,
+  ObjectStorageLimitError,
   originalObjectKey,
   parseStorageConfig,
 } from '../../../packages/storage/src/index.js';
@@ -46,5 +50,22 @@ describe('S3-compatible object storage', () => {
     const url = await storage.signUploadPart(key, uploadId, 1, 60);
     expect(new URL(url).searchParams.get('uploadId')).toBe(uploadId);
     await storage.abortMultipart(key, uploadId);
+  });
+
+  it('stops a streamed download before it exceeds the authoritative byte ceiling', async () => {
+    const bytes = new TextEncoder().encode('bounded storage download');
+    const checksum = createHash('sha256').update(bytes).digest('base64');
+    const key = originalObjectKey(uuidV7(), uuidV7());
+    const workDir = await mkdtemp(join(tmpdir(), 'family-historian-storage-test-'));
+    const destination = join(workDir, 'bounded.bin');
+    try {
+      await storage.putOriginal(key, bytes, 'application/octet-stream', checksum);
+      await expect(
+        storage.downloadToFile(key, destination, bytes.byteLength - 1),
+      ).rejects.toBeInstanceOf(ObjectStorageLimitError);
+    } finally {
+      await storage.delete(key).catch(() => undefined);
+      await rm(workDir, { recursive: true, force: true });
+    }
   });
 });

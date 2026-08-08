@@ -177,3 +177,7 @@ Restricted-field envelopes now use a versioned archive scope in the wrapping-key
 ### ADR-052: Bind confirmed facts to the authenticated confirmer
 
 The archive API now requires the `confirmerId` supplied for a confirmed fact to equal the authenticated actor creating the mutation. A mismatched confirmer is rejected before evidence or fact persistence, while a matching confirmer continues through the evidence-linked transaction. This preserves the blueprint invariant that confirmation is an attributable user action rather than caller-supplied metadata; delegated or administrative confirmation requires a separate explicitly authorized workflow.
+
+### ADR-053: Bound worker object downloads and serialize workspace builds
+
+Media workers now pass the authoritative original byte size as a hard ceiling to streamed object downloads. The storage layer stops writing as soon as a response exceeds that ceiling and raises a non-retryable limit error, preventing an oversized or corrupted object from consuming unbounded worker scratch space. Local HTTP-compatible S3 endpoints, including Docker service names, use path-style addressing; production HTTPS endpoints retain provider-compatible virtual-host addressing. The root workspace build is serialized to avoid TypeScript project-reference races during clean image builds.

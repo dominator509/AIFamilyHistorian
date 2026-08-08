@@ -32,6 +32,12 @@ export function parseStorageConfig(source: NodeJS.ProcessEnv): StorageConfig {
     secretAccessKey: value.R2_SECRET_ACCESS_KEY,
     bucket: value.R2_BUCKET,
     endpoint: endpoint.toString().replace(/\/$/, ''),
-    forcePathStyle: endpoint.hostname === '127.0.0.1' || endpoint.hostname === 'localhost',
+    // Local HTTP endpoints include Docker service names (for example
+    // `object-storage`) that cannot resolve an S3 virtual-host bucket name.
+    // Production HTTPS endpoints retain provider-compatible virtual-host mode.
+    forcePathStyle:
+      endpoint.protocol === 'http:' ||
+      endpoint.hostname === '127.0.0.1' ||
+      endpoint.hostname === 'localhost',
   });
 }
