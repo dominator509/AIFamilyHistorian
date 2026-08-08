@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit: `4295d862c662420b01d94f5095e83d7ed3218db1` (auth/storage, telemetry/Sentry, and media subprocess hardening checkpoints).
+- Current commit: `e3c4f4e1b9b9f5698c317e9faaa0e8803c321e3f` (six hardening passes complete).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `pnpm test:unit` -> 18 files, 51 tests passed (including strict bearer, storage production endpoint, telemetry-secret, and media subprocess isolation regressions)
+- `pnpm test:unit` -> 18 files, 53 tests passed (including strict bearer, storage production endpoint, telemetry-secret, and media subprocess isolation regressions)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 8 tests)
 - `sh scripts/build.sh` -> `build: ok`
