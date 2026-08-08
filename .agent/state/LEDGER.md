@@ -233,3 +233,5 @@
 2026-08-08T16:45:00Z | codex | HARDENING-37_38 | COMMAND_FAILED | full_gate_lint_require_await_rejected_async_fetch_fixtures_without_await_exit_1_fix_return_promise
 2026-08-08T16:55:00Z | codex | HARDENING-37_38 | HARDENING_PASS | provider_and_deepseek_circuit_breakers_full_unit79_integration31_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_0.74ms_livefire16_encrypted_backup_restore_schema_migrations11_passed
 2026-08-08T17:00:00Z | codex | HARDENING-39 | LOCAL_VERIFICATION | worker_fixity_and_derivative_idempotency_lookups_now_include_organization_and_archive_scope; full regression suite pending
+2026-08-08T17:10:00Z | codex | HARDENING-39 | COMMAND_FAILED | sh_scripts_preflight_exit_1_fourteen_unresolved_external_requirements_turnstile_sentry_github_fly_and_legal_vendor_insurance_dpia_retention; expected_fail_closed_external_gate
+2026-08-08T17:12:00Z | codex | HARDENING-39 | HARDENING_PASS | full_local_gates_unit79_integration31_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_0.54ms_livefire16_encrypted_backup_restore_schema_migrations11; commits_4a61ae0_04c37e9_pushed_master
