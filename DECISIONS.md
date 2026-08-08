@@ -181,3 +181,11 @@ The archive API now requires the `confirmerId` supplied for a confirmed fact to 
 ### ADR-053: Bound worker object downloads and serialize workspace builds
 
 Media workers now pass the authoritative original byte size as a hard ceiling to streamed object downloads. The storage layer stops writing as soon as a response exceeds that ceiling and raises a non-retryable limit error, preventing an oversized or corrupted object from consuming unbounded worker scratch space. Local HTTP-compatible S3 endpoints, including Docker service names, use path-style addressing; production HTTPS endpoints retain provider-compatible virtual-host addressing. The root workspace build is serialized to avoid TypeScript project-reference races during clean image builds.
+
+### ADR-054: Keep local probes inside the worker network without draining preflight
+
+When Docker’s internal-only network prevents host port publication, the database, Redis, and S3-compatible local probes now execute through the existing Compose service network. Every `docker compose exec` invocation is explicitly detached from stdin so the preflight table cannot be truncated after the first probe. This preserves the worker’s internal-only network boundary and leaves external-provider probes unchanged.
+
+### ADR-055: Make local infrastructure tests endpoint-injectable
+
+The local infrastructure integration test now accepts `LOCAL_TELEMETRY_HEALTH_URL` while retaining the loopback default. A disposable test runner can therefore use the Compose telemetry service name when attached to the internal network, without changing production configuration.

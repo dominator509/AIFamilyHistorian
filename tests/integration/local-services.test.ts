@@ -16,7 +16,7 @@ describe('local infrastructure', () => {
       await Promise.all([
         checkHttp(`${process.env.R2_ENDPOINT ?? 'http://127.0.0.1:39000'}/minio/health/ready`),
         checkHttp(`${process.env.MAILPIT_HTTP_URL ?? 'http://127.0.0.1:18025'}/api/v1/info`),
-        checkHttp('http://127.0.0.1:13134/'),
+        checkHttp(process.env.LOCAL_TELEMETRY_HEALTH_URL ?? 'http://127.0.0.1:13134/'),
       ]);
     } finally {
       await pool.end();
