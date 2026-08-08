@@ -235,3 +235,6 @@
 2026-08-08T17:00:00Z | codex | HARDENING-39 | LOCAL_VERIFICATION | worker_fixity_and_derivative_idempotency_lookups_now_include_organization_and_archive_scope; full regression suite pending
 2026-08-08T17:10:00Z | codex | HARDENING-39 | COMMAND_FAILED | sh_scripts_preflight_exit_1_fourteen_unresolved_external_requirements_turnstile_sentry_github_fly_and_legal_vendor_insurance_dpia_retention; expected_fail_closed_external_gate
 2026-08-08T17:12:00Z | codex | HARDENING-39 | HARDENING_PASS | full_local_gates_unit79_integration31_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_0.54ms_livefire16_encrypted_backup_restore_schema_migrations11; commits_4a61ae0_04c37e9_pushed_master
+2026-08-08T13:15:36Z | codex | HARDENING-40 | COMMAND_FAILED | initial_session_store_typecheck_readonly_archive_arrays_mismatch_exit_2; corrected_StoredSession_immutable_arrays
+2026-08-08T13:15:37Z | codex | HARDENING-40 | COMMAND_FAILED | initial_session_route_lint_unsafe_test_assertions_and_unused_fixture_parameter_exit_1; corrected_with_typed_or_regex_assertions
+2026-08-08T13:15:38Z | codex | HARDENING-40 | LOCAL_VERIFICATION | migration0012_database_verify_ok_unit80_integration34_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_0.53ms_livefire16_backup_restore_schema_migrations12
