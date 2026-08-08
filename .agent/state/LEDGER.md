@@ -133,3 +133,4 @@
 2026-08-08T05:20:02Z | codex | HARDENING-2 | HARDENING_PASS | Telemetry provider-secret redaction strengthened; Sentry probe now requires authenticated API token; lint format build and 3 focused tests passed
 2026-08-08T05:27:35Z | codex | HARDENING-3 | HARDENING_PASS | Media subprocess environment reduced to OS runtime variables; regression proves provider secret isolation; media tests 7, lint and typecheck passed
 2026-08-08T05:31:35Z | codex | HARDENING-4 | HARDENING_PASS | Durable deferred-external and handoff evidence refreshed: preflight now fails at TURNSTILE_SITE_KEY; deep security scan setup terminal failure recorded; local quality gates all pass
+2026-08-08T05:32:40Z | codex | HARDENING-5 | HARDENING_PASS | CI verification now runs on master and main; Docker Compose config and non-root runtime image artifacts verified; Git worktree clean
