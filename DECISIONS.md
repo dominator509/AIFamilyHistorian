@@ -105,3 +105,7 @@ The API now consumes the existing distributed limiter for source IP, authenticat
 ### ADR-035: Reject low-diversity production secrets
 
 Production runtime validation now rejects placeholder values and secrets with fewer than ten distinct characters or a single repeated character. The minimum length remains 32 characters, while development and test environments retain deterministic fixtures. This prevents obvious low-entropy deployment values from satisfying configuration validation while leaving secret generation and production secret-manager ownership unchanged.
+
+### ADR-036: Add short-lived bearer session revocation
+
+Issued bearer tokens now carry a random session identifier. The production API wires a Redis-backed, hashed deny-list whose entries expire with the token; revoked identifiers fail at the request hook before archive routes execute. Legacy tokens without an identifier remain verifiable for compatibility, while native login, session issuance persistence, device inventory, rotation, and an administrative revocation command remain required before production approval.

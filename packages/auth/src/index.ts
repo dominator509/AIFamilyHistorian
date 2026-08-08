@@ -1,9 +1,11 @@
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 
 export * from './rate-limit.js';
+export * from './session-revocation.js';
 
 export const sessionSchema = z.object({
+  sessionId: z.uuid().optional(),
   userId: z.uuid(),
   organizationId: z.uuid(),
   archiveIds: z.array(z.uuid()).min(1),
@@ -17,9 +19,15 @@ function signSession(secret: string, payload: string): Buffer {
   return createHmac('sha256', secret).update(`v1.${payload}`, 'utf8').digest();
 }
 
-export function issueSessionToken(secret: string, principal: SessionPrincipal): string {
+export function issueSessionToken(
+  secret: string,
+  principal: Omit<SessionPrincipal, 'sessionId'> & { sessionId?: string },
+): string {
   if (secret.length < 32) throw new Error('session secret is too short');
-  const parsed = sessionSchema.parse(principal);
+  const parsed = sessionSchema.parse({
+    ...principal,
+    sessionId: principal.sessionId ?? randomUUID(),
+  });
   const now = Math.floor(Date.now() / 1000);
   if (parsed.expiresAt <= now || parsed.expiresAt > now + MAX_SESSION_LIFETIME_SECONDS)
     throw new Error('session lifetime is invalid');

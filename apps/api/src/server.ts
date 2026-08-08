@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
 import { parseRuntimeEnvironment } from '@family-historian/config';
-import { RedisFixedWindowRateLimiter } from '@family-historian/auth';
+import { RedisFixedWindowRateLimiter, RedisSessionRevocationStore } from '@family-historian/auth';
 import { createPool } from '@family-historian/database';
 import { ObjectStorage, parseStorageConfig } from '@family-historian/storage';
 import { ArchiveService } from './archive-service.js';
@@ -23,6 +23,7 @@ const app = await createApp({
     limit: 120,
     windowMilliseconds: 60_000,
   }),
+  sessionRevocationStore: new RedisSessionRevocationStore(redis),
 });
 
 const shutdown = async (signal: string): Promise<void> => {

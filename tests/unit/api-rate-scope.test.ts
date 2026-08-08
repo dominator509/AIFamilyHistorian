@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createApp } from '../../apps/api/src/app.js';
 import { issueSessionToken } from '../../apps/api/src/session.js';
 import type { RateLimiter } from '../../packages/auth/src/rate-limit.js';
+import type { SessionRevocationStore } from '../../packages/auth/src/session-revocation.js';
 
 describe('API principal and archive rate scopes', () => {
   it('consumes authenticated principal and archive keys in addition to source IP', async () => {
@@ -41,6 +42,41 @@ describe('API principal and archive rate scopes', () => {
         `principal:${organizationId}:01900000-0000-7000-8000-000000000033`,
         `archive:${organizationId}:${archiveId}`,
       ]);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects a token present in the revocation store before route execution', async () => {
+    const rateLimiter: RateLimiter = {
+      consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+    };
+    const sessionRevocationStore: SessionRevocationStore = {
+      isRevoked: () => Promise.resolve(true),
+      revoke: () => Promise.resolve(),
+    };
+    const archiveId = '01900000-0000-7000-8000-000000000042';
+    const token = issueSessionToken('r'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000043',
+      organizationId: '01900000-0000-7000-8000-000000000044',
+      archiveIds: [archiveId],
+      permissions: ['people:read'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    const app = await createApp({
+      service: { ready: () => Promise.resolve(true), list: () => Promise.resolve([]) } as never,
+      sessionSecret: 'r'.repeat(32),
+      rateLimiter,
+      sessionRevocationStore,
+    });
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/archives/${archiveId}/people`,
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toMatchObject({ code: 'AUTH_REQUIRED' });
     } finally {
       await app.close();
     }

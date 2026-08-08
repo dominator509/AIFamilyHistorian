@@ -5,6 +5,7 @@ import { healthStatusSchema } from '@family-historian/contracts';
 import {
   FixedWindowRateLimiter,
   parseAuthorizationHeader,
+  type SessionRevocationStore,
   type RateLimiter,
   verifySessionToken,
 } from '@family-historian/auth';
@@ -16,6 +17,7 @@ export interface AppDependencies {
   service: ArchiveService;
   sessionSecret: string;
   rateLimiter?: RateLimiter;
+  sessionRevocationStore?: SessionRevocationStore;
 }
 
 export async function createApp(dependencies?: AppDependencies): Promise<FastifyInstance> {
@@ -40,11 +42,22 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
       decision = await rateLimiter.consume(request.ip);
       const authorization = request.headers.authorization;
       if (authorization) {
+        let session: ReturnType<typeof verifySessionToken> | undefined;
         try {
-          const session = verifySessionToken(
+          session = verifySessionToken(
             dependencies?.sessionSecret ?? '',
             parseAuthorizationHeader(authorization),
           );
+        } catch {
+          // Invalid bearer tokens remain an auth failure at the route boundary.
+        }
+        if (session) {
+          if (
+            dependencies?.sessionRevocationStore &&
+            session.sessionId &&
+            (await dependencies.sessionRevocationStore.isRevoked(session.sessionId))
+          )
+            throw new ApiProblem('AUTH_REQUIRED', 'Session has been revoked');
           const principalDecision = await rateLimiter.consume(
             `principal:${session.organizationId}:${session.userId}`,
           );
@@ -56,11 +69,10 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
             );
             if (!archiveDecision.allowed) decision = archiveDecision;
           }
-        } catch {
-          // Invalid bearer tokens remain an auth failure at the route boundary.
         }
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof ApiProblem) throw error;
       throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Rate limiter is unavailable', true);
     }
     reply

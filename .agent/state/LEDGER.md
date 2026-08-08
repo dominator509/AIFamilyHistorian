@@ -164,3 +164,6 @@
 2026-08-08T09:31:00Z | codex | HARDENING-15 | HARDENING_PASS | authenticated_principal_and_archive_rate_keys_layered_over_ip_limiter_unit65_e2e10_typecheck_lint_passed
 2026-08-08T09:35:00Z | codex | HARDENING-16 | HARDENING_PASS | production_secret_entropy_validation_rejects_low_diversity_values_unit66_typecheck_lint_passed
 2026-08-08T09:39:00Z | codex | HARDENING-16 | LOCAL_VERIFICATION | build_security_check_dependency_audit_format_check_passed
+2026-08-08T09:40:00Z | codex | HARDENING-17 | COMMAND_FAILED | revoked_session_api_test_mapped_auth_problem_to_503_due_outer_limiter_catch_fixed_preserving_api_problem
+2026-08-08T09:44:00Z | codex | HARDENING-17 | HARDENING_PASS | bearer_session_ids_redis_hashed_revocation_deny_list_production_server_wiring_unit69_integration16_e2e10_typecheck_lint_passed
+2026-08-08T09:47:00Z | codex | HARDENING-17 | LOCAL_VERIFICATION | build_security_check_dependency_audit_format_check_passed

@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Redis } from 'ioredis';
 import { uuidV7 } from '../../packages/database/src/index.js';
 import { RedisFixedWindowRateLimiter } from '../../packages/auth/src/rate-limit.js';
+import { RedisSessionRevocationStore } from '../../packages/auth/src/session-revocation.js';
 
 if (!process.env.REDIS_URL) process.loadEnvFile('.env');
 const redis = new Redis(process.env.REDIS_URL!, {
@@ -37,5 +38,13 @@ describe('Redis distributed rate limiter', () => {
     const blocked = await limiter.consume('integration-client');
     expect(blocked).toMatchObject({ allowed: false, remaining: 0 });
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
+  });
+
+  it('persists revocation in Redis without storing the raw session identifier', async () => {
+    const store = new RedisSessionRevocationStore(redis, `integration:session:${uuidV7()}`);
+    const sessionId = `integration-session-${uuidV7()}`;
+    await expect(store.isRevoked(sessionId)).resolves.toBe(false);
+    await store.revoke(sessionId, Math.floor(Date.now() / 1000) + 60);
+    await expect(store.isRevoked(sessionId)).resolves.toBe(true);
   });
 });

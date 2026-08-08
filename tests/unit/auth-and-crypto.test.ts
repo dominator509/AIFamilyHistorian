@@ -29,6 +29,7 @@ describe('session principal and auth policy', () => {
     expect(token.startsWith('v1.')).toBe(true);
     const parsed = verifySessionToken(secret, token);
     expect(parsed.userId).toBe(principal.userId);
+    expect(parsed.sessionId).toMatch(/^[0-9a-f-]{36}$/u);
   });
 
   it('rejects invalid Authorization headers', () => {
