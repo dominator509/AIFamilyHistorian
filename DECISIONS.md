@@ -83,3 +83,7 @@ This reuses the pinned `ioredis` 6.0.0 dependency already approved for workers a
 ### ADR-030: Privacy requests enter a fail-closed review state
 
 The `privacy.request` worker validates the queued payload against the tenant-scoped authoritative `privacy_requests` row, transitions it to `running`, appends a hashed-requester audit event, and creates a 30-day deletion hold for deletion requests. It deliberately does not mark fulfillment complete or delete/export data; downstream fulfillment and human approval remain explicit work items.
+
+### ADR-031: Export and narration jobs stop at explicit review intake
+
+`export.*` and `narration.generate` handlers validate their payloads against tenant-scoped authoritative rows, transition queued jobs to `running`, and append `review_required` audit events. They do not fabricate manifests, audio, provider effects, or completed status; provider execution and human approval remain separate workers.

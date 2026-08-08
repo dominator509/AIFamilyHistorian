@@ -152,3 +152,4 @@
 2026-08-08T08:42:27Z | codex | HARDENING-11 | COMMAND_FAILED | privacy_worker_lint_type_only_import_fixed_exit_1
 2026-08-08T08:42:31Z | codex | HARDENING-11 | COMMAND_FAILED | privacy_worker_integration_jsonb_array_serialization_and_stale_retry_row_order_fixed_exit_1
 2026-08-08T08:45:00Z | codex | HARDENING-11 | HARDENING_PASS | privacy_intake_authoritative_validation_review_audit_hash_deletion_hold_no_fake_fulfillment_unit_64_integration_14_e2e_9_typecheck_lint_format_build_security_audit_reality_smoke_live_fire_16
+2026-08-08T08:51:36Z | codex | HARDENING-12 | HARDENING_PASS | export_and_narration_review_gated_intake_authoritative_validation_no_fake_provider_effects_unit_64_integration_15_typecheck_lint_format_build_security_audit_reality_smoke_live_fire_16

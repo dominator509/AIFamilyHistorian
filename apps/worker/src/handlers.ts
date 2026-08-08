@@ -3,7 +3,11 @@ import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { privacyRequestInputSchema } from '@family-historian/contracts';
+import {
+  exportInputSchema,
+  narrationInputSchema,
+  privacyRequestInputSchema,
+} from '@family-historian/contracts';
 import { uuidV7, type DatabaseClient } from '@family-historian/database';
 import {
   buildMediaPipelinePlan,
@@ -25,6 +29,16 @@ const privacyPayloadSchema = z.object({
   payload: privacyRequestInputSchema,
 });
 
+const exportPayloadSchema = z.object({
+  aggregateId: z.uuid(),
+  payload: exportInputSchema,
+});
+
+const narrationPayloadSchema = z.object({
+  aggregateId: z.uuid(),
+  payload: narrationInputSchema,
+});
+
 export interface WorkerHandlerOptions {
   readonly storage: ObjectStorage;
   readonly binaries?: MediaToolExecutionOptions['binaries'];
@@ -36,7 +50,115 @@ export function createDefaultHandlers(
   return new Map([
     ['media.scan', (context) => handleMediaScan(context, options)],
     ['privacy.request', handlePrivacyRequest],
+    ['export.portable', (context) => handleExportIntake(context, 'portable')],
+    ['export.book', (context) => handleExportIntake(context, 'book')],
+    ['export.epub', (context) => handleExportIntake(context, 'epub')],
+    ['export.audiobook', (context) => handleExportIntake(context, 'audiobook')],
+    ['narration.generate', handleNarrationIntake],
   ]);
+}
+
+async function handleExportIntake(
+  context: Parameters<WorkerJobHandler>[0],
+  expectedKind: 'portable' | 'book' | 'epub' | 'audiobook',
+): Promise<void> {
+  const parsed = exportPayloadSchema.safeParse(context.job.payload);
+  if (!parsed.success || parsed.data.payload.kind !== expectedKind)
+    throw new WorkerJobError('export payload is invalid', 'JOB_PAYLOAD_INVALID', false);
+  if (!context.job.familyArchiveId)
+    throw new WorkerJobError('export archive scope is missing', 'JOB_SCOPE_INVALID', false);
+  const { aggregateId } = parsed.data;
+  await context.withTenant(async (client) => {
+    const current = await client.query<{ status: string }>(
+      `select status from export_jobs
+        where id = $1 and organization_id = $2 and family_archive_id = $3`,
+      [aggregateId, context.job.organizationId, context.job.familyArchiveId],
+    );
+    const job = current.rows[0];
+    if (!job)
+      throw new WorkerJobError(
+        'export job is outside the worker scope',
+        'PERMISSION_DENIED',
+        false,
+      );
+    if (job.status === 'completed' || job.status === 'cancelled') return;
+    if (job.status !== 'queued' && job.status !== 'retryable_failed') return;
+    const updated = await client.query(
+      `update export_jobs set status = 'running'
+        where id = $1 and organization_id = $2 and family_archive_id = $3
+          and status in ('queued', 'retryable_failed') returning id`,
+      [aggregateId, context.job.organizationId, context.job.familyArchiveId],
+    );
+    if (updated.rowCount !== 1) return;
+    await appendReviewAudit(client, context, 'export.accepted', {
+      exportJobId: aggregateId,
+      kind: expectedKind,
+    });
+  });
+}
+
+async function handleNarrationIntake(context: Parameters<WorkerJobHandler>[0]): Promise<void> {
+  const parsed = narrationPayloadSchema.safeParse(context.job.payload);
+  if (!parsed.success)
+    throw new WorkerJobError('narration payload is invalid', 'JOB_PAYLOAD_INVALID', false);
+  if (!context.job.familyArchiveId)
+    throw new WorkerJobError('narration archive scope is missing', 'JOB_SCOPE_INVALID', false);
+  const { aggregateId, payload } = parsed.data;
+  await context.withTenant(async (client) => {
+    const current = await client.query<{
+      status: string;
+      edition_id: string;
+      voice_authorization_id: string;
+    }>(
+      `select status, edition_id, voice_authorization_id from narration_jobs
+        where id = $1 and organization_id = $2 and family_archive_id = $3`,
+      [aggregateId, context.job.organizationId, context.job.familyArchiveId],
+    );
+    const job = current.rows[0];
+    if (!job)
+      throw new WorkerJobError(
+        'narration job is outside the worker scope',
+        'PERMISSION_DENIED',
+        false,
+      );
+    if (
+      job.edition_id !== payload.editionId ||
+      job.voice_authorization_id !== payload.voiceAuthorizationId
+    )
+      throw new WorkerJobError(
+        'narration payload does not match authoritative data',
+        'JOB_PAYLOAD_INVALID',
+        false,
+      );
+    if (job.status === 'completed' || job.status === 'cancelled') return;
+    if (job.status !== 'queued' && job.status !== 'retryable_failed') return;
+    const updated = await client.query(
+      `update narration_jobs set status = 'running'
+        where id = $1 and organization_id = $2 and family_archive_id = $3
+          and status in ('queued', 'retryable_failed') returning id`,
+      [aggregateId, context.job.organizationId, context.job.familyArchiveId],
+    );
+    if (updated.rowCount !== 1) return;
+    await appendReviewAudit(client, context, 'narration.accepted', {
+      narrationJobId: aggregateId,
+      editionId: payload.editionId,
+      voiceAuthorizationId: payload.voiceAuthorizationId,
+    });
+  });
+}
+
+async function appendReviewAudit(
+  client: DatabaseClient,
+  context: Parameters<WorkerJobHandler>[0],
+  action: string,
+  metadata: Record<string, string>,
+): Promise<void> {
+  await client.query(
+    `insert into audit_events(
+       id, organization_id, family_archive_id, actor_pseudonym, action, outcome, metadata, occurred_at
+     ) values ($1, $2, $3, 'worker:job-intake', $4, 'review_required', $5, now())`,
+    [uuidV7(), context.job.organizationId, context.job.familyArchiveId, action, metadata],
+  );
 }
 
 /**

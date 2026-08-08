@@ -97,4 +97,109 @@ describe('privacy request worker intake', () => {
     );
     expect(outbox.rows[0]).toEqual({ status: 'completed' });
   });
+
+  it('moves export and narration jobs into explicit review-required running states', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Generation family', 'Generation archive');
+    const exportId = uuidV7();
+    const exportOutboxId = uuidV7();
+    await pool.query(
+      "insert into export_jobs(id, organization_id, family_archive_id, status, idempotency_key) values ($1,$2,$3,'queued',$4)",
+      [exportId, context.organizationId, context.familyArchiveId, `integration:${exportId}`],
+    );
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [
+        exportOutboxId,
+        context.organizationId,
+        context.familyArchiveId,
+        'export.portable',
+        { aggregateId: exportId, payload: { kind: 'portable' } },
+      ],
+    );
+    const editionId = uuidV7();
+    const voiceAuthorizationId = uuidV7();
+    const narrationId = uuidV7();
+    const narrationOutboxId = uuidV7();
+    await pool.query(
+      "insert into editions(id, organization_id, family_archive_id, edition_hash, status, manifest) values ($1,$2,$3,$4,'draft',$5)",
+      [
+        editionId,
+        context.organizationId,
+        context.familyArchiveId,
+        `hash:${editionId}`,
+        JSON.stringify({}),
+      ],
+    );
+    await pool.query(
+      'insert into voice_authorizations(id, organization_id, family_archive_id, kind, verification_reference) values ($1,$2,$3,$4,$5)',
+      [
+        voiceAuthorizationId,
+        context.organizationId,
+        context.familyArchiveId,
+        'stock',
+        'stock:integration',
+      ],
+    );
+    await pool.query(
+      "insert into narration_jobs(id, organization_id, family_archive_id, edition_id, voice_authorization_id, status, idempotency_key) values ($1,$2,$3,$4,$5,'queued',$6)",
+      [
+        narrationId,
+        context.organizationId,
+        context.familyArchiveId,
+        editionId,
+        voiceAuthorizationId,
+        `integration:${narrationId}`,
+      ],
+    );
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [
+        narrationOutboxId,
+        context.organizationId,
+        context.familyArchiveId,
+        'narration.generate',
+        {
+          aggregateId: narrationId,
+          payload: { editionId, voiceAuthorizationId },
+        },
+      ],
+    );
+
+    const exportDispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: createDefaultHandlers({ storage: {} as ObjectStorage }),
+      jobTypes: ['export.portable'],
+      pollMilliseconds: 50,
+    });
+    expect(await exportDispatcher.processOne()).toBe(true);
+    const narrationDispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: createDefaultHandlers({ storage: {} as ObjectStorage }),
+      jobTypes: ['narration.generate'],
+      pollMilliseconds: 50,
+    });
+    expect(await narrationDispatcher.processOne()).toBe(true);
+
+    const states = await pool.query<{ export_status: string; narration_status: string }>(
+      `select
+         (select status from export_jobs where id = $1) as export_status,
+         (select status from narration_jobs where id = $2) as narration_status`,
+      [exportId, narrationId],
+    );
+    expect(states.rows[0]).toEqual({ export_status: 'running', narration_status: 'running' });
+    const audits = await pool.query<{ action: string; outcome: string }>(
+      `select action, outcome from audit_events
+        where organization_id = $1 and family_archive_id = $2
+          and action in ('export.accepted', 'narration.accepted')
+        order by action`,
+      [context.organizationId, context.familyArchiveId],
+    );
+    expect(audits.rows).toEqual([
+      { action: 'export.accepted', outcome: 'review_required' },
+      { action: 'narration.accepted', outcome: 'review_required' },
+    ]);
+  });
 });
