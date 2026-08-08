@@ -19,9 +19,9 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `pnpm test:unit` -> 20 files, 64 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder, fixed-window limiter, and Redis distributed limiter regressions)
+- `pnpm test:unit` -> 21 files, 65 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder, fixed-window limiter, Redis distributed limiter, and principal/archive rate-scope regressions)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (7 files, 15 tests, including real Redis distributed rate limiting, tenant-scoped privacy/deletion-hold evidence, export and narration review intake, and SQL outbox claim/lease/completion/retry/dead-letter, unsupported-job, and stale-worker fencing proofs)
-- `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 9 tests)
+- `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 10 tests)
 - `sh scripts/build.sh` -> `build: ok`
 - `sh scripts/security-check.sh` -> `security check: ok`
 - `sh scripts/dependency-audit.sh` -> `dependency audit: ok`
@@ -34,7 +34,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/probes/resend.sh` -> authenticated Resend domains probe passed; verified sender and recipient delivery remain required.
 - `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260808T073145Z.dump.enc`).
 - `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260808T081259Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=6`.
-- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=1.48ms` against the real Fastify health endpoint.
+- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=1.01ms` against the real Fastify health endpoint.
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
 - Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
 - Multipart resume status -> API returned the provider-listed completed part number, ETag, and byte size before completion.
