@@ -109,6 +109,43 @@ services:
       retries: 12
     restart: unless-stopped
 
+  # Opt-in local worker rehearsal. The profile keeps the default dependency
+  # stack lightweight while making the OS-level sandbox explicit when the
+  # worker is run locally.
+  worker:
+    profiles: ['worker']
+    build:
+      context: .
+      target: worker-runtime
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://family_historian:${LOCAL_POSTGRES_PASSWORD:?generate .env first}@postgres:5432/family_historian
+      REDIS_URL: redis://:${LOCAL_REDIS_PASSWORD:?generate .env first}@redis:6379
+      R2_ACCOUNT_ID: local
+      R2_ACCESS_KEY_ID: ${LOCAL_S3_ROOT_USER:?generate .env first}
+      R2_SECRET_ACCESS_KEY: ${LOCAL_S3_ROOT_PASSWORD:?generate .env first}
+      R2_BUCKET: ${R2_BUCKET:-family-historian-local}
+      R2_ENDPOINT: http://object-storage:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      object-storage-init:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=1g
+    cap_drop: ['ALL']
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
+    mem_limit: 2g
+    cpus: 2.0
+    restart: on-failure
+
 volumes:
   postgres_data:
   redis_data:

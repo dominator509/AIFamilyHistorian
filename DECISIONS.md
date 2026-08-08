@@ -144,6 +144,10 @@ Multipart completion now reads at most a bounded 4 KiB prefix from object storag
 
 The API now exposes `POST /v1/session/logout`. It verifies the current bearer token, requires a session identifier and the configured Redis-backed revocation store, and revokes only that session until its signed expiry. The route returns no body and fails closed when the revocation dependency is unavailable; administrative device/session inventory and server-side membership revalidation remain separate release gates.
 
+### ADR-046: Declare media-worker OS resource and privilege ceilings
+
+The opt-in local worker profile runs the dedicated worker image read-only, drops all Linux capabilities, enables `no-new-privileges`, confines writable space to a 1 GiB `noexec`/`nosuid` `/tmp`, and applies 2 GiB memory, 2 CPU, and 256 PID ceilings. The Fly worker configuration declares the matching 2 CPU/2 GiB VM and graceful SIGTERM timeout. The worker still needs internal database, Redis, and object-storage network access; production network-policy, syscall-profile, and hosted cgroup evidence remain release gates.
+
 ### ADR-043: Serialize cost-capacity decisions inside the database transaction
 
 Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.

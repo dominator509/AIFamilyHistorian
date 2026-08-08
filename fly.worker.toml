@@ -10,5 +10,14 @@ primary_region = "ord"
   HOST = "0.0.0.0"
   PORT = "8080"
 
+[vm]
+  cpu_kind = "shared"
+  cpus = 2
+  memory = "2048mb"
+
+[kill]
+  signal = "SIGTERM"
+  timeout = "30s"
+
 [processes]
   worker = "corepack pnpm --filter @family-historian/worker start"
