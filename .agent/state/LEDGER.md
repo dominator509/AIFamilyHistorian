@@ -135,3 +135,7 @@
 2026-08-08T05:31:35Z | codex | HARDENING-4 | HARDENING_PASS | Durable deferred-external and handoff evidence refreshed: preflight now fails at TURNSTILE_SITE_KEY; deep security scan setup terminal failure recorded; local quality gates all pass
 2026-08-08T05:32:40Z | codex | HARDENING-5 | HARDENING_PASS | CI verification now runs on master and main; Docker Compose config and non-root runtime image artifacts verified; Git worktree clean
 2026-08-08T05:37:09Z | codex | HARDENING-6 | HARDENING_PASS | Final audit passed: 18 unit files 53 tests, 4 integration files 7 tests, 3 E2E files 8 tests, security, smoke, lint, format, typecheck, performance p95 6.17ms, reality gate, compose config; tracked secret scan clean
+2026-08-08T06:20:21Z | codex | HARDENING-7 | COMMAND_FAILED | pnpm dependency-audit missing script exit 1 corrected to pnpm audit
+2026-08-08T06:20:21Z | codex | HARDENING-7 | COMMAND_FAILED | pnpm reality-gate missing script exit 1 corrected to sh scripts/reality-gate.sh
+2026-08-08T06:20:21Z | codex | HARDENING-7 | COMMAND_FAILED | restore-check missing backup argument exit 1 corrected with newest encrypted backup
+2026-08-08T06:20:21Z | codex | HARDENING-7 | HARDENING_PASS | Aggregated preflight reports 14 unresolved external requirements; limiter and provider validation hardened; recursive AI redaction and exact cache added; RLS verifier covers canonical relations; scoped mutation checks; unit 63 integration 7 E2E 9 live-fire 16 performance p95 0.61ms backup restore and tracked secret scan passed

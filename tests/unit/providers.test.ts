@@ -127,4 +127,25 @@ describe('provider adapters', () => {
       stripe.verifyWebhookSignature(payload, `t=${timestamp},v1=${signature}`, 'wrong', timestamp),
     ).toThrow(ProviderAdapterError);
   });
+
+  it('rejects unsafe provider endpoints and unbounded retry settings', async () => {
+    await expect(
+      new ResendMailer({ baseUrl: 'http://provider.example.test', apiKey: 'test-key' }).send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'unsafe-endpoint',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend' });
+    await expect(
+      new ResendMailer({ baseUrl, apiKey: 'test-key', maxAttempts: 6 }).send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'too-many-retries',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend' });
+  });
 });

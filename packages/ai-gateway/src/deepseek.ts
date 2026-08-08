@@ -29,9 +29,27 @@ export class DeepSeekProvider implements AiProvider {
 
   public constructor(private readonly config: DeepSeekConfig) {
     if (!config.apiKey.startsWith('sk-')) throw new Error('DeepSeek API key shape is invalid');
-    this.#baseUrl = (config.baseUrl ?? 'https://api.deepseek.com').replace(/\/$/u, '');
-    this.#timeoutMs = config.timeoutMs ?? 30_000;
-    this.#maxAttempts = config.maxAttempts ?? 3;
+    const baseUrl = config.baseUrl ?? 'https://api.deepseek.com';
+    let parsed: URL;
+    try {
+      parsed = new URL(baseUrl);
+    } catch {
+      throw new Error('DeepSeek endpoint is invalid');
+    }
+    const loopback = ['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname);
+    if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && loopback))
+      throw new Error('DeepSeek endpoint must use HTTPS');
+    if (parsed.username || parsed.password || parsed.search || parsed.hash)
+      throw new Error('DeepSeek endpoint contains unsupported URL components');
+    const timeoutMs = config.timeoutMs ?? 30_000;
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 120_000)
+      throw new Error('DeepSeek timeout is outside the allowed range');
+    const maxAttempts = config.maxAttempts ?? 3;
+    if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5)
+      throw new Error('DeepSeek retry count is outside the allowed range');
+    this.#baseUrl = parsed.toString().replace(/\/$/u, '');
+    this.#timeoutMs = timeoutMs;
+    this.#maxAttempts = maxAttempts;
   }
 
   public async complete(

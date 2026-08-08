@@ -21,6 +21,20 @@ export const runtimeEnvironmentSchema = z
         message: 'production must bind an explicitly configured host',
       });
     }
+    if (value.NODE_ENV === 'production') {
+      for (const key of [
+        'SESSION_SECRET',
+        'FIELD_ENCRYPTION_MASTER_KEY',
+        'DOWNLOAD_SIGNING_SECRET',
+      ] as const) {
+        if (/replace|placeholder|example|change[-_ ]?me|dummy/iu.test(value[key]))
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'production secrets must not contain placeholder values',
+          });
+      }
+    }
   });
 
 export type RuntimeEnvironment = z.infer<typeof runtimeEnvironmentSchema>;

@@ -1,6 +1,8 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 
+export * from './rate-limit.js';
+
 export const sessionSchema = z.object({
   userId: z.uuid(),
   organizationId: z.uuid(),
@@ -9,6 +11,7 @@ export const sessionSchema = z.object({
   expiresAt: z.number().int().positive(),
 });
 export type SessionPrincipal = z.infer<typeof sessionSchema>;
+const MAX_SESSION_LIFETIME_SECONDS = 24 * 60 * 60;
 
 function signSession(secret: string, payload: string): Buffer {
   return createHmac('sha256', secret).update(`v1.${payload}`, 'utf8').digest();
@@ -16,9 +19,11 @@ function signSession(secret: string, payload: string): Buffer {
 
 export function issueSessionToken(secret: string, principal: SessionPrincipal): string {
   if (secret.length < 32) throw new Error('session secret is too short');
-  const payload = Buffer.from(JSON.stringify(sessionSchema.parse(principal)), 'utf8').toString(
-    'base64url',
-  );
+  const parsed = sessionSchema.parse(principal);
+  const now = Math.floor(Date.now() / 1000);
+  if (parsed.expiresAt <= now || parsed.expiresAt > now + MAX_SESSION_LIFETIME_SECONDS)
+    throw new Error('session lifetime is invalid');
+  const payload = Buffer.from(JSON.stringify(parsed), 'utf8').toString('base64url');
   return `v1.${payload}.${signSession(secret, payload).toString('base64url')}`;
 }
 

@@ -28,13 +28,42 @@ interface RequestOptions {
   readonly body?: BodyInit;
 }
 
+function validateProviderOptions(options: ProviderAdapterOptions, provider: string): void {
+  if (!options.apiKey.trim())
+    throw new ProviderAdapterError(`${provider} API key is required`, provider);
+  const timeoutMs = options.timeoutMs ?? 20_000;
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 120_000)
+    throw new ProviderAdapterError(`${provider} timeout is outside the allowed range`, provider);
+  const maxAttempts = options.maxAttempts ?? 3;
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5)
+    throw new ProviderAdapterError(
+      `${provider} retry count is outside the allowed range`,
+      provider,
+    );
+  let parsed: URL;
+  try {
+    parsed = new URL(options.baseUrl);
+  } catch {
+    throw new ProviderAdapterError(`${provider} endpoint is invalid`, provider);
+  }
+  const loopback = ['127.0.0.1', 'localhost', '::1'].includes(parsed.hostname);
+  if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && loopback))
+    throw new ProviderAdapterError(`${provider} endpoint must use HTTPS`, provider);
+  if (parsed.username || parsed.password || parsed.search || parsed.hash)
+    throw new ProviderAdapterError(
+      `${provider} endpoint contains unsupported URL components`,
+      provider,
+    );
+}
+
 async function request(options: ProviderAdapterOptions, input: RequestOptions): Promise<Response> {
+  validateProviderOptions(options, input.provider);
   const fetchImpl = options.fetchImpl ?? fetch;
   const maxAttempts = options.maxAttempts ?? 3;
   let lastError: unknown;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const timeout = AbortSignal.timeout(options.timeoutMs ?? 20_000);
     try {
+      const timeout = AbortSignal.timeout(options.timeoutMs ?? 20_000);
       const response = await fetchImpl(input.url, {
         method: input.method,
         headers: input.headers,

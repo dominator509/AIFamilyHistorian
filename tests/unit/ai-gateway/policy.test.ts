@@ -3,6 +3,7 @@ import {
   canonicalJson,
   enforceOutboundPolicy,
   ProviderPolicyError,
+  sanitizeOutboundValue,
 } from '../../../packages/ai-gateway/src/index.js';
 
 describe('AI outbound policy', () => {
@@ -54,5 +55,11 @@ describe('AI outbound policy', () => {
     expect(canonicalJson({ z: 1, a: { y: 2, b: 3 } })).toBe(
       canonicalJson({ a: { b: 3, y: 2 }, z: 1 }),
     );
+  });
+
+  it('sanitizes nested structured values before serialization', () => {
+    const result = sanitizeOutboundValue({ nested: ['safe', 'contact@example.com'] });
+    expect(result.value).toEqual({ nested: ['safe', '[REDACTED]'] });
+    expect(result.redactions).toBe(1);
   });
 });

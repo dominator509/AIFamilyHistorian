@@ -1,6 +1,6 @@
 # PREFLIGHT - AI Family Historian
 
-This is the only interactive preparation step. Obtain every REQUIRED item, copy .env.example to .env, and run `sh scripts/preflight.sh` until `preflight: ok`. Production launch remains blocked by the documentary approvals listed below even when technical probes pass.
+This is the only interactive preparation step. Obtain every REQUIRED item, copy .env.example to .env, and run `sh scripts/preflight.sh` until `preflight: ok`. The preflight command evaluates the complete table in one bounded run and reports every unresolved variable or failed probe before exiting nonzero; it never treats a partial pass as readiness. Production launch remains blocked by the documentary approvals listed below even when technical probes pass.
 
 ## Credentials and approvals
 

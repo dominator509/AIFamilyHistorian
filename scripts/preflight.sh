@@ -16,9 +16,26 @@ elif timeout --version 2>/dev/null | grep -q 'GNU coreutils'; then
 else
   fail "GNU timeout is required for bounded credential probes"
 fi
+failures=0
 while IFS='|' read -r var req probe; do
   eval "val=\${$var:-}"
-  if [ -z "$val" ]; then [ "$req" = OPTIONAL ] && continue; fail "env var not set: $var"; fi
-  if [ "$probe" != "-" ]; then [ -f "$probe" ] || fail "missing probe: $probe"; $TCMD sh "$probe" >/dev/null 2>&1 || fail "credential probe failed: $var"; fi
+  if [ -z "$val" ]; then
+    [ "$req" = OPTIONAL ] && continue
+    echo "preflight: unresolved $var (value is not set)" >&2
+    failures=$((failures + 1))
+    continue
+  fi
+  if [ "$probe" != "-" ]; then
+    if [ ! -f "$probe" ]; then
+      echo "preflight: unresolved $var (missing probe: $probe)" >&2
+      failures=$((failures + 1))
+      continue
+    fi
+    if ! $TCMD sh "$probe" >/dev/null 2>&1; then
+      echo "preflight: unresolved $var (credential probe failed)" >&2
+      failures=$((failures + 1))
+    fi
+  fi
 done < "$TMP"
+[ "$failures" -eq 0 ] || { echo "preflight: FAIL - $failures unresolved requirements" >&2; exit 1; }
 echo "preflight: ok"

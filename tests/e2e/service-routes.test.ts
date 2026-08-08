@@ -18,7 +18,9 @@ const encryptionKey = process.env.FIELD_ENCRYPTION_MASTER_KEY ?? '';
 const pool = createPool();
 const storage = new ObjectStorage(parseStorageConfig(process.env));
 const context = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+const foreignContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
 const userId = uuidV7();
+const foreignMediaId = uuidV7();
 const service = new ArchiveService(pool, encryptionKey, storage);
 const app = await createApp({ service, sessionSecret });
 const token = issueSessionToken(sessionSecret, {
@@ -32,6 +34,13 @@ const token = issueSessionToken(sessionSecret, {
 beforeAll(async () => {
   await migrate(pool);
   await bootstrapArchive(pool, context, 'API family', 'API archive');
+  await bootstrapArchive(pool, foreignContext, 'Foreign family', 'Foreign archive');
+  await withTenantTransaction(pool, foreignContext, async (client) => {
+    await client.query(
+      "insert into media_assets(id, organization_id, family_archive_id, media_type, rights_status) values ($1,$2,$3,'audio','verified')",
+      [foreignMediaId, foreignContext.organizationId, foreignContext.familyArchiveId],
+    );
+  });
 });
 afterAll(async () => {
   await app.close();
@@ -81,6 +90,25 @@ describe('authenticated archive service routes', () => {
     });
     expect(listed.statusCode).toBe(200);
     expect(listed.json()).toMatchObject({ items: [{ id: firstBody.id }] });
+  });
+
+  it('rejects cross-archive references before creating provider uploads', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/uploads`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `cross-scope-${uuidV7()}`,
+      },
+      payload: {
+        mediaAssetId: foreignMediaId,
+        contentType: 'audio/wav',
+        byteSize: 1,
+        sha256Hex: 'a'.repeat(64),
+      },
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ code: 'PERMISSION_DENIED' });
   });
 
   it('completes a signed multipart upload and verifies streamed object fixity', async () => {

@@ -46,6 +46,18 @@ describe('session principal and auth policy', () => {
     expect(() => verifySessionToken(secret, forged)).toThrow('AUTH_REQUIRED');
   });
 
+  it('rejects expired and excessively long-lived sessions at issuance', () => {
+    expect(() =>
+      issueSessionToken(secret, { ...principal, expiresAt: Math.floor(Date.now() / 1000) - 1 }),
+    ).toThrow('session lifetime');
+    expect(() =>
+      issueSessionToken(secret, {
+        ...principal,
+        expiresAt: Math.floor(Date.now() / 1000) + 2 * 24 * 60 * 60,
+      }),
+    ).toThrow('session lifetime');
+  });
+
   it('authorizes scoped archive access only with permission', () => {
     const value = verifySessionToken(secret, issueSessionToken(secret, principal));
     expect(() => authorizeArchivePermission(value, 'other-archive', 'records:write')).toThrow(

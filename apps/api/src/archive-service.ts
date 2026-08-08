@@ -131,6 +131,14 @@ export class ArchiveService {
             );
             break;
           case 'recording-sessions':
+            if (mutation.input.subjectId)
+              await this.assertScopedIds(
+                client,
+                context,
+                'people',
+                [mutation.input.subjectId],
+                'subject',
+              );
             await client.query(
               'insert into recording_sessions(id, organization_id, family_archive_id, subject_id, scheduled_at, status) values ($1,$2,$3,$4,$5,$6)',
               [
@@ -153,6 +161,13 @@ export class ArchiveService {
             );
             break;
           case 'transcripts': {
+            await this.assertScopedIds(
+              client,
+              context,
+              'media_assets',
+              [mutation.input.mediaAssetId],
+              'media asset',
+            );
             const revisionId = uuidV7();
             await client.query(
               'insert into transcripts(id, organization_id, family_archive_id, media_asset_id) values ($1,$2,$3,$4)',
@@ -188,6 +203,20 @@ export class ArchiveService {
             );
             break;
           case 'events':
+            await this.assertScopedIds(
+              client,
+              context,
+              'people',
+              mutation.input.personId ? [mutation.input.personId] : [],
+              'person',
+            );
+            await this.assertScopedIds(
+              client,
+              context,
+              'places',
+              mutation.input.placeId ? [mutation.input.placeId] : [],
+              'place',
+            );
             await client.query(
               'insert into life_events(id, organization_id, family_archive_id, person_id, place_id, event_type, date_precision, occurred_on, description_encrypted, visibility) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',
               [
@@ -205,15 +234,14 @@ export class ArchiveService {
             );
             break;
           case 'facts': {
-            const evidence = await client.query<{ id: string }>(
-              'select id from evidence_links where id = any($1::uuid[])',
-              [mutation.input.evidenceLinkIds],
+            await this.assertScopedIds(
+              client,
+              context,
+              'evidence_links',
+              mutation.input.evidenceLinkIds,
+              'evidence link',
+              'EVIDENCE_MISSING',
             );
-            if (evidence.rowCount !== mutation.input.evidenceLinkIds.length)
-              throw new ApiProblem(
-                'EVIDENCE_MISSING',
-                'Every confirmed fact requires valid evidence',
-              );
             await client.query(
               'insert into confirmed_facts(id, organization_id, family_archive_id, encrypted_text, confirmer_id, status) values ($1,$2,$3,$4,$5,$6)',
               [
@@ -247,6 +275,20 @@ export class ArchiveService {
             );
             break;
           case 'narration':
+            await this.assertScopedIds(
+              client,
+              context,
+              'editions',
+              [mutation.input.editionId],
+              'edition',
+            );
+            await this.assertScopedIds(
+              client,
+              context,
+              'voice_authorizations',
+              [mutation.input.voiceAuthorizationId],
+              'voice authorization',
+            );
             await client.query(
               "insert into narration_jobs(id, organization_id, family_archive_id, edition_id, voice_authorization_id, status, idempotency_key) values ($1,$2,$3,$4,$5,'queued',$6)",
               [
@@ -348,6 +390,13 @@ export class ArchiveService {
           action: 'upload.begin',
         },
         async (client) => {
+          await this.assertScopedIds(
+            client,
+            context,
+            'media_assets',
+            [input.mediaAssetId],
+            'media asset',
+          );
           providerUploadId = await storage.beginMultipart(
             objectKey,
             input.contentType,
@@ -542,6 +591,31 @@ export class ArchiveService {
 
   private actorPseudonym(userId: string): string {
     return createHash('sha256').update(userId, 'utf8').digest('hex');
+  }
+
+  private async assertScopedIds(
+    client: DatabaseClient,
+    context: DatabaseContext,
+    table: string,
+    ids: readonly string[],
+    label: string,
+    problemCode: 'PERMISSION_DENIED' | 'EVIDENCE_MISSING' = 'PERMISSION_DENIED',
+  ): Promise<void> {
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length === 0) return;
+    if (uniqueIds.length !== ids.length)
+      throw new ApiProblem(problemCode, `${label} identifiers must be unique`);
+    const result = await client.query<{ id: string }>(
+      `select id from ${table} where id = any($1::uuid[]) and organization_id = $2 and family_archive_id = $3`,
+      [uniqueIds, context.organizationId, context.familyArchiveId],
+    );
+    if (result.rowCount !== uniqueIds.length)
+      throw new ApiProblem(
+        problemCode,
+        problemCode === 'EVIDENCE_MISSING'
+          ? 'Every confirmed fact requires valid evidence'
+          : `${label} is outside the authorized archive scope`,
+      );
   }
 
   private requireStorage(): ObjectStorage {

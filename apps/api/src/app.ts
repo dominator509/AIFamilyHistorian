@@ -2,13 +2,15 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { healthStatusSchema } from '@family-historian/contracts';
+import { FixedWindowRateLimiter, type RateLimiter } from '@family-historian/auth';
 import type { ArchiveService } from './archive-service.js';
-import { sendProblem } from './problems.js';
+import { ApiProblem, sendProblem } from './problems.js';
 import { registerV1Routes } from './routes.js';
 
 export interface AppDependencies {
   service: ArchiveService;
   sessionSecret: string;
+  rateLimiter?: RateLimiter;
 }
 
 export async function createApp(dependencies?: AppDependencies): Promise<FastifyInstance> {
@@ -24,6 +26,19 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
   await app.register(helmet, { global: true });
   await app.register(cors, { origin: false, credentials: false });
   app.setErrorHandler((error, request, reply) => sendProblem(error, request, reply));
+  const rateLimiter =
+    dependencies?.rateLimiter ??
+    new FixedWindowRateLimiter({ limit: 120, windowMilliseconds: 60_000, maxKeys: 10_000 });
+  app.addHook('onRequest', async (request, reply) => {
+    const decision = rateLimiter.consume(request.ip);
+    reply
+      .header('RateLimit-Limit', String(decision.limit))
+      .header('RateLimit-Remaining', String(decision.remaining));
+    if (!decision.allowed) {
+      reply.header('Retry-After', String(decision.retryAfterSeconds));
+      throw new ApiProblem('RATE_LIMITED', 'Request rate limit exceeded', true);
+    }
+  });
 
   app.get('/health/live', () =>
     healthStatusSchema.parse({

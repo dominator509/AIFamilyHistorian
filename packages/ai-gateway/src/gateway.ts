@@ -1,6 +1,12 @@
 import type { z } from 'zod';
 import { canonicalJson, sha256 } from './canonical-json.js';
-import { enforceOutboundPolicy, type ProcessingPurpose } from './policy.js';
+import {
+  containsPromptInjection,
+  enforceOutboundPolicy,
+  sanitizeOutboundValue,
+  ProviderPolicyError,
+  type ProcessingPurpose,
+} from './policy.js';
 import type { AiProvider, ProviderUsage } from './provider.js';
 
 export interface GatewayRequest<T> {
@@ -33,10 +39,61 @@ export interface GatewayResult<T> {
     redactions: number;
   };
   usage: ProviderUsage & { cacheRatio: number };
+  applicationCacheHit?: boolean;
+}
+
+export interface AiResultCache {
+  get(key: string): Promise<unknown>;
+  set(key: string, value: unknown, ttlSeconds: number): Promise<void>;
+  delete?(key: string): Promise<void>;
+}
+
+export interface RedisCacheClient {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, mode: 'EX', seconds: number): Promise<unknown>;
+  del?(key: string): Promise<unknown>;
+}
+
+/** JSON-only Redis adapter; callers must provide a private, access-controlled Redis client. */
+export class RedisAiResultCache implements AiResultCache {
+  public constructor(private readonly client: RedisCacheClient) {}
+
+  public async get(key: string): Promise<unknown> {
+    const encoded = await this.client.get(key);
+    if (encoded === null) return undefined;
+    try {
+      return JSON.parse(encoded) as unknown;
+    } catch {
+      await this.delete(key);
+      return undefined;
+    }
+  }
+
+  public async set(key: string, value: unknown, ttlSeconds: number): Promise<void> {
+    if (!Number.isInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 86_400)
+      throw new Error('AI cache TTL is outside the allowed range');
+    await this.client.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+  }
+
+  public async delete(key: string): Promise<void> {
+    if (this.client.del) await this.client.del(key);
+  }
+}
+
+export interface AiGatewayOptions {
+  readonly cache?: AiResultCache;
+  readonly cacheTtlSeconds?: number;
 }
 
 export class AiGateway {
-  public constructor(private readonly provider: AiProvider) {}
+  public constructor(
+    private readonly provider: AiProvider,
+    private readonly options: AiGatewayOptions = {},
+  ) {
+    const ttl = options.cacheTtlSeconds ?? 300;
+    if (!Number.isInteger(ttl) || ttl < 1 || ttl > 86_400)
+      throw new Error('AI cache TTL is outside the allowed range');
+  }
 
   public async execute<T>(request: GatewayRequest<T>): Promise<GatewayResult<T>> {
     const policy = enforceOutboundPolicy({
@@ -45,6 +102,13 @@ export class AiGateway {
       aiProcessingEnabled: request.aiProcessingEnabled,
       text: request.inputText,
     });
+    const inputJson = canonicalJson(request.input);
+    if (containsPromptInjection(inputJson))
+      throw new ProviderPolicyError(
+        'PROVIDER_POLICY_REJECTED',
+        'Prompt-injection content cannot cross the provider boundary',
+      );
+    const sanitizedInput = sanitizeOutboundValue(request.input);
     const stablePrefix = canonicalJson({
       contract: 'AI Family Historian evidence-only structured output',
       policyVersion: request.policyVersion,
@@ -60,9 +124,39 @@ export class AiGateway {
     const dynamicInput = canonicalJson({
       organizationScope: sha256(request.organizationId),
       archiveScope: sha256(request.familyArchiveId),
-      input: request.input,
+      input: sanitizedInput.value,
       sourceText: policy.outboundText,
     });
+    const cacheKey = `ai-result:v1:${sha256(
+      canonicalJson({
+        provider: this.provider.name,
+        organizationScope: sha256(request.organizationId),
+        archiveScope: sha256(request.familyArchiveId),
+        purpose: request.purpose,
+        promptFamily: request.promptFamily,
+        promptVersion: request.promptVersion,
+        policyVersion: request.policyVersion,
+        model: request.model,
+        stablePrefix,
+        dynamicInput,
+      }),
+    )}`;
+    if (this.options.cache) {
+      const cached = await this.options.cache.get(cacheKey);
+      if (cached !== undefined && cached !== null && typeof cached === 'object') {
+        try {
+          const cachedResult = cached as GatewayResult<T>;
+          const value = request.outputSchema.parse(cachedResult.value);
+          return {
+            ...cachedResult,
+            value,
+            applicationCacheHit: true,
+          };
+        } catch {
+          await this.options.cache.delete?.(cacheKey);
+        }
+      }
+    }
     const approximateTokens = Math.ceil((stablePrefix.length + dynamicInput.length) / 4);
     if (approximateTokens > request.maxInputTokens) throw new Error('BUDGET_EXCEEDED');
 
@@ -80,7 +174,7 @@ export class AiGateway {
     }
     const value = request.outputSchema.parse(decoded);
     const cacheTotal = response.usage.cacheHitTokens + response.usage.cacheMissTokens;
-    return {
+    const result: GatewayResult<T> = {
       value,
       provenance: {
         provider: this.provider.name,
@@ -91,12 +185,15 @@ export class AiGateway {
         policyVersion: request.policyVersion,
         inputHash: sha256(dynamicInput),
         stablePrefixHash: sha256(stablePrefix),
-        redactions: policy.redactions,
+        redactions: policy.redactions + sanitizedInput.redactions,
       },
       usage: {
         ...response.usage,
         cacheRatio: cacheTotal === 0 ? 0 : response.usage.cacheHitTokens / cacheTotal,
       },
     };
+    if (this.options.cache)
+      await this.options.cache.set(cacheKey, result, this.options.cacheTtlSeconds ?? 300);
+    return result;
   }
 }
