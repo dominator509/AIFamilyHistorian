@@ -51,6 +51,7 @@ export type ListResourceKind = Exclude<ResourceMutation['kind'], 'privacy-reques
 const MAX_ACTIVE_UPLOADS_PER_USER = 8;
 const MAX_ACTIVE_UPLOAD_BYTES_PER_USER = 25 * 1024 * 1024 * 1024;
 const MAX_ACTIVE_UPLOAD_BYTES_PER_ARCHIVE = 50 * 1024 * 1024 * 1024;
+const MAX_PENDING_JOBS_PER_ARCHIVE = 1_000;
 
 const tableByKind: Record<ListResourceKind, string> = {
   members: 'memberships',
@@ -750,6 +751,12 @@ export class ArchiveService {
     aggregateId: string,
     payload: unknown,
   ): Promise<void> {
+    const pending = await client.query<{ count: string }>(
+      "select count(*)::text as count from job_outbox where organization_id = $1 and family_archive_id = $2 and status in ('queued', 'running', 'retryable_failed')",
+      [context.organizationId, context.familyArchiveId],
+    );
+    if (Number(pending.rows[0]?.count ?? 0) >= MAX_PENDING_JOBS_PER_ARCHIVE)
+      throw new ApiProblem('QUOTA_EXCEEDED', 'Archive job queue capacity has been reached');
     await client.query(
       'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
       [

@@ -113,3 +113,7 @@ Issued bearer tokens now carry a random session identifier. The production API w
 ### ADR-037: Reserve active upload capacity transactionally
 
 Upload sessions now record the initiating user. Before a provider multipart reservation, the API checks active upload count and expected bytes for both that user and the archive under the tenant transaction. Limits are eight active sessions and 25 GiB per user, with a 50 GiB archive ceiling. Completed originals append immutable `storage_bytes` usage-ledger records; provider calls are never made after a quota rejection.
+
+### ADR-038: Bound archive outbox depth
+
+Every API-enqueued job checks the tenant-scoped outbox before insertion and rejects archives with 1,000 queued, running, or retryable jobs. This is an availability guard independent of plan billing; worker completion frees capacity, while plan-level usage, queue fairness, and hosted backpressure remain release work.
