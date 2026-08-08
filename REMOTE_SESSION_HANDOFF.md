@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `47da99f` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening); the follow-up evidence commit is `5f3429d`.
+- Current code checkpoint: `f328658` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, and authenticated principal/archive rate scopes).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
