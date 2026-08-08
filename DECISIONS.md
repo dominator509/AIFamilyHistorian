@@ -87,3 +87,9 @@ The `privacy.request` worker validates the queued payload against the tenant-sco
 ### ADR-031: Export and narration jobs stop at explicit review intake
 
 `export.*` and `narration.generate` handlers validate their payloads against tenant-scoped authoritative rows, transition queued jobs to `running`, and append `review_required` audit events. They do not fabricate manifests, audio, provider effects, or completed status; provider execution and human approval remain separate workers.
+
+### ADR-032: Enforce authorization and publication boundaries at the API contract
+
+Member mutations require an archive or organization owner membership and reject platform or organization role grants. New media and rights claims are pending-only, public sharing is excluded from the generic share mutation, privacy requests require `privacy:write`, rights subjects resolve to tenant-scoped supported entities, and completed uploads preserve the declared MIME type.
+
+These checks are enforced at both the Zod boundary and service transaction so callers cannot bypass review gates by supplying pre-approved status values. Production session revocation, per-user/per-archive quotas, and OS-level media sandboxing remain separate release work.

@@ -111,6 +111,50 @@ describe('authenticated archive service routes', () => {
     expect(response.json()).toMatchObject({ code: 'PERMISSION_DENIED' });
   });
 
+  it('rejects cross-archive rights subjects and non-pending publication inputs', async () => {
+    const rights = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/rights`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `rights-${uuidV7()}`,
+      },
+      payload: {
+        subjectType: 'media_asset',
+        subjectId: foreignMediaId,
+        basis: 'fixture',
+        status: 'pending',
+      },
+    });
+    expect(rights.statusCode).toBe(403);
+
+    const verifiedMedia = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/media`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `verified-media-${uuidV7()}`,
+      },
+      payload: { mediaType: 'audio', rightsStatus: 'verified' },
+    });
+    expect(verifiedMedia.statusCode).toBe(400);
+
+    const publicShare = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/shares`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `public-share-${uuidV7()}`,
+      },
+      payload: {
+        tokenHash: 'a'.repeat(64),
+        visibility: 'public_approved',
+        expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      },
+    });
+    expect(publicShare.statusCode).toBe(400);
+  });
+
   it('completes a signed multipart upload and verifies streamed object fixity', async () => {
     const media = await app.inject({
       method: 'POST',
@@ -119,7 +163,7 @@ describe('authenticated archive service routes', () => {
         authorization: `Bearer ${token}`,
         'idempotency-key': `media-${uuidV7()}`,
       },
-      payload: { mediaType: 'audio', visibility: 'owner_only', rightsStatus: 'verified' },
+      payload: { mediaType: 'audio', visibility: 'owner_only', rightsStatus: 'pending' },
     });
     expect(media.statusCode).toBe(201);
     const mediaId = media.json<{ id: string }>().id;

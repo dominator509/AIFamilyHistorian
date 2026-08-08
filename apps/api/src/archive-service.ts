@@ -18,6 +18,7 @@ import type {
   transcriptInputSchema,
   MutationResponse,
 } from '@family-historian/contracts';
+import { roleSchema } from '@family-historian/contracts';
 import { uuidV7, withIdempotentMutation, withTenantTransaction } from '@family-historian/database';
 import {
   originalObjectKey,
@@ -125,6 +126,15 @@ export class ArchiveService {
         const scope = [id, context.organizationId, context.familyArchiveId] as const;
         switch (mutation.kind) {
           case 'members':
+            await this.assertMemberManagementPermission(client, context, actorUserId);
+            if (
+              mutation.input.role === 'organization_owner' ||
+              mutation.input.role === 'platform_admin'
+            )
+              throw new ApiProblem(
+                'PERMISSION_DENIED',
+                'Organization and platform roles require an explicit administrative workflow',
+              );
             await client.query(
               'insert into memberships(id, organization_id, family_archive_id, user_id, role) values ($1,$2,$3,$4,$5)',
               [...scope, mutation.input.userId, mutation.input.role],
@@ -150,6 +160,8 @@ export class ArchiveService {
             );
             break;
           case 'media':
+            if (mutation.input.rightsStatus !== 'pending')
+              throw new ApiProblem('VALIDATION_FAILED', 'New media must begin with pending rights');
             await client.query(
               'insert into media_assets(id, organization_id, family_archive_id, media_type, visibility, rights_status) values ($1,$2,$3,$4,$5,$6)',
               [
@@ -325,6 +337,14 @@ export class ArchiveService {
             );
             break;
           case 'rights':
+            if (mutation.input.status !== 'pending')
+              throw new ApiProblem('VALIDATION_FAILED', 'New rights claims must begin as pending');
+            await this.assertRightsSubjectScoped(
+              client,
+              context,
+              mutation.input.subjectType,
+              mutation.input.subjectId,
+            );
             await client.query(
               'insert into rights_claims(id, organization_id, family_archive_id, subject_type, subject_id, basis, status) values ($1,$2,$3,$4,$5,$6,$7)',
               [
@@ -523,6 +543,11 @@ export class ArchiveService {
             'CHECKSUM_MISMATCH',
             'Completed object checksum metadata does not match',
           );
+        if (head.contentType && head.contentType.toLowerCase() !== upload.content_type)
+          throw new ApiProblem(
+            'MEDIA_UNSAFE',
+            'Completed object content type does not match upload intent',
+          );
         const actual = await storage.sha256Base64(upload.object_key);
         if (
           actual.byteSize !== Number(upload.expected_byte_size) ||
@@ -591,6 +616,41 @@ export class ArchiveService {
 
   private actorPseudonym(userId: string): string {
     return createHash('sha256').update(userId, 'utf8').digest('hex');
+  }
+
+  private async assertMemberManagementPermission(
+    client: DatabaseClient,
+    context: DatabaseContext,
+    actorUserId: string,
+  ): Promise<void> {
+    const result = await client.query<{ role: string }>(
+      'select role from memberships where organization_id = $1 and family_archive_id = $2 and user_id = $3 limit 1',
+      [context.organizationId, context.familyArchiveId, actorUserId],
+    );
+    const role = result.rows[0] ? roleSchema.safeParse(result.rows[0].role) : null;
+    if (!role?.success || !['organization_owner', 'archive_owner'].includes(role.data))
+      throw new ApiProblem('PERMISSION_DENIED', 'Only archive owners can manage members');
+  }
+
+  private async assertRightsSubjectScoped(
+    client: DatabaseClient,
+    context: DatabaseContext,
+    subjectType: string,
+    subjectId: string,
+  ): Promise<void> {
+    const tableBySubjectType: Record<string, string> = {
+      person: 'people',
+      people: 'people',
+      media: 'media_assets',
+      media_asset: 'media_assets',
+      edition: 'editions',
+      editions: 'editions',
+      voice_authorization: 'voice_authorizations',
+      voice_authorizations: 'voice_authorizations',
+    };
+    const table = tableBySubjectType[subjectType.toLowerCase()];
+    if (!table) throw new ApiProblem('VALIDATION_FAILED', 'Rights subject type is not supported');
+    await this.assertScopedIds(client, context, table, [subjectId], 'rights subject');
   }
 
   private async assertScopedIds(

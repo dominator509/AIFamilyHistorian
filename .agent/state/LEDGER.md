@@ -154,3 +154,8 @@
 2026-08-08T08:45:00Z | codex | HARDENING-11 | HARDENING_PASS | privacy_intake_authoritative_validation_review_audit_hash_deletion_hold_no_fake_fulfillment_unit_64_integration_14_e2e_9_typecheck_lint_format_build_security_audit_reality_smoke_live_fire_16
 2026-08-08T08:51:36Z | codex | HARDENING-12 | HARDENING_PASS | export_and_narration_review_gated_intake_authoritative_validation_no_fake_provider_effects_unit_64_integration_15_typecheck_lint_format_build_security_audit_reality_smoke_live_fire_16
 2026-08-08T08:54:31Z | codex | HARDENING-12 | LOCAL_VERIFICATION | post_checkpoint_live_fire_16_dependency_audit_reality_smoke_and_performance_p95_1.48ms_passed
+2026-08-08T09:10:00Z | codex | HARDENING-13 | COMMAND_FAILED | security_scan_draft_rejected_scope_and_coverage_shape_corrected_without_dropping_findings
+2026-08-08T09:16:24Z | codex | HARDENING-13 | SECURITY_SCAN | standard_scan_5bdf16f7_completed_target_b2bee83_four_medium_source_backed_findings_session_revocation_aggregate_quota_media_resource_bounds_global_key_management
+2026-08-08T09:18:00Z | codex | HARDENING-13 | HARDENING_PASS | api_owner_gated_members_pending_only_media_rights_private_share_privacy_write_rights_subject_scope_mime_normalization_and_completed_object_mime_check_typecheck_lint_unit64_e2e10
+2026-08-08T09:19:00Z | codex | HARDENING-13 | COMMAND_FAILED | powershell_sh_not_found_exit_1_recovered_by_explicit_git_bash_path
+2026-08-08T09:22:00Z | codex | HARDENING-13 | LOCAL_VERIFICATION | integration15_build_security_audit_reality_smoke_live_fire16_performance_p95_1.01ms_passed

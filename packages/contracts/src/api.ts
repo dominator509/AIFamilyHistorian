@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { factStatusSchema, rightsStatusSchema, uuidSchema, visibilitySchema } from './domain.js';
+import { factStatusSchema, roleSchema, uuidSchema, visibilitySchema } from './domain.js';
 
 export const idempotencyKeySchema = z.string().min(16).max(200);
 export const archiveParamsSchema = z.object({ archiveId: uuidSchema });
@@ -7,7 +7,7 @@ export const recordingSessionInputSchema = z.object({
   subjectId: uuidSchema.optional(),
   scheduledAt: z.iso.datetime().optional(),
 });
-export const memberInputSchema = z.object({ userId: uuidSchema, role: z.string().min(1).max(80) });
+export const memberInputSchema = z.object({ userId: uuidSchema, role: roleSchema });
 export const personInputSchema = z.object({
   displayName: z.string().min(1).max(300),
   isLiving: z.boolean(),
@@ -16,11 +16,15 @@ export const personInputSchema = z.object({
 export const mediaInputSchema = z.object({
   mediaType: z.enum(['audio', 'video', 'image', 'document']),
   visibility: visibilitySchema.default('owner_only'),
-  rightsStatus: rightsStatusSchema.default('pending'),
+  rightsStatus: z.literal('pending').default('pending'),
 });
 export const uploadInputSchema = z.object({
   mediaAssetId: uuidSchema,
-  contentType: z.string().min(1).max(200),
+  contentType: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9][a-z0-9!#$&^_.+-]{0,126}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}$/u),
   byteSize: z
     .number()
     .int()
@@ -83,11 +87,16 @@ export const rightsInputSchema = z.object({
   subjectType: z.string().min(1).max(100),
   subjectId: uuidSchema,
   basis: z.string().min(1).max(500),
-  status: rightsStatusSchema.default('pending'),
+  status: z.literal('pending').default('pending'),
 });
 export const shareInputSchema = z.object({
   tokenHash: z.string().regex(/^[a-f0-9]{64}$/u),
-  visibility: visibilitySchema,
+  visibility: z.union([
+    z.literal('owner_only'),
+    z.literal('selected_contributors'),
+    z.literal('family_members'),
+    z.literal('link_recipients'),
+  ]),
   expiresAt: z.iso.datetime(),
 });
 export const exportInputSchema = z.object({

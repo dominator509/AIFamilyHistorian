@@ -222,11 +222,11 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   }
 
   app.post('/v1/privacy-requests', async (request, reply) => {
-    const value = principal(request, dependencies.sessionSecret);
     const input = privacyRequestInputSchema.parse(request.body);
-    const archiveId = input.archiveId ?? value.archiveIds[0];
-    if (!archiveId || !value.archiveIds.includes(archiveId))
-      throw new ApiProblem('PERMISSION_DENIED', 'Archive access is not authorized');
+    const archiveId =
+      input.archiveId ?? principal(request, dependencies.sessionSecret).archiveIds[0];
+    if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
+    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'privacy:write');
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,
