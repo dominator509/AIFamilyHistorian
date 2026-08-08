@@ -102,6 +102,21 @@ function authorizeArchive(
   return value;
 }
 
+async function assertCurrentArchiveMembership(
+  dependencies: RouteDependencies,
+  value: SessionPrincipal,
+  archiveId: string,
+): Promise<void> {
+  if (
+    dependencies.sessionMembershipChecker &&
+    !(await dependencies.sessionMembershipChecker(
+      { organizationId: value.organizationId, familyArchiveId: archiveId },
+      value.userId,
+    ))
+  )
+    throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
+}
+
 function idempotencyKey(request: FastifyRequest): string {
   const value = request.headers['idempotency-key'];
   if (Array.isArray(value))
@@ -308,6 +323,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
       input.archiveId ?? principal(request, dependencies.sessionSecret).archiveIds[0];
     if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
     const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'privacy:write');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,
@@ -327,6 +343,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
       throw new ApiProblem('PERMISSION_DENIED', 'Billing permission is required');
     const archiveId = value.archiveIds[0];
     if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,

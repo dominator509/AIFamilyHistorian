@@ -44,3 +44,5 @@ HARDENING-31 evidence: the opt-in local worker rehearsal now shares an internal-
 HARDENING-33 evidence: signed Stripe callback ingestion now verifies that the authoritative `family_archives` row belongs to the metadata organization inside the tenant-scoped transaction; a real integration regression rejects the mismatched pair before persistence. Hosted Stripe delivery and downstream reconciliation remain deferred.
 
 HARDENING-34 evidence: API archive service entry points now validate that the requested archive belongs to the organization context before reads, mutations, uploads, and upload-part operations; a real PostgreSQL regression rejects a mismatched context. This closes the same organization/archive pairing class outside webhook ingestion.
+
+HARDENING-35 evidence: privacy-request and billing routes now revalidate authoritative archive membership even though their archive scope is carried in the body/session rather than the URL; unit coverage proves stale memberships receive `AUTH_REQUIRED` before service mutation.

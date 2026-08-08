@@ -153,4 +153,53 @@ describe('API principal and archive rate scopes', () => {
       await app.close();
     }
   });
+
+  it('rejects stale membership on archive-scoped privacy and billing routes', async () => {
+    const organizationId = '01900000-0000-7000-8000-000000000081';
+    const archiveId = '01900000-0000-7000-8000-000000000082';
+    const token = issueSessionToken('p'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000083',
+      organizationId,
+      archiveIds: [archiveId],
+      permissions: ['privacy:write', 'billing:write'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    const app = await createApp({
+      service: {
+        ready: () => Promise.resolve(true),
+        create: () =>
+          Promise.resolve({
+            response: { id: archiveId, status: 'accepted' },
+            replayed: false,
+          }),
+      } as never,
+      sessionSecret: 'p'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionMembershipChecker: () => Promise.resolve(false),
+    });
+    try {
+      const headers = {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': 'stale-membership-privacy-billing',
+      };
+      const privacy = await app.inject({
+        method: 'POST',
+        url: '/v1/privacy-requests',
+        headers,
+        payload: { archiveId, requestType: 'access', requesterReference: 'subject-ref' },
+      });
+      expect(privacy.statusCode).toBe(401);
+      const billing = await app.inject({
+        method: 'POST',
+        url: '/v1/billing',
+        headers,
+        payload: { planCode: 'family', status: 'trialing' },
+      });
+      expect(billing.statusCode).toBe(401);
+    } finally {
+      await app.close();
+    }
+  });
 });
