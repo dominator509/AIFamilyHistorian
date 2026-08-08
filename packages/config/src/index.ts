@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 const secret = z.string().min(32);
 
+function hasProductionSecretEntropy(value: string): boolean {
+  return new Set(value).size >= 10 && !/^(.)(\1)+$/u.test(value);
+}
+
 export const runtimeEnvironmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -32,6 +36,12 @@ export const runtimeEnvironmentSchema = z
             code: 'custom',
             path: [key],
             message: 'production secrets must not contain placeholder values',
+          });
+        else if (!hasProductionSecretEntropy(value[key]))
+          context.addIssue({
+            code: 'custom',
+            path: [key],
+            message: 'production secrets must contain sufficient character diversity',
           });
       }
     }

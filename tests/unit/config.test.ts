@@ -21,10 +21,21 @@ describe('runtime configuration', () => {
     expect(
       parseRuntimeEnvironment({
         ...base,
+        SESSION_SECRET: 'session-secret-0123456789-abcdefghijklmnopqrstuvwxyz',
+        FIELD_ENCRYPTION_MASTER_KEY: 'field-key-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        DOWNLOAD_SIGNING_SECRET: 'download-secret-0123456789-!@#$%^&*()',
+      }).NODE_ENV,
+    ).toBe('production');
+  });
+
+  it('rejects production secrets with insufficient character diversity', () => {
+    expect(() =>
+      parseRuntimeEnvironment({
+        ...base,
         SESSION_SECRET: 'a'.repeat(64),
         FIELD_ENCRYPTION_MASTER_KEY: 'b'.repeat(64),
         DOWNLOAD_SIGNING_SECRET: 'c'.repeat(64),
-      }).NODE_ENV,
-    ).toBe('production');
+      }),
+    ).toThrow(/character diversity/u);
   });
 });

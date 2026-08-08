@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `pnpm test:unit` -> 21 files, 65 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder, fixed-window limiter, Redis distributed limiter, and principal/archive rate-scope regressions)
+- `pnpm test:unit` -> 21 files, 66 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder and entropy checks, fixed-window limiter, Redis distributed limiter, and principal/archive rate-scope regressions)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (7 files, 15 tests, including real Redis distributed rate limiting, tenant-scoped privacy/deletion-hold evidence, export and narration review intake, and SQL outbox claim/lease/completion/retry/dead-letter, unsupported-job, and stale-worker fencing proofs)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 10 tests)
 - `sh scripts/build.sh` -> `build: ok`

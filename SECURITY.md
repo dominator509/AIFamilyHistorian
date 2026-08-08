@@ -19,7 +19,7 @@ The platform never offers unrestricted cloning. Professional voice workflows req
 High-risk claims involving crimes, abuse, parentage, health, sexuality, finances, immigration, or misconduct receive restricted defaults and a publication review gate. The model cannot convert allegations into stated fact. Living-person allegations require source attribution, owner review, and legal review when publication risk is material.
 
 ## Secrets and logs
-Secrets live only in secret managers or environment injection, never source. Logs exclude transcript text, images, prompts, names, filenames, addresses, access tokens, signed URLs, and provider payloads. Stable error codes replace sensitive values.
+Secrets live only in secret managers or environment injection, never source. Production configuration rejects placeholders and low-diversity values in the session, field-encryption, and download-signing secrets. Logs exclude transcript text, images, prompts, names, filenames, addresses, access tokens, signed URLs, and provider payloads. Stable error codes replace sensitive values.
 
 ## Encryption and keys
 TLS in transit. Provider storage encryption plus application envelope encryption for restricted fields. Per-archive data keys wrapped by KMS. Keys rotate and are versioned. Temporary media scratch is encrypted and wiped. Backups must be encrypted and restoration-tested; local backups now use streaming AES-256-GCM envelopes with an ignored local key and disposable restore-check, while hosted KMS wrapping, retention, and production restore remain release gates.

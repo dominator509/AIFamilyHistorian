@@ -101,3 +101,7 @@ The worker rejects any single derived artifact above 256 MiB or any media job wh
 ### ADR-034: Layer authenticated rate scopes over the edge limiter
 
 The API now consumes the existing distributed limiter for source IP, authenticated principal, and URL archive scope when a bearer token verifies. Redis hashes all key material before persistence, and invalid tokens remain the route-level authentication error. This reduces rotated-IP abuse without pretending to replace byte, active-upload, queue, or billing quotas.
+
+### ADR-035: Reject low-diversity production secrets
+
+Production runtime validation now rejects placeholder values and secrets with fewer than ten distinct characters or a single repeated character. The minimum length remains 32 characters, while development and test environments retain deterministic fixtures. This prevents obvious low-entropy deployment values from satisfying configuration validation while leaving secret generation and production secret-manager ownership unchanged.
