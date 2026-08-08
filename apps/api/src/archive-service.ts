@@ -48,6 +48,10 @@ type ResourceMutation =
 
 export type ListResourceKind = Exclude<ResourceMutation['kind'], 'privacy-requests' | 'billing'>;
 
+const MAX_ACTIVE_UPLOADS_PER_USER = 8;
+const MAX_ACTIVE_UPLOAD_BYTES_PER_USER = 25 * 1024 * 1024 * 1024;
+const MAX_ACTIVE_UPLOAD_BYTES_PER_ARCHIVE = 50 * 1024 * 1024 * 1024;
+
 const tableByKind: Record<ListResourceKind, string> = {
   members: 'memberships',
   'recording-sessions': 'recording_sessions',
@@ -417,17 +421,19 @@ export class ArchiveService {
             [input.mediaAssetId],
             'media asset',
           );
+          await this.assertUploadQuota(client, context, actorUserId, input.byteSize);
           providerUploadId = await storage.beginMultipart(
             objectKey,
             input.contentType,
             sha256Base64,
           );
           await client.query(
-            "insert into upload_sessions(id, organization_id, family_archive_id, media_asset_id, object_key, provider_upload_id, content_type, expected_byte_size, expected_sha256_hex, expected_sha256_base64, status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'initiated')",
+            "insert into upload_sessions(id, organization_id, family_archive_id, initiated_by_user_id, media_asset_id, object_key, provider_upload_id, content_type, expected_byte_size, expected_sha256_hex, expected_sha256_base64, status) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'initiated')",
             [
               id,
               context.organizationId,
               context.familyArchiveId,
+              actorUserId,
               input.mediaAssetId,
               objectKey,
               providerUploadId,
@@ -572,6 +578,18 @@ export class ArchiveService {
           "update upload_sessions set status = 'completed', original_object_id = $1, completed_at = now() where id = $2",
           [originalObjectId, uploadId],
         );
+        await client.query(
+          'insert into usage_ledger(id, organization_id, family_archive_id, category, quantity, unit, idempotency_key, recorded_at) values ($1,$2,$3,$4,$5,$6,$7,now())',
+          [
+            uuidV7(),
+            context.organizationId,
+            context.familyArchiveId,
+            'storage_bytes',
+            upload.expected_byte_size,
+            'bytes',
+            `storage:${originalObjectId}`,
+          ],
+        );
         await this.enqueue(client, context, 'media.scan', originalObjectId, {
           objectKey: upload.object_key,
         });
@@ -630,6 +648,31 @@ export class ArchiveService {
     const role = result.rows[0] ? roleSchema.safeParse(result.rows[0].role) : null;
     if (!role?.success || !['organization_owner', 'archive_owner'].includes(role.data))
       throw new ApiProblem('PERMISSION_DENIED', 'Only archive owners can manage members');
+  }
+
+  private async assertUploadQuota(
+    client: DatabaseClient,
+    context: DatabaseContext,
+    actorUserId: string,
+    additionalBytes: number,
+  ): Promise<void> {
+    const userResult = await client.query<{ active_count: string; active_bytes: string }>(
+      "select count(*)::text as active_count, coalesce(sum(expected_byte_size), 0)::text as active_bytes from upload_sessions where organization_id = $1 and family_archive_id = $2 and initiated_by_user_id = $3 and status = 'initiated'",
+      [context.organizationId, context.familyArchiveId, actorUserId],
+    );
+    const archiveResult = await client.query<{ active_bytes: string }>(
+      "select coalesce(sum(expected_byte_size), 0)::text as active_bytes from upload_sessions where organization_id = $1 and family_archive_id = $2 and status = 'initiated'",
+      [context.organizationId, context.familyArchiveId],
+    );
+    const activeCount = Number(userResult.rows[0]?.active_count ?? 0);
+    const activeUserBytes = Number(userResult.rows[0]?.active_bytes ?? 0);
+    const activeArchiveBytes = Number(archiveResult.rows[0]?.active_bytes ?? 0);
+    if (activeCount >= MAX_ACTIVE_UPLOADS_PER_USER)
+      throw new ApiProblem('QUOTA_EXCEEDED', 'Too many active uploads for this user');
+    if (activeUserBytes + additionalBytes > MAX_ACTIVE_UPLOAD_BYTES_PER_USER)
+      throw new ApiProblem('QUOTA_EXCEEDED', 'Active upload bytes exceed the user quota');
+    if (activeArchiveBytes + additionalBytes > MAX_ACTIVE_UPLOAD_BYTES_PER_ARCHIVE)
+      throw new ApiProblem('QUOTA_EXCEEDED', 'Active upload bytes exceed the archive quota');
   }
 
   private async assertRightsSubjectScoped(

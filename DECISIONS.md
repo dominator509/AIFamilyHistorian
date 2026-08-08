@@ -109,3 +109,7 @@ Production runtime validation now rejects placeholder values and secrets with fe
 ### ADR-036: Add short-lived bearer session revocation
 
 Issued bearer tokens now carry a random session identifier. The production API wires a Redis-backed, hashed deny-list whose entries expire with the token; revoked identifiers fail at the request hook before archive routes execute. Legacy tokens without an identifier remain verifiable for compatibility, while native login, session issuance persistence, device inventory, rotation, and an administrative revocation command remain required before production approval.
+
+### ADR-037: Reserve active upload capacity transactionally
+
+Upload sessions now record the initiating user. Before a provider multipart reservation, the API checks active upload count and expected bytes for both that user and the archive under the tenant transaction. Limits are eight active sessions and 25 GiB per user, with a 50 GiB archive ceiling. Completed originals append immutable `storage_bytes` usage-ledger records; provider calls are never made after a quota rejection.

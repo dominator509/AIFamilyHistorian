@@ -167,3 +167,7 @@
 2026-08-08T09:40:00Z | codex | HARDENING-17 | COMMAND_FAILED | revoked_session_api_test_mapped_auth_problem_to_503_due_outer_limiter_catch_fixed_preserving_api_problem
 2026-08-08T09:44:00Z | codex | HARDENING-17 | HARDENING_PASS | bearer_session_ids_redis_hashed_revocation_deny_list_production_server_wiring_unit69_integration16_e2e10_typecheck_lint_passed
 2026-08-08T09:47:00Z | codex | HARDENING-17 | LOCAL_VERIFICATION | build_security_check_dependency_audit_format_check_passed
+2026-08-08T09:50:00Z | codex | HARDENING-18 | COMMAND_FAILED | prettier_sql_migration_parser_unsupported_excluded_sql_from_formatter_file_check
+2026-08-08T09:52:00Z | codex | HARDENING-18 | COMMAND_FAILED | upload_quota_test_lint_type_only_import_fixed_before_integration
+2026-08-08T09:58:00Z | codex | HARDENING-18 | HARDENING_PASS | upload_session_user_ownership_active_count_and_25GiB_user_50GiB_archive_quota_usage_ledger_migration_0007_unit69_integration17_e2e10_build_security_audit_passed
+2026-08-08T10:00:00Z | codex | HARDENING-18 | LOCAL_VERIFICATION | encrypted_backup_and_disposable_restore_check_passed_schema_migrations_7
