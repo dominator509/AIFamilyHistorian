@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 set -eu
-curl -fsS --max-time 20 "$R2_ENDPOINT" >/dev/null || [ $? -eq 22 ]
+pnpm --filter @family-historian/storage exec tsx scripts/r2-probe.ts

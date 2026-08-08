@@ -38,8 +38,9 @@ export function verifySessionToken(secret: string, token: string): SessionPrinci
 }
 
 export function parseAuthorizationHeader(value: string | undefined): string {
-  if (!value || !value.startsWith('Bearer ')) throw new Error('AUTH_REQUIRED');
-  return value.slice(7);
+  const match = /^Bearer ([A-Za-z0-9._~-]+)$/u.exec(value ?? '');
+  if (!match) throw new Error('AUTH_REQUIRED');
+  return match[1]!;
 }
 
 export function authorizeArchivePermission(

@@ -20,8 +20,12 @@ export interface StorageConfig {
 export function parseStorageConfig(source: NodeJS.ProcessEnv): StorageConfig {
   const value = storageEnvironmentSchema.parse(source);
   const endpoint = new URL(value.R2_ENDPOINT);
-  if (process.env.NODE_ENV === 'production' && endpoint.protocol !== 'https:')
-    throw new Error('production object storage requires HTTPS');
+  const nodeEnv = source.NODE_ENV ?? 'development';
+  if (nodeEnv === 'production') {
+    if (endpoint.protocol !== 'https:') throw new Error('production object storage requires HTTPS');
+    if (['localhost', '127.0.0.1', '::1'].includes(endpoint.hostname))
+      throw new Error('production object storage cannot use a local endpoint');
+  }
   return Object.freeze({
     accountId: value.R2_ACCOUNT_ID,
     accessKeyId: value.R2_ACCESS_KEY_ID,

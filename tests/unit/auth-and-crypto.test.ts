@@ -34,6 +34,9 @@ describe('session principal and auth policy', () => {
   it('rejects invalid Authorization headers', () => {
     expect(() => parseAuthorizationHeader(undefined)).toThrow('AUTH_REQUIRED');
     expect(() => parseAuthorizationHeader('Token foo')).toThrow('AUTH_REQUIRED');
+    expect(() => parseAuthorizationHeader('Bearer ')).toThrow('AUTH_REQUIRED');
+    expect(() => parseAuthorizationHeader('Bearer token with spaces')).toThrow('AUTH_REQUIRED');
+    expect(() => parseAuthorizationHeader('Bearer token ')).toThrow('AUTH_REQUIRED');
   });
 
   it('rejects forged tokens deterministically', () => {
