@@ -11,6 +11,7 @@ import {
   withTenantTransaction,
 } from '../../packages/database/src/index.js';
 import { ObjectStorage, parseStorageConfig } from '../../packages/storage/src/index.js';
+import { decryptRestrictedText } from '../../packages/crypto/src/index.js';
 
 if (!process.env.DATABASE_URL) process.loadEnvFile('.env');
 const sessionSecret = process.env.SESSION_SECRET ?? '';
@@ -81,7 +82,15 @@ describe('authenticated archive service routes', () => {
         [firstBody.id],
       ),
     );
-    expect(stored.rows[0]?.display_name_encrypted).not.toContain('Private Person');
+    const encryptedDisplayName = stored.rows[0]?.display_name_encrypted;
+    expect(encryptedDisplayName).toBeDefined();
+    expect(encryptedDisplayName).not.toContain('Private Person');
+    expect(
+      decryptRestrictedText(encryptionKey, encryptedDisplayName!, context.familyArchiveId),
+    ).toBe('Private Person');
+    expect(() =>
+      decryptRestrictedText(encryptionKey, encryptedDisplayName!, foreignContext.familyArchiveId),
+    ).toThrow('field encryption scope does not match');
 
     const listed = await app.inject({
       method: 'GET',
