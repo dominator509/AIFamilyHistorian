@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit: `e3c4f4e1b9b9f5698c317e9faaa0e8803c321e3f` (six hardening passes complete).
+- Current commit: `8e041897653925f278f690712f740a8ee42e96d9` (six hardening passes complete).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
