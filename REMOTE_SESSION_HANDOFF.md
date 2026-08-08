@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit before this handoff refresh: `b529bdb` (`[EP-004][M4] Verify Stripe test checkout`; run `git rev-parse HEAD` to confirm the current checkpoint).
+- Current commit before this handoff refresh: `446922a` (`[EP-004][M4] Advance Resend preflight`; run `git rev-parse HEAD` to confirm the current checkpoint).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
