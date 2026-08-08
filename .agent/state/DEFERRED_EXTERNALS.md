@@ -42,3 +42,5 @@ HARDENING-30 evidence: `DEPLOYMENT.md` now uses the same `ghcr.io/${GITHUB_REPOS
 HARDENING-31 evidence: the opt-in local worker rehearsal now shares an internal-only Docker network with PostgreSQL, Redis, and object storage, preventing direct internet egress while preserving required local dependencies; `docker compose --profile worker config --quiet`, Prettier, and focused worker-sandbox tests pass. Hosted network-policy and egress enforcement remain deployment-platform gates.
 
 HARDENING-33 evidence: signed Stripe callback ingestion now verifies that the authoritative `family_archives` row belongs to the metadata organization inside the tenant-scoped transaction; a real integration regression rejects the mismatched pair before persistence. Hosted Stripe delivery and downstream reconciliation remain deferred.
+
+HARDENING-34 evidence: API archive service entry points now validate that the requested archive belongs to the organization context before reads, mutations, uploads, and upload-part operations; a real PostgreSQL regression rejects a mismatched context. This closes the same organization/archive pairing class outside webhook ingestion.
