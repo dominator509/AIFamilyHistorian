@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `ac0dac7` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions, and transactional active-upload quotas).
+- Current code checkpoint: `6eefc85` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions, transactional active-upload quotas, and archive queue-capacity enforcement).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `pnpm test:unit` -> 21 files, 66 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder and entropy checks, fixed-window limiter, Redis distributed limiter, and principal/archive rate-scope regressions)
+- `pnpm test:unit` -> 22 files, 69 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder and entropy checks, fixed-window limiter, Redis distributed limiter, principal/archive rate-scope, and session-revocation regressions)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (9 files, 18 tests, including real Redis distributed rate limiting and revocation persistence, transactional active-upload and archive queue-capacity rejection, tenant-scoped privacy/deletion-hold evidence, export and narration review intake, and SQL outbox claim/lease/completion/retry/dead-letter, unsupported-job, and stale-worker fencing proofs)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 10 tests)
 - `sh scripts/build.sh` -> `build: ok`
