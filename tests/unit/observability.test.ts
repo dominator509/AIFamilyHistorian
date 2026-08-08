@@ -38,9 +38,9 @@ describe('observability redaction', () => {
 
   it('redacts provider-specific keys and secret-bearing object fields', () => {
     expect(
-      redactTelemetryValue({ resend: 're_live_abcdefghijklmnop', apiKey: 'ordinary-value' }),
+      redactTelemetryValue({ authorization: 'provider-token-fixture', apiKey: 'ordinary-value' }),
     ).toEqual({
-      resend: '[SECRET_REDACTED]',
+      authorization: '[SECRET_REDACTED]',
       apiKey: '[SECRET_REDACTED]',
     });
   });
