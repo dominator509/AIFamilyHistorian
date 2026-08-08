@@ -4,6 +4,41 @@ export CI=true GIT_TERMINAL_PROMPT=0 GIT_PAGER=cat PAGER=cat DEBIAN_FRONTEND=non
 [ -f package.json ] || { echo "live-fire: ERROR - package.json missing; complete EP-001" >&2; exit 1; }
 failed=0
 deferred=0
+internal_runner=0
+worker_image="${WORKER_IMAGE:-family-historian-worker:local}"
+repo_root=$(pwd -W 2>/dev/null || pwd)
+internal_db=''
+if [ -f .env ] && docker image inspect "$worker_image" >/dev/null 2>&1 && docker compose exec -T postgres true </dev/null >/dev/null 2>&1; then
+  internal_runner=1
+  set -a
+  . ./.env
+  set +a
+  internal_db=$(DATABASE_URL="$DATABASE_URL" node --input-type=module -e "const u=new URL(process.env.DATABASE_URL); u.hostname='postgres'; u.port='5432'; process.stdout.write(u.toString())")
+  echo "live-fire: internal runner enabled for archive-membership and multipart-media-ingestion"
+fi
+
+run_proof() {
+  proof="$1"
+  case "$proof" in
+    archive-membership|multipart-media-ingestion)
+      if [ "$internal_runner" -eq 1 ]; then
+        MSYS_NO_PATHCONV=1 docker run --rm \
+          --network ai-family-historian_family_historian_internal \
+          --env-file .env \
+          -v "$repo_root/.env:/app/.env:ro" \
+          -v "$repo_root/drizzle:/app/drizzle:ro" \
+          -e NODE_ENV=test \
+          -e DATABASE_URL="$internal_db" \
+          -e R2_ENDPOINT=http://object-storage:9000 \
+          "$worker_image" \
+          /app/node_modules/.bin/tsx /app/tests/live-fire/run.ts --proof "$proof"
+        return
+      fi
+      ;;
+  esac
+  corepack pnpm exec tsx tests/live-fire/run.ts --proof "$proof"
+}
+
 for proof in \
   archive-membership \
   consented-interview \
@@ -21,7 +56,7 @@ for proof in \
   ai-cache-telemetry \
   billing-and-quotas \
   annual-preservation-review; do
-  if corepack pnpm exec tsx tests/live-fire/run.ts --proof "$proof"; then
+  if run_proof "$proof"; then
     :
   else
     code=$?

@@ -189,3 +189,7 @@ When Docker’s internal-only network prevents host port publication, the databa
 ### ADR-055: Make local infrastructure tests endpoint-injectable
 
 The local infrastructure integration test now accepts `LOCAL_TELEMETRY_HEALTH_URL` while retaining the loopback default. A disposable test runner can therefore use the Compose telemetry service name when attached to the internal network, without changing production configuration.
+
+### ADR-056: Route host-blocked live-fire proofs through the internal runner
+
+The live-fire wrapper detects a healthy local worker image and Compose PostgreSQL service, then runs only the database- and object-storage-dependent proofs in a disposable test container on `family_historian_internal`. All other proofs continue through the normal host runner, and the fallback remains unchanged when the local image or services are unavailable. The production worker service is never reconfigured or attached to an external network by this helper.
