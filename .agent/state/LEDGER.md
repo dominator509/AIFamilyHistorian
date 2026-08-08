@@ -172,3 +172,15 @@
 2026-08-08T09:58:00Z | codex | HARDENING-18 | HARDENING_PASS | upload_session_user_ownership_active_count_and_25GiB_user_50GiB_archive_quota_usage_ledger_migration_0007_unit69_integration17_e2e10_build_security_audit_passed
 2026-08-08T10:00:00Z | codex | HARDENING-18 | LOCAL_VERIFICATION | encrypted_backup_and_disposable_restore_check_passed_schema_migrations_7
 2026-08-08T10:05:00Z | codex | HARDENING-19 | HARDENING_PASS | archive_outbox_1000_pending_job_capacity_guard_queue_quota_integration18_e2e10_build_security_audit_passed
+2026-08-08T11:00:00Z | codex | HARDENING-20 | COMMAND_FAILED | queue_requirement_search_rg_exit_1_requested_readme_path_absent_no_code_change
+2026-08-08T11:03:00Z | codex | HARDENING-20 | COMMAND_FAILED | typecheck_passed_but_test_integration_outer_timeout_124_privacy_worker_target_not_claimed_19_tests_1_failed
+2026-08-08T11:05:00Z | codex | HARDENING-20 | COMMAND_FAILED | read_only_queue_diagnostic_exit_1_powershell_quoted_node_sql_wildcard_interpreted_by_shell
+2026-08-08T11:06:00Z | codex | HARDENING-20 | COMMAND_FAILED | read_only_queue_diagnostic_exit_1_root_node_cannot_resolve_workspace_pg_dependency
+2026-08-08T11:07:00Z | codex | HARDENING-20 | COMMAND_FAILED | read_only_queue_diagnostic_exit_1_pnpm_exec_inline_tsx_quotes_stripped_transform_unexpected_dot
+2026-08-08T11:08:00Z | codex | HARDENING-20 | COMMAND_FAILED | format_gate_exit_1_powershell_sh_not_found_retry_git_bash_path
+2026-08-08T11:09:00Z | codex | HARDENING-20 | COMMAND_FAILED | format_gate_exit_1_git_bash_path_dropped_system_path_corepack_module_resolution_failed
+2026-08-08T11:10:00Z | codex | HARDENING-20 | COMMAND_FAILED | format_gate_exit_1_prettier_dispatcher_persistence_worker_test_need_write
+2026-08-08T11:11:00Z | codex | HARDENING-20 | COMMAND_FAILED | formatter_exit_1_code_files_formatted_sql_migration_prettier_parser_unsupported
+2026-08-08T11:12:00Z | codex | HARDENING-20 | COMMAND_FAILED | integration_exit_1_archive_partition_uuid_validator_rejected_uuidv7_7_failures_20_tests
+2026-08-08T11:20:00Z | codex | HARDENING-20 | HARDENING_PASS | derivative_recipe_unique_constraint_fixity_checked_conflict_safe_worker_archive_partition_uuidv7_integration20_unit69_e2e10_build_security_audit_passed
+2026-08-08T11:21:00Z | codex | HARDENING-20 | LOCAL_VERIFICATION | database_migrate_verify_and_encrypted_backup_restore_check_passed_schema_migrations_8

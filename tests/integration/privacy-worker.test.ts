@@ -54,6 +54,7 @@ describe('privacy request worker intake', () => {
       logger,
       handlers: createDefaultHandlers({ storage: {} as ObjectStorage }),
       jobTypes: ['privacy.request'],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
     let targetProcessed = false;
@@ -171,6 +172,7 @@ describe('privacy request worker intake', () => {
       logger,
       handlers: createDefaultHandlers({ storage: {} as ObjectStorage }),
       jobTypes: ['export.portable'],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
     expect(await exportDispatcher.processOne()).toBe(true);
@@ -179,6 +181,7 @@ describe('privacy request worker intake', () => {
       logger,
       handlers: createDefaultHandlers({ storage: {} as ObjectStorage }),
       jobTypes: ['narration.generate'],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
     expect(await narrationDispatcher.processOne()).toBe(true);

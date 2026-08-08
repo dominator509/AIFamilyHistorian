@@ -117,3 +117,7 @@ Upload sessions now record the initiating user. Before a provider multipart rese
 ### ADR-038: Bound archive outbox depth
 
 Every API-enqueued job checks the tenant-scoped outbox before insertion and rejects archives with 1,000 queued, running, or retryable jobs. This is an availability guard independent of plan billing; worker completion frees capacity, while plan-level usage, queue fairness, and hosted backpressure remain release work.
+
+### ADR-039: Make derivative recipes immutable and partitionable
+
+Derivative persistence now has a database-enforced unique key on `(original_object_id, recipe_version)`. Worker writes use conflict-safe insertion and compare SHA-256 fixity before treating an existing or concurrent row as idempotent; a digest mismatch is terminal rather than silently accepted. The dispatcher also supports validated UUID archive partitions for independently scaled pools and tenant-isolated worker tests; the default production worker remains unpartitioned until deployment topology is explicitly configured.

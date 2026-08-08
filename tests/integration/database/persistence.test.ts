@@ -84,6 +84,59 @@ describe('PostgreSQL persistence invariants', () => {
     ).rejects.toThrow(/append-only/);
   });
 
+  it('enforces one immutable derivative recipe per original object', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Derivative family', 'Derivative archive');
+    const mediaId = uuidV7();
+    const originalId = uuidV7();
+    const recipeVersion = 'waveform-v1';
+    await withTenantTransaction(pool, context, async (client) => {
+      await client.query(
+        "insert into media_assets(id, organization_id, family_archive_id, media_type, rights_status) values ($1,$2,$3,'audio','verified')",
+        [mediaId, context.organizationId, context.familyArchiveId],
+      );
+      await client.query(
+        "insert into original_objects(id, organization_id, family_archive_id, media_asset_id, object_key, content_type, byte_size, sha256, quarantine_status) values ($1,$2,$3,$4,$5,'audio/wav',4,$6,'clean')",
+        [
+          originalId,
+          context.organizationId,
+          context.familyArchiveId,
+          mediaId,
+          `opaque/${uuidV7()}`,
+          'a'.repeat(64),
+        ],
+      );
+      await client.query(
+        'insert into derivative_objects(id, organization_id, family_archive_id, original_object_id, object_key, recipe_version, sha256) values ($1,$2,$3,$4,$5,$6,$7)',
+        [
+          uuidV7(),
+          context.organizationId,
+          context.familyArchiveId,
+          originalId,
+          `derivative/${uuidV7()}`,
+          recipeVersion,
+          'b'.repeat(64),
+        ],
+      );
+    });
+    await expect(
+      withTenantTransaction(pool, context, async (client) =>
+        client.query(
+          'insert into derivative_objects(id, organization_id, family_archive_id, original_object_id, object_key, recipe_version, sha256) values ($1,$2,$3,$4,$5,$6,$7)',
+          [
+            uuidV7(),
+            context.organizationId,
+            context.familyArchiveId,
+            originalId,
+            `derivative/${uuidV7()}`,
+            recipeVersion,
+            'b'.repeat(64),
+          ],
+        ),
+      ),
+    ).rejects.toThrow(/derivative_objects_recipe_idx|duplicate key/u);
+  });
+
   it('permits only the declared quarantine transitions while preserving original fixity', async () => {
     const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     await bootstrapArchive(pool, context, 'Quarantine family', 'Quarantine archive');

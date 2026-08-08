@@ -224,7 +224,10 @@ export const derivativeObjects = pgTable(
     sha256: text('sha256').notNull(),
     createdAt: createdAt(),
   },
-  (table) => [uniqueIndex('derivative_objects_key_idx').on(table.objectKey)],
+  (table) => [
+    uniqueIndex('derivative_objects_key_idx').on(table.objectKey),
+    uniqueIndex('derivative_objects_recipe_idx').on(table.originalObjectId, table.recipeVersion),
+  ],
 );
 
 export const transcriptRevisions = pgTable('transcript_revisions', {

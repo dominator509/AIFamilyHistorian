@@ -55,6 +55,7 @@ describe('SQL outbox worker dispatcher', () => {
         ],
       ]),
       jobTypes: [jobType],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
 
@@ -94,6 +95,7 @@ describe('SQL outbox worker dispatcher', () => {
         ],
       ]),
       jobTypes: [jobType],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
 
@@ -135,6 +137,7 @@ describe('SQL outbox worker dispatcher', () => {
       logger,
       handlers: new Map(),
       jobTypes: [jobType],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
 
@@ -181,6 +184,7 @@ describe('SQL outbox worker dispatcher', () => {
         ],
       ]),
       jobTypes: [jobType],
+      archiveIds: [context.familyArchiveId],
       pollMilliseconds: 50,
     });
 
@@ -197,5 +201,44 @@ describe('SQL outbox worker dispatcher', () => {
       [jobId],
     );
     expect(result.rows[0]).toEqual({ status: 'running', attempt_count: 1 });
+  });
+
+  it('claims only jobs from an archive partition', async () => {
+    const first: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    const second: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, first, 'Partition first', 'Partition first archive');
+    await bootstrapArchive(pool, second, 'Partition second', 'Partition second archive');
+    const jobType = `partition.${uuidV7()}`;
+    const firstJob = uuidV7();
+    const secondJob = uuidV7();
+    for (const [jobId, context] of [
+      [firstJob, first],
+      [secondJob, second],
+    ] as const)
+      await pool.query(
+        'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+        [
+          jobId,
+          context.organizationId,
+          context.familyArchiveId,
+          jobType,
+          { aggregateId: uuidV7() },
+        ],
+      );
+    const dispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: new Map([[jobType, async () => undefined]]),
+      jobTypes: [jobType],
+      archiveIds: [first.familyArchiveId],
+      pollMilliseconds: 50,
+    });
+    expect(await dispatcher.processOne()).toBe(true);
+    const states = await pool.query<{ id: string; status: string }>(
+      'select id, status from job_outbox where id = any($1::uuid[]) order by id',
+      [[firstJob, secondJob]],
+    );
+    expect(states.rows).toContainEqual({ id: firstJob, status: 'completed' });
+    expect(states.rows).toContainEqual({ id: secondJob, status: 'queued' });
   });
 });

@@ -548,13 +548,21 @@ async function storeDerivative(
   bytes: Uint8Array,
   contentType: string,
 ): Promise<void> {
-  const existing = await client.query(
-    'select id from derivative_objects where original_object_id = $1 and recipe_version = $2 limit 1',
+  const existing = await client.query<{ id: string; sha256: string }>(
+    'select id, sha256 from derivative_objects where original_object_id = $1 and recipe_version = $2 limit 1',
     [originalObjectId, recipeVersion],
   );
-  if (existing.rowCount === 1) return;
   const objectKey = derivativeObjectKey(originalObjectId, recipeVersion);
   const digest = createHash('sha256').update(bytes).digest('hex');
+  if (existing.rowCount === 1) {
+    if (existing.rows[0]?.sha256 !== digest)
+      throw new WorkerJobError(
+        'existing derivative fixity does not match the requested recipe output',
+        'CHECKSUM_MISMATCH',
+        false,
+      );
+    return;
+  }
   const derivativeId = uuidV7();
   const expectedSha256 = Buffer.from(digest, 'hex').toString('base64');
   try {
@@ -571,8 +579,12 @@ async function storeDerivative(
       throw error;
     }
   }
-  await client.query(
-    'insert into derivative_objects(id, organization_id, family_archive_id, original_object_id, object_key, recipe_version, sha256) values ($1,$2,$3,$4,$5,$6,$7)',
+  const inserted = await client.query<{ id: string; sha256: string }>(
+    `insert into derivative_objects(
+       id, organization_id, family_archive_id, original_object_id, object_key, recipe_version, sha256
+     ) values ($1,$2,$3,$4,$5,$6,$7)
+     on conflict (original_object_id, recipe_version) do nothing
+     returning id, sha256`,
     [
       derivativeId,
       organizationId,
@@ -583,6 +595,19 @@ async function storeDerivative(
       digest,
     ],
   );
+  if (inserted.rowCount !== 1) {
+    const concurrent = await client.query<{ sha256: string }>(
+      'select sha256 from derivative_objects where original_object_id = $1 and recipe_version = $2 limit 1',
+      [originalObjectId, recipeVersion],
+    );
+    if (concurrent.rows[0]?.sha256 !== digest)
+      throw new WorkerJobError(
+        'concurrent derivative fixity does not match the requested recipe output',
+        'CHECKSUM_MISMATCH',
+        false,
+      );
+    return;
+  }
   await client.query(
     "insert into fixity_records(id, organization_id, family_archive_id, object_kind, object_id, algorithm, digest, byte_size, verified_at) values ($1,$2,$3,'derivative',$4,'sha256',$5,$6,now())",
     [uuidV7(), organizationId, familyArchiveId, derivativeId, digest, bytes.byteLength],

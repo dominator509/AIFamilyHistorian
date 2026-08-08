@@ -33,6 +33,8 @@ export class WorkerJobError extends Error {
   }
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+
 export interface OutboxDispatcherOptions {
   readonly pool: DatabasePool;
   readonly handlers: ReadonlyMap<string, WorkerJobHandler>;
@@ -42,6 +44,8 @@ export interface OutboxDispatcherOptions {
   readonly pollMilliseconds?: number;
   /** Optional queue partitioning for independently scaled worker pools. */
   readonly jobTypes?: readonly string[];
+  /** Optional archive partitioning to isolate an archive queue from other tenants. */
+  readonly archiveIds?: readonly string[];
 }
 
 /**
@@ -57,6 +61,7 @@ export class OutboxDispatcher {
   readonly #leaseMilliseconds: number;
   readonly #pollMilliseconds: number;
   readonly #jobTypes: readonly string[];
+  readonly #archiveIds: readonly string[];
 
   public constructor(options: OutboxDispatcherOptions) {
     if (
@@ -79,6 +84,8 @@ export class OutboxDispatcher {
       throw new Error('worker poll duration is invalid');
     if (options.jobTypes?.some((jobType) => !jobType.trim()))
       throw new Error('worker job type partition is invalid');
+    if (options.archiveIds?.some((archiveId) => !UUID_PATTERN.test(archiveId)))
+      throw new Error('worker archive partition is invalid');
     this.#pool = options.pool;
     this.#handlers = options.handlers;
     this.#logger = options.logger;
@@ -86,6 +93,7 @@ export class OutboxDispatcher {
     this.#leaseMilliseconds = options.leaseMilliseconds ?? 300_000;
     this.#pollMilliseconds = options.pollMilliseconds ?? 1_000;
     this.#jobTypes = Object.freeze([...(options.jobTypes ?? [])]);
+    this.#archiveIds = Object.freeze([...(options.archiveIds ?? [])]);
   }
 
   public async processOne(): Promise<boolean> {
@@ -136,11 +144,16 @@ export class OutboxDispatcher {
     const client = await this.#pool.connect();
     try {
       await client.query('begin');
-      const typeFilter = this.#jobTypes.length > 0 ? 'and job_type = any($2::text[])' : '';
-      const queryValues =
-        this.#jobTypes.length > 0
-          ? [this.#leaseMilliseconds, this.#jobTypes]
-          : [this.#leaseMilliseconds];
+      const filters: string[] = [];
+      const queryValues: unknown[] = [this.#leaseMilliseconds];
+      if (this.#jobTypes.length > 0) {
+        filters.push(`and job_type = any($${queryValues.length + 1}::text[])`);
+        queryValues.push(this.#jobTypes);
+      }
+      if (this.#archiveIds.length > 0) {
+        filters.push(`and family_archive_id = any($${queryValues.length + 1}::uuid[])`);
+        queryValues.push(this.#archiveIds);
+      }
       const result = await client.query<{
         id: string;
         organization_id: string;
@@ -154,7 +167,7 @@ export class OutboxDispatcher {
           where status in ('queued', 'retryable_failed')
             and available_at <= now()
             and (locked_at is null or locked_at < now() - ($1 * interval '1 millisecond'))
-          ${typeFilter}
+          ${filters.join('\n          ')}
           order by created_at, id
           for update skip locked
           limit 1`,
