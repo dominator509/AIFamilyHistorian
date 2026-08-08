@@ -6,6 +6,8 @@ export interface ProviderAdapterOptions {
   readonly apiKey: string;
   readonly timeoutMs?: number;
   readonly maxAttempts?: number;
+  readonly circuitFailureThreshold?: number;
+  readonly circuitCooldownMs?: number;
   readonly fetchImpl?: typeof fetch;
 }
 
@@ -63,6 +65,21 @@ interface RequestOptions {
   readonly body?: BodyInit;
 }
 
+interface CircuitState {
+  failures: number;
+  openUntil: number;
+}
+
+const circuitStates = new WeakMap<object, CircuitState>();
+
+function circuitState(options: ProviderAdapterOptions): CircuitState {
+  const existing = circuitStates.get(options);
+  if (existing) return existing;
+  const created = { failures: 0, openUntil: 0 };
+  circuitStates.set(options, created);
+  return created;
+}
+
 function validateProviderOptions(options: ProviderAdapterOptions, provider: string): void {
   if (!options.apiKey.trim())
     throw new ProviderAdapterError(`${provider} API key is required`, provider);
@@ -73,6 +90,18 @@ function validateProviderOptions(options: ProviderAdapterOptions, provider: stri
   if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5)
     throw new ProviderAdapterError(
       `${provider} retry count is outside the allowed range`,
+      provider,
+    );
+  const failureThreshold = options.circuitFailureThreshold ?? 5;
+  if (!Number.isInteger(failureThreshold) || failureThreshold < 1 || failureThreshold > 20)
+    throw new ProviderAdapterError(
+      `${provider} circuit failure threshold is outside the allowed range`,
+      provider,
+    );
+  const cooldownMs = options.circuitCooldownMs ?? 30_000;
+  if (!Number.isInteger(cooldownMs) || cooldownMs < 1_000 || cooldownMs > 300_000)
+    throw new ProviderAdapterError(
+      `${provider} circuit cooldown is outside the allowed range`,
       provider,
     );
   let parsed: URL;
@@ -93,33 +122,58 @@ function validateProviderOptions(options: ProviderAdapterOptions, provider: stri
 
 async function request(options: ProviderAdapterOptions, input: RequestOptions): Promise<Response> {
   validateProviderOptions(options, input.provider);
+  const state = circuitState(options);
+  if (state.openUntil > Date.now())
+    throw new ProviderAdapterError(
+      `${input.provider} circuit is open`,
+      input.provider,
+      undefined,
+      true,
+    );
   const fetchImpl = options.fetchImpl ?? fetch;
   const maxAttempts = options.maxAttempts ?? 3;
+  const failureThreshold = options.circuitFailureThreshold ?? 5;
+  const cooldownMs = options.circuitCooldownMs ?? 30_000;
   let lastError: unknown;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      const timeout = AbortSignal.timeout(options.timeoutMs ?? 20_000);
-      const response = await fetchImpl(input.url, {
-        method: input.method,
-        headers: input.headers,
-        ...(input.body === undefined ? {} : { body: input.body }),
-        signal: timeout,
-      });
-      if (response.ok) return response;
-      const retryable = response.status === 429 || response.status >= 500;
-      lastError = new ProviderAdapterError(
-        `${input.provider} request failed with status ${response.status}`,
-        input.provider,
-        response.status,
-        retryable,
-      );
-      if (!retryable || attempt === maxAttempts) throw lastError;
-    } catch (error) {
-      lastError = error;
-      if (error instanceof ProviderAdapterError && !error.retryable) throw error;
-      if (attempt === maxAttempts) throw error;
+  let lastFailureRetryable = false;
+  try {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const timeout = AbortSignal.timeout(options.timeoutMs ?? 20_000);
+        const response = await fetchImpl(input.url, {
+          method: input.method,
+          headers: input.headers,
+          ...(input.body === undefined ? {} : { body: input.body }),
+          signal: timeout,
+        });
+        if (response.ok) {
+          state.failures = 0;
+          state.openUntil = 0;
+          return response;
+        }
+        const retryable = response.status === 429 || response.status >= 500;
+        lastFailureRetryable = retryable;
+        lastError = new ProviderAdapterError(
+          `${input.provider} request failed with status ${response.status}`,
+          input.provider,
+          response.status,
+          retryable,
+        );
+        if (!retryable || attempt === maxAttempts) throw lastError;
+      } catch (error) {
+        lastError = error;
+        lastFailureRetryable = !(error instanceof ProviderAdapterError) || error.retryable;
+        if (error instanceof ProviderAdapterError && !error.retryable) throw error;
+        if (attempt === maxAttempts) throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 100));
     }
-    await new Promise((resolve) => setTimeout(resolve, attempt * 100));
+  } catch (error) {
+    if (lastFailureRetryable) {
+      state.failures += 1;
+      if (state.failures >= failureThreshold) state.openUntil = Date.now() + cooldownMs;
+    }
+    throw error;
   }
   throw lastError instanceof Error ? lastError : new Error('provider request failed');
 }

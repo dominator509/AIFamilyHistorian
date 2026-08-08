@@ -46,3 +46,5 @@ HARDENING-33 evidence: signed Stripe callback ingestion now verifies that the au
 HARDENING-34 evidence: API archive service entry points now validate that the requested archive belongs to the organization context before reads, mutations, uploads, and upload-part operations; a real PostgreSQL regression rejects a mismatched context. This closes the same organization/archive pairing class outside webhook ingestion.
 
 HARDENING-35 evidence: privacy-request and billing routes now revalidate authoritative archive membership even though their archive scope is carried in the body/session rather than the URL; unit coverage proves stale memberships receive `AUTH_REQUIRED` before service mutation.
+
+HARDENING-37/38 evidence: HTTP provider adapters and DeepSeek now have bounded per-instance circuit breakers with configurable validated failure thresholds and cooldowns; deterministic tests prove retryable failures open the circuit and subsequent calls fail fast without another provider request. Provider live-fire and vendor delivery remain externally scoped.

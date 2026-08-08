@@ -63,4 +63,29 @@ describe('DeepSeek adapter contract', () => {
       usage: { cacheHitTokens: 12, cacheMissTokens: 8 },
     });
   });
+
+  it('opens a circuit after bounded retryable failures', async () => {
+    let calls = 0;
+    const provider = new DeepSeekProvider({
+      apiKey: 'sk-test-circuit-key-000000000000',
+      baseUrl: 'http://127.0.0.1:1',
+      maxAttempts: 1,
+      circuitFailureThreshold: 2,
+      circuitCooldownMs: 60_000,
+      fetchImpl: () => {
+        calls += 1;
+        return Promise.resolve(new Response('{}', { status: 503 }));
+      },
+    });
+    const request = {
+      model: 'deepseek-chat',
+      stablePrefix: 'stable',
+      dynamicInput: 'dynamic',
+      temperature: 0,
+    };
+    await expect(provider.complete(request)).rejects.toThrow(/status 503/u);
+    await expect(provider.complete(request)).rejects.toThrow(/status 503/u);
+    await expect(provider.complete(request)).rejects.toThrow('DeepSeek circuit is open');
+    expect(calls).toBe(2);
+  });
 });

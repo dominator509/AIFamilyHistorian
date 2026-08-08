@@ -19,6 +19,9 @@ export interface DeepSeekConfig {
   baseUrl?: string;
   timeoutMs?: number;
   maxAttempts?: number;
+  circuitFailureThreshold?: number;
+  circuitCooldownMs?: number;
+  fetchImpl?: typeof fetch;
 }
 
 export class DeepSeekProvider implements AiProvider {
@@ -26,6 +29,11 @@ export class DeepSeekProvider implements AiProvider {
   readonly #baseUrl: string;
   readonly #timeoutMs: number;
   readonly #maxAttempts: number;
+  readonly #circuitFailureThreshold: number;
+  readonly #circuitCooldownMs: number;
+  readonly #fetchImpl: typeof fetch;
+  #circuitFailures = 0;
+  #circuitOpenUntil = 0;
 
   public constructor(private readonly config: DeepSeekConfig) {
     if (!config.apiKey.startsWith('sk-')) throw new Error('DeepSeek API key shape is invalid');
@@ -47,21 +55,40 @@ export class DeepSeekProvider implements AiProvider {
     const maxAttempts = config.maxAttempts ?? 3;
     if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5)
       throw new Error('DeepSeek retry count is outside the allowed range');
+    const circuitFailureThreshold = config.circuitFailureThreshold ?? 5;
+    if (
+      !Number.isInteger(circuitFailureThreshold) ||
+      circuitFailureThreshold < 1 ||
+      circuitFailureThreshold > 20
+    )
+      throw new Error('DeepSeek circuit failure threshold is outside the allowed range');
+    const circuitCooldownMs = config.circuitCooldownMs ?? 30_000;
+    if (
+      !Number.isInteger(circuitCooldownMs) ||
+      circuitCooldownMs < 1_000 ||
+      circuitCooldownMs > 300_000
+    )
+      throw new Error('DeepSeek circuit cooldown is outside the allowed range');
     this.#baseUrl = parsed.toString().replace(/\/$/u, '');
     this.#timeoutMs = timeoutMs;
     this.#maxAttempts = maxAttempts;
+    this.#circuitFailureThreshold = circuitFailureThreshold;
+    this.#circuitCooldownMs = circuitCooldownMs;
+    this.#fetchImpl = config.fetchImpl ?? fetch;
   }
 
   public async complete(
     request: ProviderRequest,
     parentSignal?: AbortSignal,
   ): Promise<ProviderResponse> {
+    if (this.#circuitOpenUntil > Date.now()) throw new Error('DeepSeek circuit is open');
     let lastError: unknown;
+    let retryableFailure = false;
     for (let attempt = 1; attempt <= this.#maxAttempts; attempt += 1) {
       const timeout = AbortSignal.timeout(this.#timeoutMs);
       const signal = parentSignal ? AbortSignal.any([parentSignal, timeout]) : timeout;
       try {
-        const response = await fetch(`${this.#baseUrl}/chat/completions`, {
+        const response = await this.#fetchImpl(`${this.#baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
             authorization: `Bearer ${this.config.apiKey}`,
@@ -81,6 +108,7 @@ export class DeepSeekProvider implements AiProvider {
         });
         if (!response.ok) {
           const retryable = response.status === 429 || response.status >= 500;
+          retryableFailure = retryable;
           if (!retryable || attempt === this.#maxAttempts) {
             lastError = new Error(`DeepSeek request failed with status ${response.status}`);
             break;
@@ -102,9 +130,15 @@ export class DeepSeekProvider implements AiProvider {
         };
       } catch (error) {
         lastError = error;
+        retryableFailure = true;
         if (signal.aborted || attempt === this.#maxAttempts) break;
         await new Promise((resolve) => setTimeout(resolve, attempt * 250));
       }
+    }
+    if (retryableFailure) {
+      this.#circuitFailures += 1;
+      if (this.#circuitFailures >= this.#circuitFailureThreshold)
+        this.#circuitOpenUntil = Date.now() + this.#circuitCooldownMs;
     }
     throw lastError instanceof Error ? lastError : new Error('DeepSeek provider unavailable');
   }

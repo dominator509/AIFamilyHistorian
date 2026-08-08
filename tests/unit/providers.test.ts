@@ -148,4 +148,30 @@ describe('provider adapters', () => {
       }),
     ).rejects.toMatchObject({ provider: 'resend' });
   });
+
+  it('opens a provider circuit after bounded retryable failures', async () => {
+    let calls = 0;
+    const mailer = new ResendMailer({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      circuitFailureThreshold: 2,
+      circuitCooldownMs: 60_000,
+      fetchImpl: () => {
+        calls += 1;
+        return Promise.resolve(new Response('{}', { status: 503 }));
+      },
+    });
+    const input = {
+      from: 'Family <noreply@example.invalid>',
+      to: ['reader@example.invalid'],
+      subject: 'Subject',
+      text: 'Body',
+      idempotencyKey: 'circuit-test',
+    };
+    await expect(mailer.send(input)).rejects.toMatchObject({ status: 503, retryable: true });
+    await expect(mailer.send(input)).rejects.toMatchObject({ status: 503, retryable: true });
+    await expect(mailer.send(input)).rejects.toThrow('resend circuit is open');
+    expect(calls).toBe(2);
+  });
 });
