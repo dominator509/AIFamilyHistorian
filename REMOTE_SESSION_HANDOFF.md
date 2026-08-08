@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `HARDENING-23 pending commit` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions, transactional active-upload quotas, archive queue-capacity enforcement, derivative recipe idempotency, archive partitioning, provider-authoritative billing state, strict CORS allowlisting, and durable signature-verified Stripe callback ingestion).
+- Current code checkpoint: `e0ead5d` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions, transactional active-upload quotas, archive queue-capacity enforcement, derivative recipe idempotency, archive partitioning, provider-authoritative billing state, strict CORS allowlisting, and durable signature-verified Stripe callback ingestion).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
