@@ -211,3 +211,6 @@
 2026-08-08T13:55:00Z | codex | HARDENING-27 | HARDENING_PASS | isolated_worker_profile_compose_config_worker_image_nonroot_media_tool_probe_full_local_gates_reality_smoke_perf_livefire_backup_restore_passed
 2026-08-08T14:00:00Z | codex | HARDENING-28 | HARDENING_PASS | security_gate_now_runs_behavioral_api_media_session_and_worker_sandbox_assertions_security_check_typecheck_unit76_passed
 2026-08-08T14:10:00Z | codex | HARDENING-29 | HARDENING_PASS | request_time_authoritative_archive_membership_revalidation_before_rate_scope_and_route_unit77_integration27_e2e11_build_security_reality_smoke_perf_livefire_backup_restore_passed
+2026-08-08T14:15:00Z | codex | EP-010 | COMMAND_FAILED | production_readiness_check_exit_1_with_14_unresolved_external_and_legal_requirements_no_local_implementation_failure
+2026-08-08T14:20:00Z | codex | HARDENING-30 | HARDENING_PASS | deployment_runbook_image_identity_aligned_with_release_workflow_and_ghcr_repository_variable_mismatch_removed
+2026-08-08T14:22:00Z | codex | HARDENING-30 | COMMAND_FAILED | stale_ghcr_reference_check_used_posix_exit_in_powershell_exit_1_format_and_security_checks_passed_rerun_with_powershell_condition

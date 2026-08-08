@@ -156,6 +156,10 @@ The repository security gate now verifies the API’s redaction/body/helmet/CORS
 
 The production server now checks the authoritative `memberships` table for each token-scoped archive request, including archive listing, before applying rate scopes or running route handlers. A removed membership therefore fails closed immediately instead of remaining usable until a bearer token expires. The token’s signed archive and permission claims remain a bounded fast-path input, not the sole source of authorization truth.
 
+### ADR-049: Align manual image deployment with the release workflow
+
+The deployment runbook now derives the immutable GHCR image from `GITHUB_REPOSITORY` and `RELEASE_TAG`, matching `.github/workflows/release.yml`. This removes the stale `GHCR_OWNER/family-historian` variable mismatch while leaving the manual production deploy and authorization gates unchanged.
+
 ### ADR-043: Serialize cost-capacity decisions inside the database transaction
 
 Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.
