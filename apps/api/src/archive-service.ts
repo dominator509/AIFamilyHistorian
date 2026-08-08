@@ -699,6 +699,7 @@ export class ArchiveService {
     actorUserId: string,
     additionalBytes: number,
   ): Promise<void> {
+    await this.lockQuota(client, `upload:${context.organizationId}:${context.familyArchiveId}`);
     const userResult = await client.query<{ active_count: string; active_bytes: string }>(
       "select count(*)::text as active_count, coalesce(sum(expected_byte_size), 0)::text as active_bytes from upload_sessions where organization_id = $1 and family_archive_id = $2 and initiated_by_user_id = $3 and status = 'initiated'",
       [context.organizationId, context.familyArchiveId, actorUserId],
@@ -793,6 +794,7 @@ export class ArchiveService {
     aggregateId: string,
     payload: unknown,
   ): Promise<void> {
+    await this.lockQuota(client, `outbox:${context.organizationId}:${context.familyArchiveId}`);
     const pending = await client.query<{ count: string }>(
       "select count(*)::text as count from job_outbox where organization_id = $1 and family_archive_id = $2 and status in ('queued', 'running', 'retryable_failed')",
       [context.organizationId, context.familyArchiveId],
@@ -809,6 +811,10 @@ export class ArchiveService {
         { aggregateId, payload },
       ],
     );
+  }
+
+  private async lockQuota(client: DatabaseClient, key: string): Promise<void> {
+    await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [key]);
   }
 }
 

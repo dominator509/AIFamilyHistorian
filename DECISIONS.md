@@ -135,3 +135,7 @@ Runtime configuration now parses comma-separated origin-only URLs, rejects wildc
 The API captures the exact JSON request bytes, verifies the Stripe signature within the documented five-minute tolerance, requires organization and archive UUIDs in the signed event metadata, and inserts an append-only tenant-scoped callback row keyed by `(provider, provider_event_id)`. Duplicate delivery is acknowledged only when the payload hash matches; a same-ID/different-payload replay is rejected. Subscription state is not mutated by ingestion; a separate reconciler must consume the durable event and apply provider-authoritative billing transitions.
 
 This keeps signature verification, replay protection, tenant isolation, and auditability at the network boundary while leaving signed sandbox delivery and downstream reconciliation as explicit external release gates.
+
+### ADR-043: Serialize cost-capacity decisions inside the database transaction
+
+Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.
