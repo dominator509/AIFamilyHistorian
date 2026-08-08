@@ -164,9 +164,17 @@ export class OutboxDispatcher {
       }>(
         `select id, organization_id, family_archive_id, job_type, payload, attempt_count
            from job_outbox
-          where status in ('queued', 'retryable_failed')
-            and available_at <= now()
-            and (locked_at is null or locked_at < now() - ($1 * interval '1 millisecond'))
+          where available_at <= now()
+            and (
+              (
+                status in ('queued', 'retryable_failed')
+                and (locked_at is null or locked_at < now() - ($1 * interval '1 millisecond'))
+              )
+              or (
+                status = 'running'
+                and locked_at < now() - ($1 * interval '1 millisecond')
+              )
+            )
           ${filters.join('\n          ')}
           order by created_at, id
           for update skip locked

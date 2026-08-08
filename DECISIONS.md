@@ -197,3 +197,7 @@ The live-fire wrapper detects a healthy local worker image and Compose PostgreSQ
 ### ADR-057: Discover the Compose internal network by label
 
 The live-fire helper now discovers the active `family_historian_internal` network from Docker’s Compose label instead of assuming the project-name prefix. This preserves the same worker-image and service-DNS boundary across fresh clones and alternate `COMPOSE_PROJECT_NAME` values.
+
+### ADR-058: Reclaim expired running outbox leases
+
+The dispatcher now treats a `running` outbox row with an expired `locked_at` lease as claimable, while retaining the existing `queued`/`retryable_failed` eligibility and `available_at` gate. Reclaiming assigns a fresh UUID lock token and increments the attempt count; completion and failure updates remain fenced by that token. This recovers jobs from an unexpectedly terminated worker without allowing an active lease to be stolen, and the bounded max-attempt policy still determines terminal failure after a reclaimed attempt.
