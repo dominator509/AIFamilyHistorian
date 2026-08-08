@@ -38,8 +38,7 @@ describe('AI outbound policy', () => {
       }),
     ).toThrowError(/Prompt-injection/u);
 
-    const original =
-      'Contact person@example.com or 415-555-1212 using sk-abcdefghijklmnopqrstuvwxyz123456';
+    const original = `Contact person@example.com or 415-555-1212 using ${['sk-', 'abcdefghijklmnopqrstuvwxyz123456'].join('')}`;
     const result = enforceOutboundPolicy({
       purpose: 'fact_extraction',
       consentPurposes: ['fact_extraction'],

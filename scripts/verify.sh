@@ -10,6 +10,7 @@ sh scripts/test-integration.sh
 sh scripts/test-e2e.sh
 sh scripts/build.sh
 sh scripts/security-check.sh
+sh scripts/secret-scan.sh
 sh scripts/dependency-audit.sh
 sh scripts/reality-gate.sh
 sh scripts/smoke-test.sh

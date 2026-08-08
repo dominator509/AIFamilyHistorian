@@ -26,5 +26,6 @@ jobs:
       - run: sh scripts/test-unit.sh
       - run: sh scripts/build.sh
       - run: sh scripts/security-check.sh
+      - run: sh scripts/secret-scan.sh
       - run: sh scripts/dependency-audit.sh
       - run: sh scripts/reality-gate.sh
