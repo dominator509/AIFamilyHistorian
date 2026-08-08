@@ -97,3 +97,7 @@ These checks are enforced at both the Zod boundary and service transaction so ca
 ### ADR-033: Bound worker derivative materialization
 
 The worker rejects any single derived artifact above 256 MiB or any media job whose derived artifacts exceed 512 MiB before buffering and persisting them. This complements the no-shell executor, scratch-path confinement, diagnostic cap, and timeout controls. OS-level CPU, memory, PID, syscall, and network isolation still belongs to the worker runtime deployment gate.
+
+### ADR-034: Layer authenticated rate scopes over the edge limiter
+
+The API now consumes the existing distributed limiter for source IP, authenticated principal, and URL archive scope when a bearer token verifies. Redis hashes all key material before persistence, and invalid tokens remain the route-level authentication error. This reduces rotated-IP abuse without pretending to replace byte, active-upload, queue, or billing quotas.

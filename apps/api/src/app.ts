@@ -2,7 +2,12 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { healthStatusSchema } from '@family-historian/contracts';
-import { FixedWindowRateLimiter, type RateLimiter } from '@family-historian/auth';
+import {
+  FixedWindowRateLimiter,
+  parseAuthorizationHeader,
+  type RateLimiter,
+  verifySessionToken,
+} from '@family-historian/auth';
 import type { ArchiveService } from './archive-service.js';
 import { ApiProblem, sendProblem } from './problems.js';
 import { registerV1Routes } from './routes.js';
@@ -33,6 +38,28 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
     let decision: Awaited<ReturnType<RateLimiter['consume']>>;
     try {
       decision = await rateLimiter.consume(request.ip);
+      const authorization = request.headers.authorization;
+      if (authorization) {
+        try {
+          const session = verifySessionToken(
+            dependencies?.sessionSecret ?? '',
+            parseAuthorizationHeader(authorization),
+          );
+          const principalDecision = await rateLimiter.consume(
+            `principal:${session.organizationId}:${session.userId}`,
+          );
+          if (!principalDecision.allowed) decision = principalDecision;
+          const archiveId = (request.params as { archiveId?: unknown } | undefined)?.archiveId;
+          if (typeof archiveId === 'string' && session.archiveIds.includes(archiveId)) {
+            const archiveDecision = await rateLimiter.consume(
+              `archive:${session.organizationId}:${archiveId}`,
+            );
+            if (!archiveDecision.allowed) decision = archiveDecision;
+          }
+        } catch {
+          // Invalid bearer tokens remain an auth failure at the route boundary.
+        }
+      }
     } catch {
       throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Rate limiter is unavailable', true);
     }
