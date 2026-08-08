@@ -242,3 +242,5 @@
 2026-08-08T13:17:08Z | codex | HARDENING-40 | SECURITY_SCAN | standard_scan_ea39d0c_started_at_revision_2c73cbb_discovery_stalled_zero_rows_and_is_now_stale_after_verified_98b7ac7; no_finding_claim_inferred
 2026-08-08T13:19:10Z | codex | HARDENING-40 | LOCAL_VERIFICATION | session_rotation_issues_replacement_token_before_database_predecessor_revocation; focused_unit_and_integration_tests_passed
 2026-08-08T13:26:59Z | codex | HARDENING-41 | HARDENING_PASS | archive_scoped_wrapping_key_v2_cross_archive_rejection_v1_compatibility_full_unit81_integration34_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_1.08ms_livefire16_backup_restore_schema_migrations12
+2026-08-08T13:32:30Z | codex | HARDENING-41 | LOCAL_VERIFICATION | API_E2E_scoped_encrypted_field_roundtrip_and_cross_archive_rejection_passed_typecheck_lint_format_full_e2e_3_files_11_tests_commit_3789fcc
+2026-08-08T13:32:31Z | codex | HARDENING-41 | SECURITY_SCAN | current_head_scan_de063598_target_846e03a_discovery_running_zero_of_322_checks_no_report_artifact_no_no_findings_claim
