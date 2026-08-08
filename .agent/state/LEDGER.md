@@ -218,3 +218,4 @@
 2026-08-08T15:05:00Z | codex | HARDENING-31 | LOCAL_VERIFICATION | internal_only_worker_network_compose_config_prettier_unit77_integration27_e2e11_build_security_audit_reality_smoke_performance_p95_0.63ms_livefire16_encrypted_backup_restore_schema_migrations10_passed
 2026-08-08T15:10:00Z | codex | HARDENING-32 | COMMAND_FAILED | secret_scan_invoked_via_powershell_package_script_sh_unavailable_exit_1; rerun through_documented_git_bash_path
 2026-08-08T15:15:00Z | codex | HARDENING-32 | HARDENING_PASS | tracked_secret_scan_added_to_package_verify_ci_and_security_docs_boundary_false_positive_fixed_secret_scan_ok_format_lint_typecheck_unit77_security_check_ok
+2026-08-08T15:25:00Z | codex | HARDENING-33 | HARDENING_PASS | stripe_webhook_archive_organization_metadata_scope_validation_inside_rls_transaction_cross_tenant_regression_integration4_typecheck_format_passed

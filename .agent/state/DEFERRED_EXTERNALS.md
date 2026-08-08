@@ -40,3 +40,5 @@ HARDENING-29 evidence: the production server wires authoritative membership reva
 HARDENING-30 evidence: `DEPLOYMENT.md` now uses the same `ghcr.io/${GITHUB_REPOSITORY}:${RELEASE_TAG}` image identity as the release workflow; the stale `GHCR_OWNER/family-historian` reference is removed. This is documentation/configuration hardening only; hosted registry and Fly probes remain deferred.
 
 HARDENING-31 evidence: the opt-in local worker rehearsal now shares an internal-only Docker network with PostgreSQL, Redis, and object storage, preventing direct internet egress while preserving required local dependencies; `docker compose --profile worker config --quiet`, Prettier, and focused worker-sandbox tests pass. Hosted network-policy and egress enforcement remain deployment-platform gates.
+
+HARDENING-33 evidence: signed Stripe callback ingestion now verifies that the authoritative `family_archives` row belongs to the metadata organization inside the tenant-scoped transaction; a real integration regression rejects the mismatched pair before persistence. Hosted Stripe delivery and downstream reconciliation remain deferred.

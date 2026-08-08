@@ -106,6 +106,12 @@ export class ArchiveService {
     },
   ): Promise<{ replayed: boolean }> {
     return withTenantTransaction(this.pool, context, async (client) => {
+      const archive = await client.query(
+        'select 1 from family_archives where id = $1 and organization_id = $2 limit 1',
+        [context.familyArchiveId, context.organizationId],
+      );
+      if (archive.rowCount !== 1)
+        throw new ApiProblem('VALIDATION_FAILED', 'Stripe webhook archive metadata is invalid');
       const inserted = await client.query(
         `insert into provider_callback_events
           (id, organization_id, family_archive_id, provider, provider_event_id, event_type, payload, payload_sha256, signature_verified)

@@ -154,4 +154,37 @@ describe('Stripe webhook ingestion', () => {
     });
     expect(response.statusCode).toBe(400);
   });
+
+  it('rejects tenant-mismatched archive metadata before persistence', async () => {
+    const otherOrganizationId = uuidV7();
+    const otherArchiveId = uuidV7();
+    await bootstrapArchive(
+      pool,
+      { organizationId: otherOrganizationId, familyArchiveId: otherArchiveId },
+      'Other Stripe family',
+      'Other Stripe archive',
+    );
+    const eventId = `evt_${organizationId.replaceAll('-', '')}4`;
+    const payload = JSON.stringify({
+      id: eventId,
+      type: 'checkout.session.completed',
+      data: {
+        object: {
+          metadata: { organization_id: organizationId, family_archive_id: otherArchiveId },
+        },
+      },
+    });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/v1/webhooks/stripe',
+      headers: { 'content-type': 'application/json', 'stripe-signature': signedPayload(payload) },
+      payload,
+    });
+    expect(response.statusCode).toBe(400);
+    const rows = await pool.query(
+      'select 1 from provider_callback_events where provider_event_id = $1',
+      [eventId],
+    );
+    expect(rows.rowCount).toBe(0);
+  });
 });
