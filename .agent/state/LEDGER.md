@@ -128,3 +128,4 @@
 2026-08-08T04:31:27Z | codex | EP-004 | EXTERNAL_VERIFIED | resend_authenticated_domains_probe_passed_new_local_credential
 2026-08-08T04:31:27Z | codex | EP-000 | PREFLIGHT_ADVANCED | preflight_now_stops_at_missing_TURNSTILE_SITE_KEY_exit_1
 2026-08-08T04:33:12Z | codex | EP-004 | LOCAL_VERIFICATION | resend_docs_format_and_diff_check_passed
+2026-08-08T04:34:25Z | codex | EP-004 | COMMAND_FAILED | resend_domain_status_diagnostic_shell_quoting_exit_1_probe_itself_passed
