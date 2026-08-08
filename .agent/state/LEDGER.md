@@ -198,3 +198,4 @@
 2026-08-08T12:25:00Z | codex | HARDENING-23 | COMMAND_FAILED | migration_verify_passed_but_powershell_could_not_launch_sh_for_backup_restore_retrying_explicit_git_bash_sh
 2026-08-08T12:30:00Z | codex | HARDENING-23 | COMMAND_FAILED | ad_hoc_node_dotenv_schema_diagnostic_missing_root_dotenv_module_migration_and_backup_commands_remained_valid
 2026-08-08T12:35:00Z | codex | HARDENING-23 | HARDENING_PASS | durable_signature_verified_stripe_callback_ingestion_append_only_payload_hash_replay_guard_tenant_metadata_schema_10_unit72_integration25_e2e10_build_security_audit_lint_format_reality_smoke_performance_p95_0.95ms_backup_restore_passed
+2026-08-08T12:40:00Z | codex | HARDENING-23 | COMMAND_FAILED | tracked_secret_scan_rg_exit_1_no_secret_bearing_tracked_paths_found_remote_equality_probe_passed
