@@ -139,3 +139,8 @@
 2026-08-08T06:20:21Z | codex | HARDENING-7 | COMMAND_FAILED | pnpm reality-gate missing script exit 1 corrected to sh scripts/reality-gate.sh
 2026-08-08T06:20:21Z | codex | HARDENING-7 | COMMAND_FAILED | restore-check missing backup argument exit 1 corrected with newest encrypted backup
 2026-08-08T06:20:21Z | codex | HARDENING-7 | HARDENING_PASS | Aggregated preflight reports 14 unresolved external requirements; limiter and provider validation hardened; recursive AI redaction and exact cache added; RLS verifier covers canonical relations; scoped mutation checks; unit 63 integration 7 E2E 9 live-fire 16 performance p95 0.61ms backup restore and tracked secret scan passed
+2026-08-08T08:03:07Z | codex | HARDENING-8 | COMMAND_FAILED | worker_dispatcher_integration_selected_stale_queued_rows_fixed_with_unique_job_type_partitions
+2026-08-08T08:03:11Z | codex | HARDENING-8 | COMMAND_FAILED | verify_stopped_at_preflight_14_external_requirements_exit_1_local_gates_run_independently
+2026-08-08T08:03:14Z | codex | HARDENING-8 | COMMAND_FAILED | host_media_tools_probe_missing_ffmpeg_exiftool_magick_clamscan_ocrmypdf_python_fixed_with_worker_runtime_image
+2026-08-08T08:03:18Z | codex | HARDENING-8 | COMMAND_FAILED | frozen_docker_build_rejected_stale_worker_lockfile_pg_removed_lockfile_regenerated
+2026-08-08T08:03:21Z | codex | HARDENING-8 | HARDENING_PASS | sql_outbox_dispatcher_media_quarantine_handler_worker_runtime_image_and_quarantine_migration_verified_format_lint_typecheck_build_unit_63_integration_10_e2e_9_security_audit_reality_smoke_live_fire_16_backup_restore_performance_p95_2_85ms_secret_scan

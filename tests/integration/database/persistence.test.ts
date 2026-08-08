@@ -84,6 +84,49 @@ describe('PostgreSQL persistence invariants', () => {
     ).rejects.toThrow(/append-only/);
   });
 
+  it('permits only the declared quarantine transitions while preserving original fixity', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Quarantine family', 'Quarantine archive');
+    const mediaId = uuidV7();
+    const originalId = uuidV7();
+    await withTenantTransaction(pool, context, async (client) => {
+      await client.query(
+        "insert into media_assets(id, organization_id, family_archive_id, media_type, rights_status) values ($1,$2,$3,'image','verified')",
+        [mediaId, context.organizationId, context.familyArchiveId],
+      );
+      await client.query(
+        "insert into original_objects(id, organization_id, family_archive_id, media_asset_id, object_key, content_type, byte_size, sha256) values ($1,$2,$3,$4,$5,'image/jpeg',4,$6)",
+        [
+          originalId,
+          context.organizationId,
+          context.familyArchiveId,
+          mediaId,
+          `opaque/${uuidV7()}`,
+          'b'.repeat(64),
+        ],
+      );
+      await client.query(
+        "update original_objects set quarantine_status = 'scanning' where id = $1",
+        [originalId],
+      );
+      await client.query("update original_objects set quarantine_status = 'clean' where id = $1", [
+        originalId,
+      ]);
+    });
+    await expect(
+      withTenantTransaction(pool, context, async (client) =>
+        client.query("update original_objects set quarantine_status = 'scanning' where id = $1", [
+          originalId,
+        ]),
+      ),
+    ).rejects.toThrow(/immutable/);
+    await expect(
+      withTenantTransaction(pool, context, async (client) =>
+        client.query('update original_objects set byte_size = 5 where id = $1', [originalId]),
+      ),
+    ).rejects.toThrow(/immutable/);
+  });
+
   it('serializes idempotent mutations and writes exactly one audit event', async () => {
     const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     await bootstrapArchive(pool, context, 'Idempotent family', 'Idempotent archive');

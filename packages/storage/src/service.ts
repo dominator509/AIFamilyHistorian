@@ -11,6 +11,8 @@ import {
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
 import { createHash } from 'node:crypto';
+import { createWriteStream } from 'node:fs';
+import { finished } from 'node:stream/promises';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { StorageConfig } from './config.js';
 
@@ -161,6 +163,36 @@ export class ObjectStorage {
     );
     if (!response.Body) throw new Error('object body is missing');
     return response.Body.transformToByteArray();
+  }
+
+  /** Stream an object to a worker-owned file without buffering the full payload in memory. */
+  public async downloadToFile(
+    key: string,
+    destinationPath: string,
+  ): Promise<{ sha256Base64: string; byteSize: number }> {
+    const response = await this.#client.send(
+      new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
+    );
+    const body = response.Body as AsyncIterable<Uint8Array> | undefined;
+    if (!body || typeof body[Symbol.asyncIterator] !== 'function')
+      throw new Error('object body is not streamable');
+    const output = createWriteStream(destinationPath, { flags: 'wx' });
+    const hash = createHash('sha256');
+    let byteSize = 0;
+    try {
+      for await (const chunk of body) {
+        hash.update(chunk);
+        byteSize += chunk.byteLength;
+        if (!output.write(chunk))
+          await new Promise<void>((resolve) => output.once('drain', resolve));
+      }
+      output.end();
+      await finished(output);
+      return { sha256Base64: hash.digest('base64'), byteSize };
+    } catch (error) {
+      output.destroy();
+      throw error;
+    }
   }
 
   /** Stream an object once to verify its actual bytes without buffering the payload. */

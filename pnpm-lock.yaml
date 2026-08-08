@@ -108,6 +108,18 @@ importers:
       '@family-historian/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@family-historian/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@family-historian/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@family-historian/media':
+        specifier: workspace:*
+        version: link:../../packages/media
+      '@family-historian/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       ioredis:
         specifier: 6.0.0
         version: 6.0.0

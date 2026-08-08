@@ -20,7 +20,7 @@ export interface MediaDescriptor {
 
 export interface PipelineStep {
   readonly name: string;
-  readonly tool: 'clamdscan' | 'ffprobe' | 'ffmpeg' | 'exiftool' | 'magick' | 'ocrmypdf';
+  readonly tool: 'clamscan' | 'ffprobe' | 'ffmpeg' | 'exiftool' | 'magick' | 'ocrmypdf';
   readonly args: readonly string[];
   readonly timeoutSeconds: number;
   readonly inputObjectKey: string;
@@ -107,7 +107,7 @@ export function buildMediaPipelinePlan(descriptor: MediaDescriptor): readonly Pi
   const steps: PipelineStep[] = [
     {
       name: 'malware-scan',
-      tool: 'clamdscan',
+      tool: 'clamscan',
       args: ['--fdpass', '--no-summary', media.objectKey],
       timeoutSeconds: 300,
       inputObjectKey: media.objectKey,

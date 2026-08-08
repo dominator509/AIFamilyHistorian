@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@family-historian/contracts": "workspace:*",
     "@family-historian/config": "workspace:*",
+    "@family-historian/database": "workspace:*",
+    "@family-historian/media": "workspace:*",
+    "@family-historian/storage": "workspace:*",
     "ioredis": "6.0.0",
     "pino": "10.3.1"
   },

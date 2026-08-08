@@ -1,0 +1,14 @@
+app = "family-historian-worker-staging"
+primary_region = "ord"
+
+[build]
+  dockerfile = "Dockerfile"
+  build-target = "worker-runtime"
+
+[env]
+  NODE_ENV = "production"
+  HOST = "0.0.0.0"
+  PORT = "8080"
+
+[processes]
+  worker = "corepack pnpm --filter @family-historian/worker start"
