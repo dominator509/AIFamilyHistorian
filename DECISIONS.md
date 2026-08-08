@@ -93,3 +93,7 @@ The `privacy.request` worker validates the queued payload against the tenant-sco
 Member mutations require an archive or organization owner membership and reject platform or organization role grants. New media and rights claims are pending-only, public sharing is excluded from the generic share mutation, privacy requests require `privacy:write`, rights subjects resolve to tenant-scoped supported entities, and completed uploads preserve the declared MIME type.
 
 These checks are enforced at both the Zod boundary and service transaction so callers cannot bypass review gates by supplying pre-approved status values. Production session revocation, per-user/per-archive quotas, and OS-level media sandboxing remain separate release work.
+
+### ADR-033: Bound worker derivative materialization
+
+The worker rejects any single derived artifact above 256 MiB or any media job whose derived artifacts exceed 512 MiB before buffering and persisting them. This complements the no-shell executor, scratch-path confinement, diagnostic cap, and timeout controls. OS-level CPU, memory, PID, syscall, and network isolation still belongs to the worker runtime deployment gate.

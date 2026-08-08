@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -38,6 +38,9 @@ const narrationPayloadSchema = z.object({
   aggregateId: z.uuid(),
   payload: narrationInputSchema,
 });
+
+const MAX_DERIVATIVE_BYTES = 256 * 1024 * 1024;
+const MAX_TOTAL_DERIVATIVE_BYTES = 512 * 1024 * 1024;
 
 export interface WorkerHandlerOptions {
   readonly storage: ObjectStorage;
@@ -374,6 +377,7 @@ async function handleMediaScan(
         bytes: Uint8Array;
         contentType: string;
       }[] = [];
+      let totalDerivativeBytes = 0;
       for (const step of buildMediaPipelinePlan(descriptor)) {
         if (step.outputObjectKey && !step.outputObjectKey.startsWith(`${scratchPrefix}/`))
           throw new WorkerJobError(
@@ -386,12 +390,28 @@ async function handleMediaScan(
           resolveObjectKey,
           ...(options.binaries ? { binaries: options.binaries } : {}),
         });
-        if (step.outputObjectKey)
+        if (step.outputObjectKey) {
+          const outputPath = resolveObjectKey(step.outputObjectKey);
+          const outputSize = (await stat(outputPath)).size;
+          if (outputSize > MAX_DERIVATIVE_BYTES)
+            throw new WorkerJobError(
+              'media derivative exceeds the per-artifact output ceiling',
+              'MEDIA_OUTPUT_TOO_LARGE',
+              false,
+            );
+          totalDerivativeBytes += outputSize;
+          if (totalDerivativeBytes > MAX_TOTAL_DERIVATIVE_BYTES)
+            throw new WorkerJobError(
+              'media derivatives exceed the job output ceiling',
+              'MEDIA_OUTPUT_TOO_LARGE',
+              false,
+            );
           artifacts.push({
             recipeVersion: step.name,
-            bytes: await readFile(resolveObjectKey(step.outputObjectKey)),
+            bytes: await readFile(outputPath),
             contentType: derivativeContentType(step.outputObjectKey),
           });
+        }
       }
       await context.withTenant(async (client) => {
         await ensureFixity(

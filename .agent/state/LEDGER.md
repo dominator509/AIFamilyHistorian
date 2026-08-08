@@ -159,3 +159,4 @@
 2026-08-08T09:18:00Z | codex | HARDENING-13 | HARDENING_PASS | api_owner_gated_members_pending_only_media_rights_private_share_privacy_write_rights_subject_scope_mime_normalization_and_completed_object_mime_check_typecheck_lint_unit64_e2e10
 2026-08-08T09:19:00Z | codex | HARDENING-13 | COMMAND_FAILED | powershell_sh_not_found_exit_1_recovered_by_explicit_git_bash_path
 2026-08-08T09:22:00Z | codex | HARDENING-13 | LOCAL_VERIFICATION | integration15_build_security_audit_reality_smoke_live_fire16_performance_p95_1.01ms_passed
+2026-08-08T09:26:00Z | codex | HARDENING-14 | HARDENING_PASS | worker_derivative_per_artifact_256MiB_and_job_512MiB_output_ceilings_added_typecheck_lint_unit64_integration15_passed
