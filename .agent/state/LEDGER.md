@@ -210,3 +210,4 @@
 2026-08-08T13:50:00Z | codex | HARDENING-27 | COMMAND_FAILED | combined_full_gates_and_worker_image_build_timed_out_exit_124_after_300s_rerun_as_bounded_individual_commands_and_docker_build_diagnostic
 2026-08-08T13:55:00Z | codex | HARDENING-27 | HARDENING_PASS | isolated_worker_profile_compose_config_worker_image_nonroot_media_tool_probe_full_local_gates_reality_smoke_perf_livefire_backup_restore_passed
 2026-08-08T14:00:00Z | codex | HARDENING-28 | HARDENING_PASS | security_gate_now_runs_behavioral_api_media_session_and_worker_sandbox_assertions_security_check_typecheck_unit76_passed
+2026-08-08T14:10:00Z | codex | HARDENING-29 | HARDENING_PASS | request_time_authoritative_archive_membership_revalidation_before_rate_scope_and_route_unit77_integration27_e2e11_build_security_reality_smoke_perf_livefire_backup_restore_passed

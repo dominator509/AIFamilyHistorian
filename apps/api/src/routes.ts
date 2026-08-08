@@ -40,6 +40,10 @@ interface RouteDependencies {
   service: ArchiveService;
   sessionSecret: string;
   sessionRevocationStore?: SessionRevocationStore;
+  sessionMembershipChecker?: (
+    context: { organizationId: string; familyArchiveId: string },
+    userId: string,
+  ) => Promise<boolean>;
   stripeWebhookSecret?: string;
 }
 
@@ -162,6 +166,17 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.get('/v1/archives', async (request) => {
     const value = principal(request, dependencies.sessionSecret);
+    if (dependencies.sessionMembershipChecker) {
+      for (const archiveId of value.archiveIds) {
+        if (
+          !(await dependencies.sessionMembershipChecker(
+            { organizationId: value.organizationId, familyArchiveId: archiveId },
+            value.userId,
+          ))
+        )
+          throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
+      }
+    }
     const archives = (
       await Promise.all(
         value.archiveIds.map((archiveId) =>

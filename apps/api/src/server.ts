@@ -16,8 +16,9 @@ const redis = new Redis(environment.REDIS_URL, {
 });
 await redis.connect();
 await redis.ping();
+const service = new ArchiveService(pool, environment.FIELD_ENCRYPTION_MASTER_KEY, storage);
 const app = await createApp({
-  service: new ArchiveService(pool, environment.FIELD_ENCRYPTION_MASTER_KEY, storage),
+  service,
   sessionSecret: environment.SESSION_SECRET,
   corsAllowedOrigins: parseCorsOrigins(environment.CORS_ALLOWED_ORIGINS),
   stripeWebhookSecret: environment.STRIPE_WEBHOOK_SECRET,
@@ -26,6 +27,7 @@ const app = await createApp({
     windowMilliseconds: 60_000,
   }),
   sessionRevocationStore: new RedisSessionRevocationStore(redis),
+  sessionMembershipChecker: (context, userId) => service.isArchiveMember(context, userId),
 });
 
 const shutdown = async (signal: string): Promise<void> => {

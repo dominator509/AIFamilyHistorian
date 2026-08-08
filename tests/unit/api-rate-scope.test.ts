@@ -124,4 +124,33 @@ describe('API principal and archive rate scopes', () => {
       await app.close();
     }
   });
+
+  it('rejects a bearer token whose archive membership was revoked', async () => {
+    const token = issueSessionToken('m'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000071',
+      organizationId: '01900000-0000-7000-8000-000000000072',
+      archiveIds: ['01900000-0000-7000-8000-000000000073'],
+      permissions: ['archive:*'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    const app = await createApp({
+      service: { ready: () => Promise.resolve(true), list: () => Promise.resolve([]) } as never,
+      sessionSecret: 'm'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionMembershipChecker: () => Promise.resolve(false),
+    });
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/archives/01900000-0000-7000-8000-000000000073/people',
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toMatchObject({ code: 'AUTH_REQUIRED' });
+    } finally {
+      await app.close();
+    }
+  });
 });

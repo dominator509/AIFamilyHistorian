@@ -86,6 +86,16 @@ export class ArchiveService {
     }
   }
 
+  public async isArchiveMember(context: DatabaseContext, userId: string): Promise<boolean> {
+    return withTenantTransaction(this.pool, context, async (client) => {
+      const result = await client.query(
+        'select 1 from memberships where organization_id = $1 and family_archive_id = $2 and user_id = $3 limit 1',
+        [context.organizationId, context.familyArchiveId, userId],
+      );
+      return result.rowCount === 1;
+    });
+  }
+
   public async recordStripeWebhook(
     context: DatabaseContext,
     input: {

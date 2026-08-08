@@ -18,6 +18,10 @@ export interface AppDependencies {
   sessionSecret: string;
   rateLimiter?: RateLimiter;
   sessionRevocationStore?: SessionRevocationStore;
+  sessionMembershipChecker?: (
+    context: { organizationId: string; familyArchiveId: string },
+    userId: string,
+  ) => Promise<boolean>;
   corsAllowedOrigins?: readonly string[];
   stripeWebhookSecret?: string;
 }
@@ -81,6 +85,14 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
           if (!principalDecision.allowed) decision = principalDecision;
           const archiveId = (request.params as { archiveId?: unknown } | undefined)?.archiveId;
           if (typeof archiveId === 'string' && session.archiveIds.includes(archiveId)) {
+            if (
+              dependencies?.sessionMembershipChecker &&
+              !(await dependencies.sessionMembershipChecker(
+                { organizationId: session.organizationId, familyArchiveId: archiveId },
+                session.userId,
+              ))
+            )
+              throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
             const archiveDecision = await rateLimiter.consume(
               `archive:${session.organizationId}:${archiveId}`,
             );
