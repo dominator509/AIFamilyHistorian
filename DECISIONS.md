@@ -74,3 +74,8 @@ The Deepgram API-key projects probe verifies authentication only. Because the pr
 ### ADR-028: Stripe test-mode checkout proof
 
 The Stripe balance probe verifies API authentication only. The sandbox checkout probe creates one subscription-mode Checkout Session with the configured test price and a unique idempotency key, validates the returned `cs_` session contract, and never completes payment. Webhook delivery remains separate because it requires a reachable signed endpoint or Stripe CLI forwarding.
+### ADR-029: Redis-backed distributed API rate limiting
+
+The production API uses an atomic Redis fixed-window script with SHA-256-hashed client keys; the in-memory limiter remains available only for deterministic tests and direct app construction without production dependencies. Redis startup and request-time failures fail closed as provider-unavailable rather than silently disabling abuse protection.
+
+This reuses the pinned `ioredis` 6.0.0 dependency already approved for workers and is proven against the real local Redis service. Per-user and per-archive quotas remain separate from the edge/IP limiter and continue to be enforced by domain authorization and billing controls.

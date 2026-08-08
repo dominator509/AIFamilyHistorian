@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { FixedWindowRateLimiter } from '../../packages/auth/src/rate-limit.js';
+import {
+  FixedWindowRateLimiter,
+  RedisFixedWindowRateLimiter,
+} from '../../packages/auth/src/rate-limit.js';
 
 describe('FixedWindowRateLimiter', () => {
   it('enforces a bounded fixed window and reports retry metadata', () => {
@@ -50,5 +53,26 @@ describe('FixedWindowRateLimiter', () => {
     );
     const limiter = new FixedWindowRateLimiter({ limit: 1, windowMilliseconds: 1 });
     expect(() => limiter.consume('  ', 0)).toThrow('rate limiter key is required');
+  });
+
+  it('uses an atomic Redis result and never sends the raw key to Redis', async () => {
+    const calls: string[][] = [];
+    const limiter = new RedisFixedWindowRateLimiter(
+      {
+        eval: (_script, _numberOfKeys, ...args) => {
+          calls.push(args);
+          return Promise.resolve([3, 4_001]);
+        },
+      },
+      { limit: 2, windowMilliseconds: 10_000, prefix: 'test:limit' },
+    );
+    await expect(limiter.consume('203.0.113.10')).resolves.toEqual({
+      allowed: false,
+      limit: 2,
+      remaining: 0,
+      retryAfterSeconds: 5,
+    });
+    expect(calls[0]?.[0]).toMatch(/^test:limit:[a-f0-9]{64}$/u);
+    expect(calls[0]?.[0]).not.toContain('203.0.113.10');
   });
 });

@@ -30,7 +30,12 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
     dependencies?.rateLimiter ??
     new FixedWindowRateLimiter({ limit: 120, windowMilliseconds: 60_000, maxKeys: 10_000 });
   app.addHook('onRequest', async (request, reply) => {
-    const decision = rateLimiter.consume(request.ip);
+    let decision: Awaited<ReturnType<RateLimiter['consume']>>;
+    try {
+      decision = await rateLimiter.consume(request.ip);
+    } catch {
+      throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Rate limiter is unavailable', true);
+    }
     reply
       .header('RateLimit-Limit', String(decision.limit))
       .header('RateLimit-Remaining', String(decision.remaining));
