@@ -4,11 +4,11 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `cfcbd4d8b34c158479a3560d4412e3ec9d841f1f` (hardening pass seven); this handoff document is refreshed in the following docs-only commit.
+- Current code checkpoint: `9cf7b1d19d5f9ef98920a858cada540fa62d4130` (hardening pass eight worker and media runtime checkpoint).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
-- Engineering completion estimate: 88% weighted implementation completion. This is a progress estimate, not a release approval.
+- Engineering completion estimate: 92% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
 - Why `RUN_COMPLETE` was not reached: Deepgram, DeepSeek, Stripe, and Resend authenticated probes now pass, while aggregated `sh scripts/preflight.sh` reports 14 unresolved requirements (Turnstile, Sentry, GitHub, Fly.io, and legal/vendor/insurance/DPIA/retention evidence). Hosted abuse-prevention, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
 
@@ -20,7 +20,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
 - `pnpm test:unit` -> 20 files, 63 tests passed (including strict bearer, storage production endpoint, telemetry-secret, media subprocess isolation, configuration placeholder, and fixed-window limiter regressions)
-- `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
+- `sh scripts/test-integration.sh` -> `integration tests: ok` (5 files, 10 tests, including real SQL outbox claim/lease/completion/retry/dead-letter proofs)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 9 tests)
 - `sh scripts/build.sh` -> `build: ok`
 - `sh scripts/security-check.sh` -> `security check: ok`
@@ -32,9 +32,9 @@ The following commands passed after the continuation changes:
 - `sh scripts/probes/deepgram_transcription.sh` -> authenticated sample transcription passed (`request_id` observed; 136 transcript characters); no provider audio or transcript was persisted.
 - `sh scripts/probes/deepseek_api_key.sh` -> authenticated DeepSeek probe passed with the newly supplied local credential; production rotation and vendor approval remain required.
 - `sh scripts/probes/resend.sh` -> authenticated Resend domains probe passed; verified sender and recipient delivery remain required.
-- `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260807T063342Z.dump.enc`).
-- `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260807T063342Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=4`.
-- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.61ms` against the real Fastify health endpoint.
+- `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260808T073145Z.dump.enc`).
+- `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260808T073145Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=5`.
+- `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=2.85ms` against the real Fastify health endpoint.
 - Media executor unit coverage -> no-shell child process execution, scratch-path confinement, bounded output, timeout termination, and unavailable-tool mapping all pass with a real local child process; pinned media binaries remain unavailable.
 - Authenticated multipart API E2E -> signed part URL, real MinIO PUT, completion, streamed SHA-256 fixity, and immutable-original persistence all passed.
 - Multipart resume status -> API returned the provider-listed completed part number, ETag, and byte size before completion.
@@ -42,6 +42,8 @@ The following commands passed after the continuation changes:
 - `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify-20260807 .` -> image present after the reduced context build; `docker image inspect` observed `user=node` and the HTTP healthcheck; `docker compose config --quiet` passed.
 - `docker compose config --quiet` -> passed.
 - `sh scripts/local-services-check.sh` -> `local services: ok`.
+- `docker build --target worker-runtime -t family-historian-worker:local .` -> worker image build passed with frozen pnpm install, workspace build, and pinned Debian media packages.
+- `docker run --rm --entrypoint sh family-historian-worker:local -c 'for tool in ffmpeg ffprobe exiftool magick clamscan ocrmypdf python3; do command -v "$tool" >/dev/null || exit 1; done'` -> `worker-media-tools: ok`.
 - `sh scripts/preflight.sh` -> 14 `preflight: unresolved ...` lines followed by `preflight: FAIL - 14 unresolved requirements` (exit 1; complete external inventory, not an engineering test failure).
 - Required Codex Security deep scan -> terminal setup failure before discovery: `in_scope_files.txt:1 must be a safe repository-relative path`; no security findings were inferred from this failed scan.
 
@@ -54,7 +56,7 @@ The following commands passed after the continuation changes:
 | API and web client | Engineering complete locally | Fastify health/auth/archive routes, idempotent mutations, private-by-default UI workflow | API E2E, web E2E, smoke | Staging URL and browser accessibility/performance audit | Product surface is intentionally bounded relative to the full blueprint |
 | Authentication and authorization | Local bearer/TOTP hardening complete; native auth/passkey rollout pending | Short-lived signed sessions, archive permission checks, tenant boundaries, cross-archive mutation checks, fail-closed visibility/rights checks, RFC-compatible TOTP enrollment/replay protection/recovery codes | Unit, integration, E2E; TOTP RFC-vector and cross-scope upload coverage | WebAuthn/passkey live-fire, database-backed session rotation/revocation/device management, production secret injection | Current API has no native login, cookie CSRF path, distributed rate limiter, or session inventory |
 | AI gateway | Local and authenticated nonproduction proof complete | DeepSeek adapter, policy/DLP, recursive structured-input redaction, prompt canonicalization, tenant-isolated exact-result cache adapter, structured output, provenance, usage/cache telemetry, disablement behavior | Unit, contract, authenticated DeepSeek live-fire, cache isolation/redaction regressions | Production cache backend wiring, key/vendor approval, hosted retention/location evidence | Cache is an injected adapter and is not wired into the API process; current development key must be rotated before production |
-| Worker and job execution | Not complete; technical blocker remains | API writes scoped outbox jobs and local worker readiness checks; no production job dispatcher currently executes media, privacy, export, or narration workflows | Outbox persistence and live-fire enqueue assertions | Real worker claim/lease/handler execution, dead-letter/retry proofs, media binaries and provider wiring | Queued jobs can remain unprocessed; no fake success was added |
+| Worker and job execution | Dispatcher and media quarantine path implemented; remaining job families pending | SQL `FOR UPDATE SKIP LOCKED` claim/lease, tenant transaction scope, bounded retry/backoff/dead-letter, unsupported-job fail-closed behavior, streamed object download/fixity, media plan execution, derivative persistence, and clean/error quarantine transitions | 10 real-database integration tests; worker image build/tool probe; media executor unit coverage | Privacy/export/narration/transcription handler families, hosted object-storage fixture, production queue topology and authenticated media fixture | Unimplemented job types terminal-fail safely; media fixture/live-fire still needs a representative object in the worker image |
 | Transcription/narration/email/billing providers | Adapter engineering complete | Deepgram, ElevenLabs, Resend, Stripe, Turnstile HTTP adapters with bounded retries, validation, signature checks, and local protocol tests; authenticated Deepgram sample, Stripe balance/Checkout Session, and Resend domains probes; local billing/quota domain | Provider local HTTP contract tests and all sixteen local live-fire proofs | Resend sender/recipient delivery, Turnstile, signed Stripe webhook delivery, remaining hosted probes, vendor approvals | No external delivery or payment effect was fabricated |
 | Documents and exports | Local implementation complete | Tamper-evident provenance/audit chains, portable JSONL/CSV manifest, deterministic text-first PDF/EPUB, release-gated publication bundle, explicit-marker candidate extraction, 25 GB resumable chunk manifest/part recovery planner, media quarantine/derivative command plans, no-shell worker executor with path confinement and bounded time/output | Unit and `book-pdf-epub`/`portable-export`/`evidence-extraction` live-fire | Accessible-PDF/EPUB audit and 25 GB transfer/recovery rehearsal | Advanced layout, media embedding, automatic NLP extraction, pinned media-tool fixture execution, and formal accessibility audit remain |
 | Observability/operations | Local implementation complete | Redacted structured telemetry, metric samples, OTel local sink, immutable audit events, streaming encrypted backup/restore scripts, incident/runbook guidance | Unit, local collector/reality gates, encrypted backup and disposable restore-check | Hosted Sentry/OTLP, KMS wrapping, alert paging, production retention/restore | Hosted restore and quarterly preservation drills remain operator-owned |
@@ -69,12 +71,12 @@ The following commands passed after the continuation changes:
 | EP-001 | Engineering complete; externally unverified | Foundation and toolchain gates passed locally; graph dependency remains EP-000. |
 | EP-002 | Engineering complete; externally unverified | Domain invariants and tests passed locally; graph dependency remains EP-000. |
 | EP-003 | Engineering complete; externally unverified | Migrations, RLS, storage and persistence tests passed locally; hosted probes remain. |
-| EP-004 | Engineering continuation complete; externally unverified | API/service layer and provider adapters pass local tests; authenticated Deepgram sample, Stripe Checkout Session, and Resend domains probes pass, while delivery/webhook and remaining hosted probes remain. |
+| EP-004 | Engineering continuation complete; externally unverified | API/service layer, provider adapters, SQL outbox dispatcher, and media handler pass local tests; authenticated Deepgram sample, Stripe Checkout Session, and Resend domains probes pass, while delivery/webhook and remaining hosted probes remain. |
 | EP-005 | Engineering continuation complete; externally unverified | UI/E2E and all live-fire dispatchers pass locally; graph lease remains EP-000. |
 | EP-006 | Engineering complete; externally unverified | Auth/security gates pass locally; OAuth/passkey/provider evidence remains. |
 | EP-007 | Engineering continuation complete; externally unverified | All 16 live-fire proofs and local regression gates pass; full verify cannot start. |
 | EP-008 | Engineering continuation complete; externally unverified | Observability package/runbooks and local checks pass; hosted telemetry and restore remain. |
-| EP-009 | Engineering continuation complete; externally unverified | Container/Fly/workflow artifacts and local image build pass; staging/deployment/rollback remain. |
+| EP-009 | Engineering continuation complete; externally unverified | Non-root API image, dedicated worker-runtime image with media tools, Fly configs, and workflow artifacts pass local build/config checks; staging/deployment/rollback remain. |
 | EP-010 | Pending | Production readiness is blocked by preflight and legal/business evidence. |
 
 ## Deferred external requirements
@@ -94,7 +96,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 | Application production secrets | `SESSION_SECRET`, `FIELD_ENCRYPTION_MASTER_KEY`, `DOWNLOAD_SIGNING_SECRET`, `BACKUP_ENCRYPTION_KEY` | Presence check in `sh scripts/preflight.sh` | production secret-manager/KMS injection plus readiness check | Yes |
 | Legal/vendor/insurance/DPIA/retention | `LEGAL_APPROVAL_FILE`, `VENDOR_RISK_APPROVAL_FILE`, `INSURANCE_EVIDENCE_FILE`, `DPIA_APPROVAL_FILE`, `RETENTION_APPROVAL_FILE` | File-presence gates in `sh scripts/preflight.sh` | `sh scripts/production-readiness-check.sh` | Yes |
 | Data region and data-broker determinations | `compliance/evidence/data-region-verification.md`, `compliance/evidence/data-broker-determination.md` | `sh scripts/production-readiness-check.sh` | same command after signed artifacts exist | Yes |
-| Local media executables | `ffmpeg`, `ffprobe`, `exiftool`, `magick`, `clamscan`, `ocrmypdf`, `python` | `sh scripts/media-tools-check.sh` | install pinned tools, then rerun media fixture/live-fire checks | Yes for media release |
+| Local media executables | `ffmpeg`, `ffprobe`, `exiftool`, `magick`, `clamscan`, `ocrmypdf`, `python` | `sh scripts/media-tools-check.sh` (host probe remains deferred) | `docker build --target worker-runtime -t family-historian-worker:local .` then the worker-image tool probe and representative media fixture | Yes for media release |
 
 ## Commands to resume
 
@@ -140,14 +142,15 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 - Actual 25 GB transfer/recovery, pinned FFmpeg/OCR/ClamAV execution, authenticated k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; the bounded 100-request health smoke, no-shell media executor, and local backup/restore now have executable rehearsals.
 - Native session signing and TOTP/recovery controls are implemented, but passkeys/WebAuthn, device management, and production MFA rollout need live verification.
 - The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.
-- The worker package currently performs dependency readiness checks but has no production outbox dispatcher or handlers; queued media, privacy, export, and narration jobs therefore require a separate implementation pass before launch.
+- The worker now has a real SQL dispatcher and media quarantine handler, but privacy, export, transcription, narration, and deletion job families still require implementation and fixture proofs. Unsupported job types fail closed rather than reporting success.
 - Legal, insurance, vendor, data-region, and policy approvals are not engineering artifacts and remain fail-closed.
 
 ## Final operator checklist
 
-1. Supply Turnstile site/secret keys; rerun `sh scripts/preflight.sh` and `sh scripts/probes/turnstile.sh`.
-2. Verify the Resend sender domain and run a real recipient delivery proof; complete signed Stripe webhook delivery with a reachable endpoint or Stripe CLI forwarding.
-3. Obtain and place the signed legal/vendor/insurance/DPIA/retention/data-region/data-broker artifacts outside Git; rerun production readiness.
-4. Run the GitHub release workflow, deploy staging, run health/live-fire smoke, and complete a restore and rollback drill.
-5. Rotate the local development DeepSeek key and inject production-scoped secrets only after vendor approval.
-6. Run the documented manual production deploy command only after every production-readiness sentinel and approval is genuine.
+1. Implement and verify the remaining worker job families (privacy, export, transcription, narration, deletion), then run representative real-object fixtures through `worker-runtime`.
+2. Supply Turnstile site/secret keys; rerun `sh scripts/preflight.sh` and `sh scripts/probes/turnstile.sh`.
+3. Verify the Resend sender domain and run a real recipient delivery proof; complete signed Stripe webhook delivery with a reachable endpoint or Stripe CLI forwarding.
+4. Obtain and place the signed legal/vendor/insurance/DPIA/retention/data-region/data-broker artifacts outside Git; rerun production readiness.
+5. Run the GitHub release workflow, deploy staging, run health/live-fire smoke, and complete a restore and rollback drill.
+6. Rotate the local development DeepSeek key and inject production-scoped secrets only after vendor approval.
+7. Run the documented manual production deploy command only after every production-readiness sentinel and approval is genuine.
