@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: the next commit in this run will include the Redis distributed rate-limiter hardening checkpoint; the exact full hash is recorded in Git after commit.
+- Current code checkpoint: `b560a036c12f9314e0f5d3e1c91b18452b78fd1a` (Redis distributed rate-limiter hardening checkpoint).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
