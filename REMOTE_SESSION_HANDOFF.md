@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `adebd3a37a1f577f6fbc717d2dae7265e8066588` (privacy-request intake and deletion-hold hardening checkpoint; includes the Redis distributed rate limiter).
+- Current code checkpoint: `e3eaa3d772ccc63afd751e66fc3428a749aaf7ac` (privacy, export, and narration review-intake hardening checkpoint; includes the Redis distributed rate limiter).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
