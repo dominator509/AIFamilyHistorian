@@ -35,4 +35,13 @@ describe('observability redaction', () => {
     );
     expect(() => metricSample('bad', Number.NaN, 'count')).toThrow('finite');
   });
+
+  it('redacts provider-specific keys and secret-bearing object fields', () => {
+    expect(
+      redactTelemetryValue({ resend: 're_live_abcdefghijklmnop', apiKey: 'ordinary-value' }),
+    ).toEqual({
+      resend: '[SECRET_REDACTED]',
+      apiKey: '[SECRET_REDACTED]',
+    });
+  });
 });

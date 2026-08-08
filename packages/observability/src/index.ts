@@ -1,4 +1,4 @@
-const SECRET_PATTERN = /\b(?:sk|pk|rk|whsec)[_-][A-Za-z0-9_-]{12,}\b/gu;
+const SECRET_PATTERN = /\b(?:sk|pk|rk|whsec|re|dg|gsk)[_-][A-Za-z0-9_.-]{12,}\b/gu;
 const PRIVATE_KEY_PATTERN =
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/gu;
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu;
@@ -12,6 +12,16 @@ const CONTENT_KEYS = new Set([
   'transcript',
   'plaintext',
   'body',
+]);
+const SENSITIVE_KEYS = new Set([
+  'authorization',
+  'apiKey',
+  'accessKeyId',
+  'secretAccessKey',
+  'secret',
+  'token',
+  'password',
+  'dsn',
 ]);
 
 export interface TelemetryContext {
@@ -44,6 +54,7 @@ export interface MetricSample {
 export function redactTelemetryValue(value: unknown, key?: string, depth = 0): unknown {
   if (depth > 8) return '[REDACTED_DEPTH]';
   if (key && CONTENT_KEYS.has(key)) return '[CONTENT_REDACTED]';
+  if (key && SENSITIVE_KEYS.has(key)) return '[SECRET_REDACTED]';
   if (typeof value === 'string')
     return value
       .replaceAll(PRIVATE_KEY_PATTERN, '[SECRET_REDACTED]')
