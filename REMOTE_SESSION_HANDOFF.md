@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `aa56608` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions with explicit logout, transaction-serialized active-upload and archive queue quotas, derivative recipe idempotency, archive partitioning, provider-authoritative billing state, strict CORS allowlisting, durable signature-verified Stripe callback ingestion, bounded magic-byte upload signature validation, and OS-bounded worker runtime artifacts).
+- Current code checkpoint: `41e8d3a` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions with explicit logout, transaction-serialized active-upload and archive queue quotas, derivative recipe idempotency, archive partitioning, provider-authoritative billing state, strict CORS allowlisting, durable signature-verified Stripe callback ingestion, bounded magic-byte upload signature validation, OS-bounded worker runtime artifacts, and behavior-backed security-gate assertions).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
@@ -23,7 +23,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (11 files, 27 tests, including real PostgreSQL concurrent upload-reservation and archive-queue-capacity serialization, Redis distributed rate limiting and revocation persistence, derivative recipe uniqueness/fixity, archive-partition isolation, provider-authoritative billing status and subscription uniqueness, tenant-scoped privacy/deletion-hold evidence, export and narration review intake, SQL outbox claim/lease/completion/retry/dead-letter, unsupported-job, and stale-worker fencing proofs, and signed Stripe webhook persistence, replay, and payload-hash mismatch rejection)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 11 tests, including valid WAV acceptance and mismatched PNG-as-WAV rejection before immutable persistence)
 - `sh scripts/build.sh` -> `build: ok`
-- `sh scripts/security-check.sh` -> `security check: ok`
+- `sh scripts/security-check.sh` -> `security check: ok` (behavioral API, media-signature, revocable-session, and worker-sandbox assertions)
 - `sh scripts/dependency-audit.sh` -> `dependency audit: ok`
 - `sh scripts/reality-gate.sh` -> `reality gate: ok`
 - `sh scripts/smoke-test.sh` -> `smoke test: ok`
