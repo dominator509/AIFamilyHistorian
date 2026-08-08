@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current code checkpoint: `0242fcb` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions, transactional active-upload quotas, archive queue-capacity enforcement, derivative recipe idempotency, archive partitioning, and provider-authoritative billing state).
+- Current code checkpoint: `ac49871` (privacy/export/narration review intake, Redis limiter, API authorization/publication/MIME hardening, bounded worker derivatives, authenticated principal/archive rate scopes, production secret entropy validation, revocable bearer sessions, transactional active-upload quotas, archive queue-capacity enforcement, derivative recipe idempotency, archive partitioning, provider-authoritative billing state, and strict CORS allowlisting).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
