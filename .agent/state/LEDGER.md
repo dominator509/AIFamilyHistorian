@@ -240,3 +240,4 @@
 2026-08-08T13:15:38Z | codex | HARDENING-40 | LOCAL_VERIFICATION | migration0012_database_verify_ok_unit80_integration34_e2e11_build_security_secret_scan_audit_reality_smoke_performance_p95_0.53ms_livefire16_backup_restore_schema_migrations12
 2026-08-08T13:17:07Z | codex | HARDENING-40 | COMMAND_FAILED | sh_scripts_production_readiness_check_exit_1_fourteen_unresolved_external_requirements; expected_fail_closed_release_gate
 2026-08-08T13:17:08Z | codex | HARDENING-40 | SECURITY_SCAN | standard_scan_ea39d0c_started_at_revision_2c73cbb_discovery_stalled_zero_rows_and_is_now_stale_after_verified_98b7ac7; no_finding_claim_inferred
+2026-08-08T13:19:10Z | codex | HARDENING-40 | LOCAL_VERIFICATION | session_rotation_issues_replacement_token_before_database_predecessor_revocation; focused_unit_and_integration_tests_passed

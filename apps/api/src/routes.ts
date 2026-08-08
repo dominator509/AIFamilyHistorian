@@ -192,12 +192,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
       sessionId: randomUUID(),
       expiresAt: now + 24 * 60 * 60,
     };
+    const token = issueSessionToken(dependencies.sessionSecret, replacement);
     await sessionStoreOperation(() =>
       store.rotate(value.sessionId!, replacement, sessionMetadata(request)),
     );
     await dependencies.sessionRevocationStore?.revoke(value.sessionId, value.expiresAt);
     return {
-      token: issueSessionToken(dependencies.sessionSecret, replacement),
+      token,
       sessionId: replacement.sessionId,
       expiresAt: replacement.expiresAt,
     };
