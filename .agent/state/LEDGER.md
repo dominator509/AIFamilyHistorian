@@ -125,3 +125,6 @@
 2026-08-08T04:22:06Z | codex | EP-004 | EXTERNAL_VERIFIED | stripe_balance_and_test_checkout_session_passed_test_session_created
 2026-08-08T04:22:06Z | codex | EP-004 | LOCAL_VERIFICATION | stripe_checkout_probe_lint_format_typecheck_shell_validation_passed
 2026-08-08T04:22:06Z | codex | EP-000 | PREFLIGHT_ADVANCED | preflight_now_stops_at_missing_RESEND_API_KEY_exit_1
+2026-08-08T04:31:27Z | codex | EP-004 | EXTERNAL_VERIFIED | resend_authenticated_domains_probe_passed_new_local_credential
+2026-08-08T04:31:27Z | codex | EP-000 | PREFLIGHT_ADVANCED | preflight_now_stops_at_missing_TURNSTILE_SITE_KEY_exit_1
+2026-08-08T04:33:12Z | codex | EP-004 | LOCAL_VERIFICATION | resend_docs_format_and_diff_check_passed

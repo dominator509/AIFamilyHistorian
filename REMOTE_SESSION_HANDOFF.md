@@ -10,7 +10,7 @@
 - Graph status: `RESUME EP-000`
 - Engineering completion estimate: 88% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
-- Why `RUN_COMPLETE` was not reached: Deepgram and DeepSeek authenticated probes now pass, but `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` advance to `env var not set: STRIPE_SECRET_KEY`. Hosted billing, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
+- Why `RUN_COMPLETE` was not reached: Deepgram, DeepSeek, Stripe, and Resend authenticated probes now pass, but `sh scripts/preflight.sh` and `sh scripts/production-readiness-check.sh` advance to `env var not set: TURNSTILE_SITE_KEY`. Hosted abuse-prevention, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
 
 ## Verified local evidence
 
@@ -31,6 +31,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/probes/deepgram_api_key.sh` -> authenticated Deepgram projects probe passed.
 - `sh scripts/probes/deepgram_transcription.sh` -> authenticated sample transcription passed (`request_id` observed; 136 transcript characters); no provider audio or transcript was persisted.
 - `sh scripts/probes/deepseek_api_key.sh` -> authenticated DeepSeek probe passed with the newly supplied local credential; production rotation and vendor approval remain required.
+- `sh scripts/probes/resend.sh` -> authenticated Resend domains probe passed; verified sender and recipient delivery remain required.
 - `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260807T063342Z.dump.enc`).
 - `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260807T063342Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=4`.
 - `sh scripts/performance-smoke.sh` -> `performance: ok requests=100 p95=0.52ms` against the real Fastify health endpoint.
@@ -51,7 +52,7 @@ The following commands passed after the continuation changes:
 | API and web client | Engineering complete locally | Fastify health/auth/archive routes, idempotent mutations, private-by-default UI workflow | API E2E, web E2E, smoke | Staging URL and browser accessibility/performance audit | Product surface is intentionally bounded relative to the full blueprint |
 | Authentication and authorization | Local MFA hardening complete; passkey rollout pending | Signed sessions, archive permission checks, tenant boundaries, fail-closed visibility/rights checks, RFC-compatible TOTP enrollment/replay protection/recovery codes | Unit, integration, E2E; TOTP RFC-vector coverage | WebAuthn/passkey provider live-fire, device management, production secret injection | Native auth/TOTP are not a substitute for a completed Better Auth/passkey rollout |
 | AI gateway | Local and authenticated nonproduction proof complete | DeepSeek adapter, policy/DLP, prompt canonicalization, structured output, provenance, usage/cache telemetry, disablement behavior | Unit, contract, authenticated DeepSeek live-fire | Production key/vendor approval and hosted retention/location evidence | Current development key must be rotated before production |
-| Transcription/narration/email/billing providers | Adapter engineering complete | Deepgram, ElevenLabs, Resend, Stripe, Turnstile HTTP adapters with bounded retries, validation, signature checks, and local protocol tests; local billing/quota domain | Provider local HTTP contract tests and all sixteen local live-fire proofs | Authenticated sandbox probes, signed webhook delivery, vendor approvals | No external delivery or payment effect was fabricated |
+| Transcription/narration/email/billing providers | Adapter engineering complete | Deepgram, ElevenLabs, Resend, Stripe, Turnstile HTTP adapters with bounded retries, validation, signature checks, and local protocol tests; authenticated Deepgram sample, Stripe balance/Checkout Session, and Resend domains probes; local billing/quota domain | Provider local HTTP contract tests and all sixteen local live-fire proofs | Resend sender/recipient delivery, Turnstile, signed Stripe webhook delivery, remaining hosted probes, vendor approvals | No external delivery or payment effect was fabricated |
 | Documents and exports | Local implementation complete | Tamper-evident provenance/audit chains, portable JSONL/CSV manifest, deterministic text-first PDF/EPUB, release-gated publication bundle, explicit-marker candidate extraction, 25 GB resumable chunk manifest/part recovery planner, media quarantine/derivative command plans, no-shell worker executor with path confinement and bounded time/output | Unit and `book-pdf-epub`/`portable-export`/`evidence-extraction` live-fire | Accessible-PDF/EPUB audit and 25 GB transfer/recovery rehearsal | Advanced layout, media embedding, automatic NLP extraction, pinned media-tool fixture execution, and formal accessibility audit remain |
 | Observability/operations | Local implementation complete | Redacted structured telemetry, metric samples, OTel local sink, immutable audit events, streaming encrypted backup/restore scripts, incident/runbook guidance | Unit, local collector/reality gates, encrypted backup and disposable restore-check | Hosted Sentry/OTLP, KMS wrapping, alert paging, production retention/restore | Hosted restore and quarterly preservation drills remain operator-owned |
 | Deployment/release | Local artifact complete | Non-root Docker image, healthcheck, Fly staging config, release workflow, manual production command | Docker build and compose config | GHCR, Fly staging smoke, DNS/certificates, production migration and rollback | No cloud mutation or auto-deploy was authorized |
@@ -61,11 +62,11 @@ The following commands passed after the continuation changes:
 
 | Node | Status | Reason |
 |---|---|---|
-| EP-000 | In progress; externally unverified | Scheduler lease preserved; preflight now advances to missing `STRIPE_SECRET_KEY`. |
+| EP-000 | In progress; externally unverified | Scheduler lease preserved; preflight now advances to missing `TURNSTILE_SITE_KEY`. |
 | EP-001 | Engineering complete; externally unverified | Foundation and toolchain gates passed locally; graph dependency remains EP-000. |
 | EP-002 | Engineering complete; externally unverified | Domain invariants and tests passed locally; graph dependency remains EP-000. |
 | EP-003 | Engineering complete; externally unverified | Migrations, RLS, storage and persistence tests passed locally; hosted probes remain. |
-| EP-004 | Engineering continuation complete; externally unverified | API/service layer and provider adapters pass local tests; authenticated Deepgram sample transcription now passes, while other hosted provider probes remain. |
+| EP-004 | Engineering continuation complete; externally unverified | API/service layer and provider adapters pass local tests; authenticated Deepgram sample, Stripe Checkout Session, and Resend domains probes pass, while delivery/webhook and remaining hosted probes remain. |
 | EP-005 | Engineering continuation complete; externally unverified | UI/E2E and all live-fire dispatchers pass locally; graph lease remains EP-000. |
 | EP-006 | Engineering complete; externally unverified | Auth/security gates pass locally; OAuth/passkey/provider evidence remains. |
 | EP-007 | Engineering continuation complete; externally unverified | All 16 live-fire proofs and local regression gates pass; full verify cannot start. |
@@ -82,7 +83,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 | Deepgram transcription | `DEEPGRAM_API_KEY` | `sh scripts/probes/deepgram_api_key.sh` and `sh scripts/probes/deepgram_transcription.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes under current gate |
 | Cloudflare R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT` | `sh scripts/probes/r2.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
 | Stripe sandbox | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` | `sh scripts/probes/stripe.sh` and `sh scripts/probes/stripe_checkout.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
-| Resend delivery | `RESEND_API_KEY`, `EMAIL_FROM` | `sh scripts/probes/resend.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
+| Resend delivery | `RESEND_API_KEY`, `EMAIL_FROM` | `sh scripts/probes/resend.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` plus verified sender/recipient delivery | Yes |
 | Turnstile | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | `sh scripts/probes/turnstile.sh` | `sh scripts/preflight.sh` | Yes |
 | Sentry/hosted OTLP | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | `sh scripts/probes/sentry.sh` and `sh scripts/probes/otel.sh` | `sh scripts/preflight.sh` | Yes under current gate |
 | GitHub/GHCR | `GITHUB_TOKEN`, `GITHUB_REPOSITORY` | `sh scripts/probes/github.sh` | `sh scripts/preflight.sh` and remote workflow run | Yes |
@@ -132,7 +133,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Known risks
 
-- Hosted narration, email, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; Deepgram authenticated sample transcription and Stripe test Checkout Session creation passed, but signed Stripe webhook delivery, production vendor approval, retention/location review, and end-to-end media workflow proof remain; production backup KMS wrapping and retention are also pending.
+- Hosted narration, email delivery, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; Deepgram authenticated sample transcription, Stripe test Checkout Session creation, and Resend domains authentication passed, but verified email delivery, signed Stripe webhook delivery, production vendor approval, retention/location review, and end-to-end media workflow proof remain; production backup KMS wrapping and retention are also pending.
 - Actual 25 GB transfer/recovery, pinned FFmpeg/OCR/ClamAV execution, authenticated k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; the bounded 100-request health smoke, no-shell media executor, and local backup/restore now have executable rehearsals.
 - Native session signing and TOTP/recovery controls are implemented, but passkeys/WebAuthn, device management, and production MFA rollout need live verification.
 - The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.
@@ -140,8 +141,8 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Final operator checklist
 
-1. Stripe balance and test Checkout Session probes already pass; complete signed webhook delivery with a reachable endpoint or Stripe CLI forwarding, then rerun the full gate.
-2. Supply real R2, Resend, Turnstile, Sentry/OTLP, GitHub, and Fly credentials; run each named probe and the full verify gate.
+1. Supply Turnstile site/secret keys; rerun `sh scripts/preflight.sh` and `sh scripts/probes/turnstile.sh`.
+2. Verify the Resend sender domain and run a real recipient delivery proof; complete signed Stripe webhook delivery with a reachable endpoint or Stripe CLI forwarding.
 3. Obtain and place the signed legal/vendor/insurance/DPIA/retention/data-region/data-broker artifacts outside Git; rerun production readiness.
 4. Run the GitHub release workflow, deploy staging, run health/live-fire smoke, and complete a restore and rollback drill.
 5. Rotate the local development DeepSeek key and inject production-scoped secrets only after vendor approval.
