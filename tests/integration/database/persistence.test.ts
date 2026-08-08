@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { ArchiveService } from '../../../apps/api/src/archive-service.js';
 import {
   bootstrapArchive,
   createPool,
@@ -19,6 +20,20 @@ beforeAll(async () => {
 });
 
 describe('PostgreSQL persistence invariants', () => {
+  it('rejects an archive context whose organization does not own the archive', async () => {
+    const first: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    const second: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, first, 'Context family', 'Context archive');
+    await bootstrapArchive(pool, second, 'Other context family', 'Other context archive');
+    const service = new ArchiveService(pool, 'a'.repeat(32));
+    await expect(
+      service.getArchive({
+        organizationId: first.organizationId,
+        familyArchiveId: second.familyArchiveId,
+      }),
+    ).rejects.toThrow('Archive tenant scope is invalid');
+  });
+
   it('enforces tenant isolation with RLS and stores evidence-linked facts transactionally', async () => {
     const first: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     const second: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };

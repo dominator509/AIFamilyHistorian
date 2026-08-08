@@ -140,6 +140,7 @@ export class ArchiveService {
   }
 
   public async getArchive(context: DatabaseContext): Promise<{ id: string; name: string } | null> {
+    await this.assertArchiveContext(context);
     return withTenantTransaction(this.pool, context, async (client) => {
       const result = await client.query<{ id: string; name: string }>(
         'select id, name from family_archives where id = $1',
@@ -153,6 +154,7 @@ export class ArchiveService {
     kind: ListResourceKind,
     context: DatabaseContext,
   ): Promise<readonly { id: string }[]> {
+    await this.assertArchiveContext(context);
     const table = tableByKind[kind];
     return withTenantTransaction(this.pool, context, async (client) => {
       const result = await client.query<{ id: string }>(
@@ -169,6 +171,7 @@ export class ArchiveService {
     route: string,
     mutation: ResourceMutation,
   ): Promise<{ response: MutationResponse; replayed: boolean }> {
+    await this.assertArchiveContext(context);
     const id = uuidV7();
     const actorPseudonym = createHash('sha256').update(actorUserId, 'utf8').digest('hex');
     const result = await withIdempotentMutation(
@@ -457,6 +460,7 @@ export class ArchiveService {
       sha256Hex: string;
     },
   ): Promise<{ response: MutationResponse; replayed: boolean }> {
+    await this.assertArchiveContext(context);
     const storage = this.requireStorage();
     const id = uuidV7();
     const objectKey = originalObjectKey(context.organizationId, context.familyArchiveId);
@@ -519,6 +523,7 @@ export class ArchiveService {
     uploadId: string,
     partNumber: number,
   ): Promise<{ url: string; expiresIn: number }> {
+    await this.assertArchiveContext(context);
     const upload = await this.upload(context, uploadId);
     if (upload.status !== 'initiated')
       throw new ApiProblem('UPLOAD_INCOMPLETE', 'Upload is not accepting parts');
@@ -543,6 +548,7 @@ export class ArchiveService {
     expectedByteSize: number;
     parts: readonly { partNumber: number; etag: string; byteSize: number }[];
   }> {
+    await this.assertArchiveContext(context);
     const upload = await this.upload(context, uploadId);
     const parts =
       upload.status === 'initiated'
@@ -570,6 +576,7 @@ export class ArchiveService {
       ChecksumSHA256?: string;
     }[],
   ): Promise<{ response: MutationResponse; replayed: boolean }> {
+    await this.assertArchiveContext(context);
     const storage = this.requireStorage();
     const result = await withIdempotentMutation(
       this.pool,
@@ -671,6 +678,7 @@ export class ArchiveService {
     idempotencyKey: string,
     uploadId: string,
   ): Promise<{ response: MutationResponse; replayed: boolean }> {
+    await this.assertArchiveContext(context);
     const storage = this.requireStorage();
     const result = await withIdempotentMutation(
       this.pool,
@@ -700,6 +708,17 @@ export class ArchiveService {
 
   private actorPseudonym(userId: string): string {
     return createHash('sha256').update(userId, 'utf8').digest('hex');
+  }
+
+  private async assertArchiveContext(context: DatabaseContext): Promise<void> {
+    const exists = await withTenantTransaction(this.pool, context, async (client) => {
+      const result = await client.query(
+        'select 1 from family_archives where id = $1 and organization_id = $2 limit 1',
+        [context.familyArchiveId, context.organizationId],
+      );
+      return result.rowCount === 1;
+    });
+    if (!exists) throw new ApiProblem('VALIDATION_FAILED', 'Archive tenant scope is invalid');
   }
 
   private async assertMemberManagementPermission(
