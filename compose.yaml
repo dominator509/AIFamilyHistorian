@@ -9,6 +9,7 @@ services:
       POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:?generate .env first}
     ports:
       - '127.0.0.1:35432:5432'
+    networks: [family_historian_internal]
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,6 +31,7 @@ services:
       ]
     ports:
       - '127.0.0.1:36379:6379'
+    networks: [family_historian_internal]
     volumes:
       - redis_data:/data
     healthcheck:
@@ -48,6 +50,7 @@ services:
     ports:
       - '127.0.0.1:39000:9000'
       - '127.0.0.1:39001:9001'
+    networks: [family_historian_internal]
     volumes:
       - object_storage_data:/data
     healthcheck:
@@ -62,6 +65,7 @@ services:
     depends_on:
       object-storage:
         condition: service_healthy
+    networks: [family_historian_internal]
     environment:
       MINIO_ROOT_USER: ${LOCAL_S3_ROOT_USER:?generate .env first}
       MINIO_ROOT_PASSWORD: ${LOCAL_S3_ROOT_PASSWORD:?generate .env first}
@@ -135,6 +139,7 @@ services:
         condition: service_healthy
       object-storage-init:
         condition: service_healthy
+    networks: [family_historian_internal]
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=1g
@@ -150,3 +155,7 @@ volumes:
   postgres_data:
   redis_data:
   object_storage_data:
+
+networks:
+  family_historian_internal:
+    internal: true

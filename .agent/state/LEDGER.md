@@ -214,3 +214,4 @@
 2026-08-08T14:15:00Z | codex | EP-010 | COMMAND_FAILED | production_readiness_check_exit_1_with_14_unresolved_external_and_legal_requirements_no_local_implementation_failure
 2026-08-08T14:20:00Z | codex | HARDENING-30 | HARDENING_PASS | deployment_runbook_image_identity_aligned_with_release_workflow_and_ghcr_repository_variable_mismatch_removed
 2026-08-08T14:22:00Z | codex | HARDENING-30 | COMMAND_FAILED | stale_ghcr_reference_check_used_posix_exit_in_powershell_exit_1_format_and_security_checks_passed_rerun_with_powershell_condition
+2026-08-08T14:30:00Z | codex | HARDENING-31 | LOCAL_VERIFICATION | tenant_rls_audit_canonical_relations_and_runtime_role_policy_coverage_aligned_no_source_backed_gap; redacted_secret_scan_exit_1_only_documented_placeholders_and_fake_test_fixture_no_tracked_credentials

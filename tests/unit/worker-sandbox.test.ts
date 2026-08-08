@@ -12,6 +12,8 @@ describe('worker OS sandbox declaration', () => {
     expect(compose).toContain('mem_limit: 2g');
     expect(compose).toContain('cpus: 2.0');
     expect(compose).toContain('/tmp:rw,noexec,nosuid,size=1g');
+    expect(compose).toContain('networks: [family_historian_internal]');
+    expect(compose).toContain('family_historian_internal:\n    internal: true');
   });
 
   it('declares bounded VM resources and graceful termination for Fly worker', async () => {
