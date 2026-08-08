@@ -71,3 +71,6 @@ Add a decision before introducing a new canonical name, dependency, provider pro
 ### ADR-027: Authenticated Deepgram transcription proof
 
 The Deepgram API-key projects probe verifies authentication only. Because the production gate requires a real speech-to-text proof, `scripts/probes/deepgram_transcription.ts` uses the provider's documented sample audio URL, requests Nova-3 with smart formatting, validates the response shape, and requires non-empty transcript text. The probe does not persist provider audio or transcript content and remains separate from local deterministic tests.
+### ADR-028: Stripe test-mode checkout proof
+
+The Stripe balance probe verifies API authentication only. The sandbox checkout probe creates one subscription-mode Checkout Session with the configured test price and a unique idempotency key, validates the returned `cs_` session contract, and never completes payment. Webhook delivery remains separate because it requires a reachable signed endpoint or Stripe CLI forwarding.

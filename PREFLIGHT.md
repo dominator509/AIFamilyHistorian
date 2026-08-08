@@ -12,7 +12,7 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 | DeepSeek | Interview planning and editorial generation | DEEPSEEK_API_KEY | API inference only | Usage based | scripts/probes/deepseek_api_key.sh |
 | Deepgram | Primary transcription | DEEPGRAM_API_KEY | Speech-to-text only | Usage based | scripts/probes/deepgram_api_key.sh; authenticated sample proof: scripts/probes/deepgram_transcription.sh |
 | ElevenLabs | Optional stock narration and verified self-voice | ELEVENLABS_API_KEY | Text-to-speech and permitted voice endpoints only | Usage based | scripts/probes/elevenlabs_api_key.sh |
-| Stripe | Billing live-fire | STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID | Test mode during build | Usage based | scripts/probes/stripe.sh |
+| Stripe | Billing live-fire | STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ID | Test mode during build | Usage based | scripts/probes/stripe.sh; authenticated checkout proof: scripts/probes/stripe_checkout.sh |
 | Resend | Invitations and job notices | RESEND_API_KEY, EMAIL_FROM | Sending domain only | Usage based | scripts/probes/resend.sh |
 | Cloudflare Turnstile | Abuse prevention | TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY | One site | Free | scripts/probes/turnstile.sh |
 | Sentry | Redacted errors | SENTRY_DSN, SENTRY_AUTH_TOKEN | Project event ingest and release upload | Paid or free tier | scripts/probes/sentry.sh |

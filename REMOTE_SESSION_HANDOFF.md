@@ -81,7 +81,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 |---|---|---|---|---|
 | Deepgram transcription | `DEEPGRAM_API_KEY` | `sh scripts/probes/deepgram_api_key.sh` and `sh scripts/probes/deepgram_transcription.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes under current gate |
 | Cloudflare R2 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_ENDPOINT` | `sh scripts/probes/r2.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
-| Stripe sandbox | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` | `sh scripts/probes/stripe.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
+| Stripe sandbox | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` | `sh scripts/probes/stripe.sh` and `sh scripts/probes/stripe_checkout.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
 | Resend delivery | `RESEND_API_KEY`, `EMAIL_FROM` | `sh scripts/probes/resend.sh` | `sh scripts/preflight.sh && sh scripts/live-fire.sh` | Yes |
 | Turnstile | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | `sh scripts/probes/turnstile.sh` | `sh scripts/preflight.sh` | Yes |
 | Sentry/hosted OTLP | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | `sh scripts/probes/sentry.sh` and `sh scripts/probes/otel.sh` | `sh scripts/preflight.sh` | Yes under current gate |
@@ -132,7 +132,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Known risks
 
-- Hosted narration, email, billing, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; Deepgram authenticated sample transcription passed, but production vendor approval, retention/location review, and end-to-end media workflow proof remain; production backup KMS wrapping and retention are also pending.
+- Hosted narration, email, abuse-prevention, telemetry, R2, CI, and Fly behavior is not live-fire verified; Deepgram authenticated sample transcription and Stripe test Checkout Session creation passed, but signed Stripe webhook delivery, production vendor approval, retention/location review, and end-to-end media workflow proof remain; production backup KMS wrapping and retention are also pending.
 - Actual 25 GB transfer/recovery, pinned FFmpeg/OCR/ClamAV execution, authenticated k6 performance, and formal WCAG/PDF/EPUB audits remain unproven; the bounded 100-request health smoke, no-shell media executor, and local backup/restore now have executable rehearsals.
 - Native session signing and TOTP/recovery controls are implemented, but passkeys/WebAuthn, device management, and production MFA rollout need live verification.
 - The product surface is a bounded modular-monolith foundation, not a claim that every blueprint UI and worker feature is complete; extraction intentionally accepts explicit source markers only and does not auto-confirm facts.
@@ -140,7 +140,7 @@ fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GHCR_OWNER/family-histo
 
 ## Final operator checklist
 
-1. Supply Stripe test-mode credentials; rerun `sh scripts/preflight.sh` and `sh scripts/probes/stripe.sh`.
+1. Stripe balance and test Checkout Session probes already pass; complete signed webhook delivery with a reachable endpoint or Stripe CLI forwarding, then rerun the full gate.
 2. Supply real R2, Resend, Turnstile, Sentry/OTLP, GitHub, and Fly credentials; run each named probe and the full verify gate.
 3. Obtain and place the signed legal/vendor/insurance/DPIA/retention/data-region/data-broker artifacts outside Git; rerun production readiness.
 4. Run the GitHub release workflow, deploy staging, run health/live-fire smoke, and complete a restore and rollback drill.
