@@ -3,6 +3,7 @@ import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
+import { privacyRequestInputSchema } from '@family-historian/contracts';
 import { uuidV7, type DatabaseClient } from '@family-historian/database';
 import {
   buildMediaPipelinePlan,
@@ -19,6 +20,11 @@ const mediaPayloadSchema = z.object({
   payload: z.object({ objectKey: z.string().min(1).max(512) }),
 });
 
+const privacyPayloadSchema = z.object({
+  aggregateId: z.uuid(),
+  payload: privacyRequestInputSchema,
+});
+
 export interface WorkerHandlerOptions {
   readonly storage: ObjectStorage;
   readonly binaries?: MediaToolExecutionOptions['binaries'];
@@ -27,7 +33,107 @@ export interface WorkerHandlerOptions {
 export function createDefaultHandlers(
   options: WorkerHandlerOptions,
 ): ReadonlyMap<string, WorkerJobHandler> {
-  return new Map([['media.scan', (context) => handleMediaScan(context, options)]]);
+  return new Map([
+    ['media.scan', (context) => handleMediaScan(context, options)],
+    ['privacy.request', handlePrivacyRequest],
+  ]);
+}
+
+/**
+ * Accept a privacy request into the authoritative review queue. This handler
+ * never claims to fulfill access, correction, export, restriction, objection,
+ * or deletion; it records the scoped handoff and leaves the request running
+ * until a provider-independent review/fulfillment worker is implemented.
+ */
+async function handlePrivacyRequest(context: Parameters<WorkerJobHandler>[0]): Promise<void> {
+  const parsed = privacyPayloadSchema.safeParse(context.job.payload);
+  if (!parsed.success)
+    throw new WorkerJobError('privacy request payload is invalid', 'JOB_PAYLOAD_INVALID', false);
+  if (!context.job.familyArchiveId)
+    throw new WorkerJobError(
+      'privacy request archive scope is missing',
+      'JOB_SCOPE_INVALID',
+      false,
+    );
+  const { aggregateId, payload } = parsed.data;
+  await context.withTenant(async (client) => {
+    const current = await client.query<{
+      request_type: string;
+      status: string;
+      requester_reference: string;
+      family_archive_id: string;
+    }>(
+      `select request_type, status, requester_reference, family_archive_id
+         from privacy_requests
+        where id = $1 and organization_id = $2 and family_archive_id = $3`,
+      [aggregateId, context.job.organizationId, context.job.familyArchiveId],
+    );
+    const request = current.rows[0];
+    if (!request)
+      throw new WorkerJobError(
+        'privacy request is outside the worker scope',
+        'PERMISSION_DENIED',
+        false,
+      );
+    if (
+      request.request_type !== payload.requestType ||
+      request.requester_reference !== payload.requesterReference ||
+      (payload.archiveId ?? context.job.familyArchiveId) !== request.family_archive_id
+    )
+      throw new WorkerJobError(
+        'privacy request payload does not match authoritative data',
+        'JOB_PAYLOAD_INVALID',
+        false,
+      );
+    if (request.status === 'completed' || request.status === 'cancelled') return;
+    if (request.status !== 'queued' && request.status !== 'retryable_failed') return;
+    const updated = await client.query(
+      `update privacy_requests
+          set status = 'running'
+        where id = $1 and organization_id = $2 and family_archive_id = $3
+          and status in ('queued', 'retryable_failed')
+        returning id`,
+      [aggregateId, context.job.organizationId, context.job.familyArchiveId],
+    );
+    if (updated.rowCount !== 1) return;
+
+    if (payload.requestType === 'deletion') {
+      await client.query(
+        `insert into deletion_jobs(
+           id, organization_id, family_archive_id, status, idempotency_key, grace_ends_at, evidence
+         ) values ($1, $2, $3, 'queued', $4, now() + interval '30 days', $5)
+         on conflict (organization_id, idempotency_key) do nothing`,
+        [
+          uuidV7(),
+          context.job.organizationId,
+          context.job.familyArchiveId,
+          `privacy-request:${aggregateId}`,
+          JSON.stringify([
+            { source: 'privacy_request', privacyRequestId: aggregateId, state: 'review_required' },
+          ]),
+        ],
+      );
+    }
+    await client.query(
+      `insert into audit_events(
+         id, organization_id, family_archive_id, actor_pseudonym, action, outcome, metadata, occurred_at
+       ) values ($1, $2, $3, $4, $5, 'review_required', $6, now())`,
+      [
+        uuidV7(),
+        context.job.organizationId,
+        context.job.familyArchiveId,
+        'worker:privacy-intake',
+        'privacy_request.accepted',
+        {
+          requestType: payload.requestType,
+          privacyRequestId: aggregateId,
+          requesterReferenceHash: createHash('sha256')
+            .update(payload.requesterReference, 'utf8')
+            .digest('hex'),
+        },
+      ],
+    );
+  });
 }
 
 async function handleMediaScan(

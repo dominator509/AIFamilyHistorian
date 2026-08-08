@@ -148,3 +148,7 @@
 2026-08-08T08:15:45Z | codex | HARDENING-9 | HARDENING_PASS | outbox_lease_token_fencing_prevents_stale_completion_unsupported_jobs_dead_letter_explicitly_and_worker_loop_handles_reclaimed_leases_unit_63_integration_12_e2e_9_live_fire_16_build_security_audit_reality_smoke_backup_restore_schema_6_performance_p95_0_52ms
 2026-08-08T08:32:12Z | codex | HARDENING-10 | COMMAND_FAILED | redis_limiter_initial_lint_typecheck_materialization_and_import_shape_fixed_before_gate_rerun
 2026-08-08T08:32:22Z | codex | HARDENING-10 | HARDENING_PASS | redis_atomic_distributed_per_ip_limiter_hashed_keys_fail_closed_local_redis_integration_unit_64_integration_13_e2e_9_typecheck_lint_format_build_security_audit_reality_smoke_live_fire_16_performance_p95_0.57ms
+2026-08-08T08:42:23Z | codex | HARDENING-11 | COMMAND_FAILED | privacy_worker_format_gate_handlers_and_test_prettier_required_exit_1
+2026-08-08T08:42:27Z | codex | HARDENING-11 | COMMAND_FAILED | privacy_worker_lint_type_only_import_fixed_exit_1
+2026-08-08T08:42:31Z | codex | HARDENING-11 | COMMAND_FAILED | privacy_worker_integration_jsonb_array_serialization_and_stale_retry_row_order_fixed_exit_1
+2026-08-08T08:45:00Z | codex | HARDENING-11 | HARDENING_PASS | privacy_intake_authoritative_validation_review_audit_hash_deletion_hold_no_fake_fulfillment_unit_64_integration_14_e2e_9_typecheck_lint_format_build_security_audit_reality_smoke_live_fire_16
