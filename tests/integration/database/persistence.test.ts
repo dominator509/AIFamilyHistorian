@@ -34,6 +34,19 @@ describe('PostgreSQL persistence invariants', () => {
     ).rejects.toThrow('Archive tenant scope is invalid');
   });
 
+  it('enforces the organization/archive pair at the database foreign-key boundary', async () => {
+    const first: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    const second: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, first, 'Foreign-key family', 'Foreign-key archive');
+    await bootstrapArchive(pool, second, 'Other foreign-key family', 'Other foreign-key archive');
+    await expect(
+      pool.query(
+        "insert into media_assets(id, organization_id, family_archive_id, media_type, rights_status) values ($1,$2,$3,'image','pending')",
+        [uuidV7(), first.organizationId, second.familyArchiveId],
+      ),
+    ).rejects.toThrow(/media_assets_tenant_fk/u);
+  });
+
   it('enforces tenant isolation with RLS and stores evidence-linked facts transactionally', async () => {
     const first: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     const second: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
