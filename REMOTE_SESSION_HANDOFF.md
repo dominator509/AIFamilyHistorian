@@ -4,7 +4,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Current commit before this handoff refresh: `8bd9b55` (`[EP-004][M4] Record Resend diagnostic`; run `git rev-parse HEAD` to confirm the current checkpoint).
+- Current commit: `4295d862c662420b01d94f5095e83d7ed3218db1` (auth/storage, telemetry/Sentry, and media subprocess hardening checkpoints).
 - Branch: `master`
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
@@ -19,7 +19,7 @@ The following commands passed after the continuation changes:
 - `sh scripts/lint.sh` -> `lint: ok`
 - `sh scripts/format-check.sh` -> `format check: ok`
 - `sh scripts/typecheck.sh` -> `typecheck: ok`
-- `sh scripts/test-unit.sh` -> `unit tests: ok` (17 files, 48 tests)
+- `pnpm test:unit` -> 18 files, 51 tests passed (including strict bearer, storage production endpoint, telemetry-secret, and media subprocess isolation regressions)
 - `sh scripts/test-integration.sh` -> `integration tests: ok` (4 files, 7 tests)
 - `sh scripts/test-e2e.sh` -> `e2e tests: ok` (3 files, 8 tests)
 - `sh scripts/build.sh` -> `build: ok`
@@ -42,6 +42,8 @@ The following commands passed after the continuation changes:
 - `docker build --target runtime --build-arg SERVICE=api --tag ai-family-historian:local-verify-20260807 .` -> image present after the reduced context build; `docker image inspect` observed `user=node` and the HTTP healthcheck; `docker compose config --quiet` passed.
 - `docker compose config --quiet` -> passed.
 - `sh scripts/local-services-check.sh` -> `local services: ok`.
+- `sh scripts/preflight.sh` -> `preflight: FAIL - env var not set: TURNSTILE_SITE_KEY` (exit 1; remaining external gate, not an engineering test failure).
+- Required Codex Security deep scan -> terminal setup failure before discovery: `in_scope_files.txt:1 must be a safe repository-relative path`; no security findings were inferred from this failed scan.
 
 ## Subsystem status
 
