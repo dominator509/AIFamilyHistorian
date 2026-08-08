@@ -173,3 +173,7 @@ Native Better Auth/passkey/Argon2id issuance and the provider-owned migration of
 ### ADR-051: Derive restricted-field wrapping keys per archive
 
 Restricted-field envelopes now use a versioned archive scope in the wrapping-key derivation (`HMAC-SHA256(master, family-historian:field-key:v1:<archive>)`) before generating a random per-value data key. Version 1/global envelopes remain readable for migration compatibility, while archive writes emit version 2 scoped envelopes and decryption rejects a mismatched archive scope. This provides local tenant key separation without claiming to replace production KMS wrapping, rotation, or escrow evidence.
+
+### ADR-052: Bind confirmed facts to the authenticated confirmer
+
+The archive API now requires the `confirmerId` supplied for a confirmed fact to equal the authenticated actor creating the mutation. A mismatched confirmer is rejected before evidence or fact persistence, while a matching confirmer continues through the evidence-linked transaction. This preserves the blueprint invariant that confirmation is an attributable user action rather than caller-supplied metadata; delegated or administrative confirmation requires a separate explicitly authorized workflow.

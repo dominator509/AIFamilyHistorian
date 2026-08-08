@@ -246,3 +246,6 @@
 2026-08-08T13:32:31Z | codex | HARDENING-41 | SECURITY_SCAN | current_head_scan_de063598_target_846e03a_discovery_running_zero_of_322_checks_no_report_artifact_no_no_findings_claim
 2026-08-08T13:34:50Z | codex | HARDENING-41 | SECURITY_SCAN | replacement_current_head_scan_3a8fb1b3_target_3789fcc_preflight_4_of_4_then_stalled_before_discovery_after_handoff_commit_remediation_unavailable_no_no_findings_claim
 2026-08-08T13:35:20Z | codex | HARDENING-41 | LOCAL_VERIFICATION | final_pushed_checkpoint_f3aa65b_secret_scan_ok_remote_head_equals_local
+2026-08-08T13:43:10Z | codex | HARDENING-42 | COMMAND_FAILED | persistence_confirmer_regression_exit_1_expected_status_201_observed_status_accepted
+2026-08-08T13:43:40Z | codex | HARDENING-42 | HYPOTHESIS | mutation_response_contract_uses_string_status_and_service_create_returns_accepted
+2026-08-08T13:48:44Z | codex | HARDENING-42 | HARDENING_PASS | authenticated_actor_confirmer_binding_mismatch_rejected_without_persistence_matching_confirmation_accepted_full_unit81_integration35_e2e11_build_security_secret_scan_dependency_reality_smoke_livefire16_performance_p95_0.56ms_backup_restore_schema_migrations12_commit_32204ad
