@@ -70,6 +70,49 @@ describe('PostgreSQL persistence invariants', () => {
     expect(await listConfirmedFactIds(pool, second)).not.toContain(factId);
   });
 
+  it('binds fact confirmation to the authenticated actor', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Confirmation family', 'Confirmation archive');
+    const evidenceId = uuidV7();
+    await withTenantTransaction(pool, context, async (client) => {
+      await client.query(
+        'insert into evidence_links(id, organization_id, family_archive_id, source_id, revision_id, start_offset, end_offset) values ($1,$2,$3,$4,$5,0,12)',
+        [evidenceId, context.organizationId, context.familyArchiveId, uuidV7(), uuidV7()],
+      );
+    });
+    const actorUserId = uuidV7();
+    const service = new ArchiveService(pool, 'a'.repeat(32));
+    await expect(
+      service.create(context, actorUserId, `fact-confirmation-${uuidV7()}`, '/v1/facts', {
+        kind: 'facts',
+        input: {
+          text: 'Authenticated confirmation only',
+          confirmerId: uuidV7(),
+          evidenceLinkIds: [evidenceId],
+          status: 'confirmed',
+        },
+      }),
+    ).rejects.toThrow('Only the authenticated actor can confirm a fact');
+    await expect(
+      service.create(context, actorUserId, `fact-confirmation-${uuidV7()}`, '/v1/facts', {
+        kind: 'facts',
+        input: {
+          text: 'Authenticated confirmation accepted',
+          confirmerId: actorUserId,
+          evidenceLinkIds: [evidenceId],
+          status: 'confirmed',
+        },
+      }),
+    ).resolves.toMatchObject({ replayed: false, response: { status: 'accepted' } });
+    const persisted = await withTenantTransaction(pool, context, async (client) =>
+      client.query<{ count: string }>(
+        'select count(*)::text as count from confirmed_facts where organization_id = $1 and family_archive_id = $2',
+        [context.organizationId, context.familyArchiveId],
+      ),
+    );
+    expect(persisted.rows[0]?.count).toBe('1');
+  });
+
   it('rejects original-object mutation and audit-event mutation', async () => {
     const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     await bootstrapArchive(pool, context, 'Immutable family', 'Immutable archive');

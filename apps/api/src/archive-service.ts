@@ -320,6 +320,11 @@ export class ArchiveService {
             );
             break;
           case 'facts': {
+            if (mutation.input.confirmerId !== actorUserId)
+              throw new ApiProblem(
+                'PERMISSION_DENIED',
+                'Only the authenticated actor can confirm a fact',
+              );
             await this.assertScopedIds(
               client,
               context,
