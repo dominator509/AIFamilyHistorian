@@ -136,6 +136,10 @@ The API captures the exact JSON request bytes, verifies the Stripe signature wit
 
 This keeps signature verification, replay protection, tenant isolation, and auditability at the network boundary while leaving signed sandbox delivery and downstream reconciliation as explicit external release gates.
 
+### ADR-044: Validate uploaded bytes against declared media type before persistence
+
+Multipart completion now reads at most a bounded 4 KiB prefix from object storage and compares recognized magic bytes with the declared MIME type before hashing and creating an immutable original row. Text payloads are admitted only for explicitly safe UTF-8 text types; unknown or mismatched signatures fail closed as `MEDIA_UNSAFE`. The prefix check is intentionally independent of the streamed SHA-256 fixity check and does not buffer large media objects.
+
 ### ADR-043: Serialize cost-capacity decisions inside the database transaction
 
 Upload active-count/byte reservations and archive outbox-capacity checks now acquire transaction-scoped PostgreSQL advisory locks keyed by the organization and archive before reading the current usage. The lock is held through the reservation or enqueue insert, so concurrent idempotency keys cannot both observe stale capacity and exceed the eight-upload, byte, or 1,000-job ceilings. The lock is an availability guard only; it does not replace plan-level billing enforcement or worker fairness.

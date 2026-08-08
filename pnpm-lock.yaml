@@ -65,6 +65,9 @@ importers:
       '@family-historian/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@family-historian/media':
+        specifier: workspace:*
+        version: link:../../packages/media
       '@family-historian/providers':
         specifier: workspace:*
         version: link:../../packages/providers

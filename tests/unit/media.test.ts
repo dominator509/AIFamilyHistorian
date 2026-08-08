@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import {
   assertOriginalImmutable,
   buildMediaPipelinePlan,
+  contentTypeMatchesSignature,
   executeMediaPipelineStep,
   MediaPipelineError,
   transitionQuarantine,
@@ -20,6 +21,27 @@ const descriptor = {
 };
 
 describe('media pipeline boundaries', () => {
+  it('requires declared media types to match bounded magic bytes', () => {
+    expect(contentTypeMatchesSignature('audio/wav', new TextEncoder().encode('not a wave'))).toBe(
+      false,
+    );
+    expect(
+      contentTypeMatchesSignature(
+        'audio/wav',
+        Uint8Array.from([0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x41, 0x56, 0x45]),
+      ),
+    ).toBe(true);
+    expect(
+      contentTypeMatchesSignature(
+        'image/png',
+        Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+      ),
+    ).toBe(true);
+    expect(
+      contentTypeMatchesSignature('application/json', new TextEncoder().encode('{"ok":true}')),
+    ).toBe(true);
+  });
+
   it('builds a bounded argv plan without shell interpolation', () => {
     const plan = buildMediaPipelinePlan(descriptor);
     expect(plan.map((step) => step.name)).toEqual([

@@ -25,6 +25,7 @@ import {
   type CompletedUploadPart,
   type ObjectStorage,
 } from '@family-historian/storage';
+import { contentTypeMatchesSignature } from '@family-historian/media';
 import type { DatabaseClient, DatabaseContext, DatabasePool } from '@family-historian/database';
 import { encryptRestrictedText } from './encryption.js';
 import { ApiProblem } from './problems.js';
@@ -596,6 +597,12 @@ export class ArchiveService {
           throw new ApiProblem(
             'MEDIA_UNSAFE',
             'Completed object content type does not match upload intent',
+          );
+        const prefix = await storage.readPrefix(upload.object_key);
+        if (!contentTypeMatchesSignature(upload.content_type, prefix))
+          throw new ApiProblem(
+            'MEDIA_UNSAFE',
+            'Completed object content does not match upload intent',
           );
         const actual = await storage.sha256Base64(upload.object_key);
         if (

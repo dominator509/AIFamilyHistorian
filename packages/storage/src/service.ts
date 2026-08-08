@@ -165,6 +165,21 @@ export class ObjectStorage {
     return response.Body.transformToByteArray();
   }
 
+  /** Read only a bounded object prefix for content-signature validation. */
+  public async readPrefix(key: string, maxBytes = 4096): Promise<Uint8Array> {
+    if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > 1_048_576)
+      throw new RangeError('object prefix limit is invalid');
+    const response = await this.#client.send(
+      new GetObjectCommand({
+        Bucket: this.config.bucket,
+        Key: key,
+        Range: `bytes=0-${maxBytes - 1}`,
+      }),
+    );
+    if (!response.Body) throw new Error('object body is missing');
+    return response.Body.transformToByteArray();
+  }
+
   /** Stream an object to a worker-owned file without buffering the full payload in memory. */
   public async downloadToFile(
     key: string,

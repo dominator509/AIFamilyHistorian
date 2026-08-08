@@ -8,6 +8,7 @@
     { "path": "../../packages/auth" },
     { "path": "../../packages/crypto" },
     { "path": "../../packages/database" },
+    { "path": "../../packages/media" },
     { "path": "../../packages/storage" },
     { "path": "../../packages/providers" }
   ]

@@ -167,7 +167,11 @@ describe('authenticated archive service routes', () => {
     });
     expect(media.statusCode).toBe(201);
     const mediaId = media.json<{ id: string }>().id;
-    const bytes = new TextEncoder().encode('authenticated multipart fixity fixture');
+    const bytes = Uint8Array.from([
+      0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6d, 0x74, 0x20, 0x10,
+      0, 0, 0, 1, 0, 1, 0, 0x44, 0xac, 0, 0, 0, 0x88, 0x58, 1, 0, 2, 0x10, 0, 0, 0x64, 0x61, 0x74,
+      0x61, 0, 0, 0, 0,
+    ]);
     const sha256Hex = createHash('sha256').update(bytes).digest('hex');
     const begin = await app.inject({
       method: 'POST',
@@ -229,5 +233,68 @@ describe('authenticated archive service routes', () => {
     expect(persisted.rows).toHaveLength(1);
     expect(persisted.rows[0]?.sha256).toBe(sha256Hex);
     await storage.delete(persisted.rows[0]!.object_key);
+  });
+
+  it('rejects a completed object whose bytes disagree with the declared media type', async () => {
+    const media = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/media`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `media-signature-${uuidV7()}`,
+      },
+      payload: { mediaType: 'audio', visibility: 'owner_only', rightsStatus: 'pending' },
+    });
+    expect(media.statusCode).toBe(201);
+    const mediaId = media.json<{ id: string }>().id;
+    const bytes = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const begin = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/uploads`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `upload-signature-${uuidV7()}`,
+      },
+      payload: {
+        mediaAssetId: mediaId,
+        contentType: 'audio/wav',
+        byteSize: bytes.byteLength,
+        sha256Hex: createHash('sha256').update(bytes).digest('hex'),
+      },
+    });
+    expect(begin.statusCode).toBe(201);
+    const uploadId = begin.json<{ id: string }>().id;
+    const signed = await app.inject({
+      method: 'GET',
+      url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}/parts/1`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const uploaded = await fetch(signed.json<{ url: string }>().url, {
+      method: 'PUT',
+      body: bytes,
+    });
+    expect(uploaded.ok).toBe(true);
+    const etag = uploaded.headers.get('etag');
+    expect(etag).toBeTruthy();
+    const complete = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}/complete`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `complete-signature-${uuidV7()}`,
+      },
+      payload: { parts: [{ ETag: etag, PartNumber: 1 }] },
+    });
+    expect(complete.statusCode).toBe(422);
+    expect(complete.json()).toMatchObject({ code: 'MEDIA_UNSAFE' });
+    const aborted = await app.inject({
+      method: 'POST',
+      url: `/v1/archives/${context.familyArchiveId}/uploads/${uploadId}/abort`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        'idempotency-key': `abort-signature-${uuidV7()}`,
+      },
+    });
+    expect(aborted.statusCode).toBe(200);
   });
 });

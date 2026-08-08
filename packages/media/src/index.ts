@@ -84,6 +84,67 @@ export function inferMediaKind(contentType: string): MediaKind | undefined {
   return contentTypeKinds.find(([pattern]) => pattern.test(contentType))?.[1];
 }
 
+function startsWithBytes(input: Uint8Array, expected: readonly number[], offset = 0): boolean {
+  return expected.every((value, index) => input[offset + index] === value);
+}
+
+function isUtf8Text(input: Uint8Array): boolean {
+  if (input.includes(0)) return false;
+  try {
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(input);
+    return decoded.trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Infer a MIME type from bounded magic bytes; never reads or buffers the full object. */
+export function sniffContentType(prefix: Uint8Array): string | undefined {
+  if (startsWithBytes(prefix, [0xff, 0xd8, 0xff])) return 'image/jpeg';
+  if (startsWithBytes(prefix, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'image/png';
+  if (
+    startsWithBytes(prefix, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) ||
+    startsWithBytes(prefix, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61])
+  )
+    return 'image/gif';
+  if (
+    startsWithBytes(prefix, [0x52, 0x49, 0x46, 0x46]) &&
+    startsWithBytes(prefix, [0x57, 0x45, 0x42, 0x50], 8)
+  )
+    return 'image/webp';
+  if (
+    startsWithBytes(prefix, [0x52, 0x49, 0x46, 0x46]) &&
+    startsWithBytes(prefix, [0x57, 0x41, 0x56, 0x45], 8)
+  )
+    return 'audio/wav';
+  if (
+    startsWithBytes(prefix, [0x49, 0x44, 0x33]) ||
+    (prefix[0] === 0xff && (prefix[1]! & 0xe0) === 0xe0)
+  )
+    return 'audio/mpeg';
+  if (startsWithBytes(prefix, [0x4f, 0x67, 0x67, 0x53])) return 'audio/ogg';
+  if (startsWithBytes(prefix, [0x66, 0x4c, 0x61, 0x43])) return 'audio/flac';
+  if (startsWithBytes(prefix, [0x1a, 0x45, 0xdf, 0xa3])) return 'video/webm';
+  if (startsWithBytes(prefix, [0x66, 0x74, 0x79, 0x70], 4)) return 'video/mp4';
+  if (startsWithBytes(prefix, [0x25, 0x50, 0x44, 0x46, 0x2d])) return 'application/pdf';
+  if (startsWithBytes(prefix, [0x50, 0x4b, 0x03, 0x04])) return 'application/zip';
+  if (isUtf8Text(prefix)) return 'text/plain';
+  return undefined;
+}
+
+/** Return whether the declared upload type agrees with its bounded content signature. */
+export function contentTypeMatchesSignature(contentType: string, prefix: Uint8Array): boolean {
+  const declared = contentType.toLowerCase();
+  if (declared === 'text/plain' || declared === 'text/csv' || declared === 'application/json')
+    return isUtf8Text(prefix);
+  const detected = sniffContentType(prefix);
+  if (!detected) return false;
+  if (declared === detected) return true;
+  if (declared === 'audio/mp4' && detected === 'video/mp4') return true;
+  if (declared === 'video/quicktime' && detected === 'video/mp4') return true;
+  return false;
+}
+
 export function transitionQuarantine(
   current: QuarantineStatus,
   next: QuarantineStatus,
