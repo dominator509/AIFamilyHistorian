@@ -5,6 +5,7 @@ const base = {
   NODE_ENV: 'production' as const,
   HOST: '0.0.0.0',
   PORT: '8080',
+  CORS_ALLOWED_ORIGINS: 'https://app.example.com',
   DATABASE_URL: 'postgresql://user:password@example.invalid/db',
   REDIS_URL: 'rediss://:password@example.invalid:6380',
   SESSION_SECRET: 'replace-with-at-least-32-random-bytes',
@@ -37,5 +38,20 @@ describe('runtime configuration', () => {
         DOWNLOAD_SIGNING_SECRET: 'c'.repeat(64),
       }),
     ).toThrow(/character diversity/u);
+  });
+
+  it('rejects wildcard or non-HTTPS production CORS origins', () => {
+    expect(() => parseRuntimeEnvironment({ ...base, CORS_ALLOWED_ORIGINS: '*' })).toThrow(
+      /CORS wildcard/u,
+    );
+    expect(() =>
+      parseRuntimeEnvironment({ ...base, CORS_ALLOWED_ORIGINS: 'http://app.example.com' }),
+    ).toThrow(/HTTPS/u);
+  });
+
+  it('requires a non-empty production CORS allowlist', () => {
+    expect(() => parseRuntimeEnvironment({ ...base, CORS_ALLOWED_ORIGINS: '' })).toThrow(
+      /explicit CORS origin allowlist/u,
+    );
   });
 });

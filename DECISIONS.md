@@ -125,3 +125,7 @@ Derivative persistence now has a database-enforced unique key on `(original_obje
 ### ADR-040: Keep billing state provider-authoritative
 
 Billing input accepts only the catalog plan codes, and the API may create only a `trialing` subscription. `active`, `past_due`, and `cancelled` transitions require a verified provider event; PostgreSQL enforces the plan/status vocabulary and permits only one current subscription per organization. Local entitlement and domain tests remain available, while signed webhook delivery and reconciliation are still external release work.
+
+### ADR-041: Require an explicit production CORS allowlist
+
+Runtime configuration now parses comma-separated origin-only URLs, rejects wildcards and non-HTTPS production origins, and fails production startup when the allowlist is empty. Fastify receives only that exact allowlist with credentials disabled; local development retains same-origin behavior until an origin is explicitly configured.

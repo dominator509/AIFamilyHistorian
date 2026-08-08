@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import { parseRuntimeEnvironment } from '@family-historian/config';
+import { parseCorsOrigins, parseRuntimeEnvironment } from '@family-historian/config';
 import { RedisFixedWindowRateLimiter, RedisSessionRevocationStore } from '@family-historian/auth';
 import { createPool } from '@family-historian/database';
 import { ObjectStorage, parseStorageConfig } from '@family-historian/storage';
@@ -19,6 +19,7 @@ await redis.ping();
 const app = await createApp({
   service: new ArchiveService(pool, environment.FIELD_ENCRYPTION_MASTER_KEY, storage),
   sessionSecret: environment.SESSION_SECRET,
+  corsAllowedOrigins: parseCorsOrigins(environment.CORS_ALLOWED_ORIGINS),
   rateLimiter: new RedisFixedWindowRateLimiter(redis, {
     limit: 120,
     windowMilliseconds: 60_000,

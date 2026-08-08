@@ -18,6 +18,7 @@ export interface AppDependencies {
   sessionSecret: string;
   rateLimiter?: RateLimiter;
   sessionRevocationStore?: SessionRevocationStore;
+  corsAllowedOrigins?: readonly string[];
 }
 
 export async function createApp(dependencies?: AppDependencies): Promise<FastifyInstance> {
@@ -31,7 +32,11 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
   });
 
   await app.register(helmet, { global: true });
-  await app.register(cors, { origin: false, credentials: false });
+  const corsOrigins = dependencies?.corsAllowedOrigins ?? [];
+  await app.register(cors, {
+    origin: corsOrigins.length > 0 ? [...corsOrigins] : false,
+    credentials: false,
+  });
   app.setErrorHandler((error, request, reply) => sendProblem(error, request, reply));
   const rateLimiter =
     dependencies?.rateLimiter ??

@@ -188,3 +188,5 @@
 2026-08-08T11:24:00Z | codex | HARDENING-21 | COMMAND_FAILED | full_gate_format_exit_1_billing_fixture_needs_prettier_other_gates_passed
 2026-08-08T11:26:00Z | codex | HARDENING-21 | HARDENING_PASS | provider_authoritative_billing_status_catalog_plan_enum_subscription_constraints_one_current_subscription_unit69_integration22_e2e10_build_security_audit_passed
 2026-08-08T11:27:00Z | codex | HARDENING-21 | LOCAL_VERIFICATION | database_migrate_verify_schema_migrations_9_format_gate_passed
+2026-08-08T11:30:00Z | codex | HARDENING-22 | COMMAND_FAILED | security_check_exit_1_static_baseline_expected_removed_origin_false_cors_control
+2026-08-08T11:33:00Z | codex | HARDENING-22 | HARDENING_PASS | strict_cors_origin_allowlist_https_production_validation_unit72_integration22_e2e10_build_security_audit_passed

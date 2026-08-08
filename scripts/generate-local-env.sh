@@ -30,6 +30,7 @@ trap 'rm -f "$tmp"' EXIT
   echo 'SMTP_HOST=localhost'
   echo 'SMTP_PORT=11025'
   echo 'MAILPIT_HTTP_URL=http://localhost:18025'
+  echo 'CORS_ALLOWED_ORIGINS='
   printf 'DATABASE_URL=postgresql://family_historian:%s@127.0.0.1:35432/family_historian\n' "$postgres_password"
   printf 'REDIS_URL=redis://:%s@127.0.0.1:36379\n' "$redis_password"
   echo 'R2_ACCOUNT_ID=local'
