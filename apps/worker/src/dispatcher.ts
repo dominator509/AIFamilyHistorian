@@ -1,4 +1,4 @@
-import type { DatabaseClient, DatabasePool } from '@family-historian/database';
+import { uuidV7, type DatabaseClient, type DatabasePool } from '@family-historian/database';
 
 export interface OutboxJob {
   readonly id: string;
@@ -7,6 +7,7 @@ export interface OutboxJob {
   readonly jobType: string;
   readonly payload: unknown;
   readonly attemptCount: number;
+  readonly lockToken: string;
 }
 
 export interface WorkerLogger {
@@ -99,7 +100,18 @@ export class OutboxDispatcher {
       this.#logger.info({ jobId: job.id, jobType: job.jobType }, 'worker job completed');
     } catch (error) {
       const failure = this.failure(error);
-      await this.fail(job, failure);
+      try {
+        await this.fail(job, failure);
+      } catch (failureUpdateError) {
+        if (isLeaseLost(error) || isLeaseLost(failureUpdateError)) {
+          this.#logger.error(
+            { jobId: job.id, jobType: job.jobType, errorCode: 'WORKER_LEASE_LOST' },
+            'worker lease was reclaimed before failure state could be recorded',
+          );
+          return true;
+        }
+        throw failureUpdateError;
+      }
       this.#logger.error(
         {
           jobId: job.id,
@@ -153,13 +165,14 @@ export class OutboxDispatcher {
         await client.query('commit');
         return null;
       }
+      const lockToken = uuidV7();
       const updated = await client.query(
         `update job_outbox
-            set status = 'running', locked_at = now(), attempt_count = attempt_count + 1,
+            set status = 'running', locked_at = now(), lock_token = $2, attempt_count = attempt_count + 1,
                 last_error_code = null
           where id = $1
           returning id`,
-        [row.id],
+        [row.id, lockToken],
       );
       if (updated.rowCount !== 1) throw new Error('worker job claim was lost');
       await client.query('commit');
@@ -170,6 +183,7 @@ export class OutboxDispatcher {
         jobType: row.job_type,
         payload: row.payload,
         attemptCount: row.attempt_count + 1,
+        lockToken,
       });
       this.#logger.info(
         { jobId: claimedJob.id, jobType: claimedJob.jobType },
@@ -214,9 +228,9 @@ export class OutboxDispatcher {
   private async complete(job: OutboxJob): Promise<void> {
     const result = await this.#pool.query(
       `update job_outbox
-          set status = 'completed', completed_at = now(), locked_at = null, last_error_code = null
-        where id = $1 and status = 'running'`,
-      [job.id],
+          set status = 'completed', completed_at = now(), locked_at = null, lock_token = null, last_error_code = null
+        where id = $1 and status = 'running' and lock_token = $2`,
+      [job.id, job.lockToken],
     );
     if (result.rowCount !== 1) throw new Error('worker completion update was lost');
   }
@@ -225,15 +239,17 @@ export class OutboxDispatcher {
     const terminal = !failure.retryable || job.attemptCount >= this.#maxAttempts;
     const status = terminal ? 'terminal_failed' : 'retryable_failed';
     const delaySeconds = Math.min(300, 2 ** Math.max(0, job.attemptCount - 1));
-    await this.#pool.query(
+    const result = await this.#pool.query(
       `update job_outbox
           set status = $2::job_status,
               available_at = now() + ($3 * interval '1 second'),
               locked_at = null,
+              lock_token = null,
               last_error_code = $4
-        where id = $1 and status = 'running'`,
-      [job.id, status, delaySeconds, failure.code.slice(0, 120)],
+        where id = $1 and status = 'running' and lock_token = $5`,
+      [job.id, status, delaySeconds, failure.code.slice(0, 120), job.lockToken],
     );
+    if (result.rowCount !== 1) throw new Error('worker failure update was lost');
   }
 
   private failure(error: unknown): { code: string; retryable: boolean } {
@@ -245,4 +261,10 @@ export class OutboxDispatcher {
 
 function sleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function isLeaseLost(error: unknown): boolean {
+  return (
+    error instanceof Error && /worker (?:completion|failure) update was lost/u.test(error.message)
+  );
 }

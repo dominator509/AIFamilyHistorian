@@ -120,4 +120,82 @@ describe('SQL outbox worker dispatcher', () => {
       last_error_code: 'DEPENDENCY_TEMPORARY',
     });
   });
+
+  it('dead-letters an unsupported job without claiming success', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Unsupported family', 'Unsupported archive');
+    const jobId = uuidV7();
+    const jobType = `unsupported.${jobId}`;
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [jobId, context.organizationId, context.familyArchiveId, jobType, { aggregateId: uuidV7() }],
+    );
+    const dispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: new Map(),
+      jobTypes: [jobType],
+      pollMilliseconds: 50,
+    });
+
+    expect(await dispatcher.processOne()).toBe(true);
+    const result = await pool.query<{
+      status: string;
+      attempt_count: number;
+      last_error_code: string;
+    }>('select status, attempt_count, last_error_code from job_outbox where id = $1', [jobId]);
+    expect(result.rows[0]).toEqual({
+      status: 'terminal_failed',
+      attempt_count: 1,
+      last_error_code: 'JOB_UNSUPPORTED',
+    });
+  });
+
+  it('fences a stale worker after another worker reclaims its lease', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Fenced family', 'Fenced archive');
+    const jobId = uuidV7();
+    const jobType = `fenced.${jobId}`;
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [jobId, context.organizationId, context.familyArchiveId, jobType, { aggregateId: uuidV7() }],
+    );
+    let entered!: () => void;
+    let release!: () => void;
+    const enteredPromise = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const releasePromise = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const dispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: new Map([
+        [
+          jobType,
+          async () => {
+            entered();
+            await releasePromise;
+          },
+        ],
+      ]),
+      jobTypes: [jobType],
+      pollMilliseconds: 50,
+    });
+
+    const processing = dispatcher.processOne();
+    await enteredPromise;
+    await pool.query('update job_outbox set locked_at = now(), lock_token = $2 where id = $1', [
+      jobId,
+      uuidV7(),
+    ]);
+    release();
+    await expect(processing).resolves.toBe(true);
+    const result = await pool.query<{ status: string; attempt_count: number }>(
+      'select status, attempt_count from job_outbox where id = $1',
+      [jobId],
+    );
+    expect(result.rows[0]).toEqual({ status: 'running', attempt_count: 1 });
+  });
 });
