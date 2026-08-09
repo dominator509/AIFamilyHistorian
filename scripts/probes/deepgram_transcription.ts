@@ -10,6 +10,48 @@ const endpoint = new URL('https://api.deepgram.com/v1/listen');
 endpoint.searchParams.set('model', 'nova-3');
 endpoint.searchParams.set('smart_format', 'true');
 
+const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
+
+async function readBoundedJson(response: Response): Promise<unknown> {
+  const declaredLength = response.headers.get('content-length');
+  if (declaredLength !== null) {
+    const length = Number(declaredLength);
+    if (!Number.isSafeInteger(length) || length < 0 || length > MAX_RESPONSE_BYTES)
+      throw new Error('Deepgram response exceeds the allowed size');
+  }
+  if (!response.body) {
+    if (declaredLength === null) throw new Error('Deepgram response has no bounded body length');
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_RESPONSE_BYTES)
+      throw new Error('Deepgram response exceeds the allowed size');
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const next = await reader.read();
+      if (next.done) break;
+      total += next.value.byteLength;
+      if (total > MAX_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw new Error('Deepgram response exceeds the allowed size');
+      }
+      chunks.push(next.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+}
+
 const response = await fetch(endpoint, {
   method: 'POST',
   headers: {
@@ -21,7 +63,7 @@ const response = await fetch(endpoint, {
 });
 
 assert.equal(response.ok, true, `Deepgram transcription failed with HTTP ${response.status}`);
-const body = (await response.json()) as {
+const body = (await readBoundedJson(response)) as {
   results?: { channels?: Array<{ alternatives?: Array<{ transcript?: unknown }> }> };
   metadata?: { request_id?: unknown };
 };
@@ -31,6 +73,11 @@ if (typeof transcriptValue !== 'string')
 const transcript = transcriptValue;
 assert.ok(transcript.trim().length > 0, 'Deepgram returned an empty transcript');
 
-console.log(
-  `deepgram transcription: ok request_id=${typeof body.metadata?.request_id === 'string' ? body.metadata.request_id : 'absent'} characters=${transcript.length}`,
-);
+const requestId =
+  typeof body.metadata?.request_id === 'string' &&
+  /^[A-Za-z0-9._:-]{1,256}$/u.test(body.metadata.request_id)
+    ? body.metadata.request_id
+    : typeof body.metadata?.request_id === 'string'
+      ? 'present'
+      : 'absent';
+console.log(`deepgram transcription: ok request_id=${requestId} characters=${transcript.length}`);

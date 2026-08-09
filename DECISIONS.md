@@ -625,3 +625,7 @@ The worker manifest now declares a named 30 GiB volume mounted at `/tmp` only fo
 ### ADR-164: Require structured worker sandbox attestations
 
 The sandbox evidence probe now requires a bounded JSON document with schema version, issuer/subject, evidence ID, signature metadata, valid timestamps, and affirmative values for syscall, egress, filesystem, privilege, resource, and scratch controls. This prevents arbitrary non-empty text from satisfying the gate; cryptographic signature authenticity remains an external operations check.
+
+### ADR-165: Bound the Deepgram live-fire probe response
+
+The authenticated Deepgram transcription probe now caps streamed and non-streamed response bodies at 8 MiB before JSON parsing and emits only a validated request identifier (or a neutral `present` marker). Live-fire diagnostics must not permit an unbounded provider response or attacker-controlled log-line injection, even though the probe is operator-run and does not persist provider data.

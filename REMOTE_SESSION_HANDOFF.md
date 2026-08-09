@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -16,6 +16,7 @@
 - Staging release wiring now deploys `fly.worker.toml` separately, preserving the native `worker-runtime` image for media processing; the security harness asserts that dedicated deployment command.
 - Hosted scratch wiring now declares a named 30 GiB `worker_scratch` volume at `/tmp` for the worker process. The exact `fly volumes create` command is documented, but the volume, filesystem mode, and hosted sandbox controls remain unverified because no Fly credential was available.
 - The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. Signature authenticity and hosted enforcement remain external.
+- The Deepgram transcription live-fire probe now bounds streamed and non-streamed provider responses at 8 MiB before JSON parsing and emits only a validated request identifier or neutral presence marker; this changes no production-provider credential state.
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
 
 ### Current security scan
@@ -27,7 +28,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `4f86346` plus the current attestation hardening; provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, hosted scratch-volume declaration, and structured sandbox evidence validation are now recorded. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `HARDENING-165` plus the current attestation hardening; provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, hosted scratch-volume declaration, structured sandbox evidence validation, and bounded Deepgram probe responses are now recorded. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
@@ -35,7 +36,7 @@
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
 - Current source checkpoint: `git rev-parse HEAD` (implementation, documentation, and current local verification evidence); verify `origin/master` matches before resuming.
-- Current code checkpoint: `dac6738` (provider redirect rejection, worker `auth_sessions` revocation, and all prior capabilities).
+- Current code checkpoint: run `git rev-parse HEAD` (provider redirect rejection, worker `auth_sessions` revocation, structured sandbox attestation, and bounded Deepgram probe responses are included).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
 - Latest continuation recheck: internal media-worker coverage passed 2/2; integration passed 13 files/43 tests, unit 27 files/147 tests, E2E 3 files/11 tests, all 16 live-fire proofs, accessibility (`pdf_tagged=true epub_semantics=true`), and performance (`requests=100 p95=1.19ms`) passed. Build, typecheck, lint, format, security, secret, dependency, and reality gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
