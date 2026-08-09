@@ -44,6 +44,7 @@ describe('resumable export planning', () => {
     );
     const manifest = planResumableExport({ ...input, totalBytes: 5 * 1024 * 1024 });
     expect(() => assertExportComplete(manifest, [])).toThrow('EXPORT_INCOMPLETE');
+    expect(() => planResumableExport({ ...input, generatedAt: 'not-a-timestamp' })).toThrow();
   });
 
   it('rejects duplicate and out-of-manifest completed parts', () => {

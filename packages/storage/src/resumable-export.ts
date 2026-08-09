@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import type { EntityId } from '@family-historian/contracts';
 import { uuidSchema } from '@family-historian/contracts';
 
@@ -30,6 +31,7 @@ export function planResumableExport(input: {
 }): ResumableExportManifest {
   uuidSchema.parse(input.exportId);
   uuidSchema.parse(input.archiveId);
+  z.iso.datetime().parse(input.generatedAt);
   if (
     !Number.isInteger(input.totalBytes) ||
     input.totalBytes <= 0 ||

@@ -277,3 +277,7 @@ Confirmed-fact requests now cap evidence-link identifiers at 1,000 before the te
 ### ADR-077: Reject invalid resumable-export completion sets
 
 Resumable export completion now rejects duplicate part numbers and any part not present in the generated manifest before computing missing parts. This prevents extra or replayed provider parts from being silently ignored and keeps completion proof bound to the exact planned chunk set.
+
+### ADR-078: Validate resumable-export timestamps at planning time
+
+Resumable export planning now requires an RFC 3339 timestamp before hashing or returning a manifest. Invalid generation metadata therefore fails at the first trust boundary instead of surviving into later publication or restore workflows.
