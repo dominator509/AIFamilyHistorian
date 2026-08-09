@@ -349,3 +349,7 @@ The OTLP preflight probe first checks the configured endpoint directly, then—o
 ### ADR-095: Fence every worker intake transaction to its outbox lease
 
 Privacy, export, and narration intake handlers now verify and lock their active outbox row before reading or mutating authoritative status, audit, or deletion-hold records. Media scan loading also locks the original row and uses a tenant-scoped compare-and-set transition into `scanning`. A reclaimed or stale worker therefore cannot publish review evidence or overwrite quarantine state after losing its lease; the dispatcher still records completion/failure only with the same lock token.
+
+### ADR-096: Gate production on hosted worker sandbox evidence
+
+The preflight table now requires `WORKER_SANDBOX_EVIDENCE_FILE` and verifies that the referenced attestation exists and is non-empty. Local Compose declarations prove development isolation only; production release must additionally retain current evidence for syscall, network-egress, cgroup/PID, read-only-root, and bounded-scratch enforcement. No placeholder artifact is created, so this gate remains unresolved until an operator supplies genuine staging or production-equivalent evidence.

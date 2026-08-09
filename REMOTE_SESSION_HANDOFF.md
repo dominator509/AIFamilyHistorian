@@ -19,7 +19,7 @@
 - Graph status: `RESUME EP-000`
 - Engineering completion estimate: 93% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
-- Why `RUN_COMPLETE` was not reached: the current `sh scripts/preflight.sh` reports 15 unresolved requirements, including a failed Resend credential probe plus Turnstile, Sentry, GitHub, Fly.io, and legal/vendor/insurance/DPIA/retention evidence. Hosted abuse-prevention, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
+- Why `RUN_COMPLETE` was not reached: the current `sh scripts/preflight.sh` reports 16 unresolved requirements, including a failed Resend credential probe, missing hosted worker sandbox attestation, Turnstile, Sentry, GitHub, Fly.io, and legal/vendor/insurance/DPIA/retention evidence. Hosted abuse-prevention, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
 
 ## Verified local evidence
 
@@ -47,7 +47,7 @@ The following commands passed after the continuation changes:
 - Current recheck: `sh scripts/test-integration.sh` failed before the real-service suites because PostgreSQL/Redis/MinIO host ports `35432`, `36379`, and `39000` are not published by the intentionally internal-only Compose network; no integration success is inferred from this host-only command.
 - Superseding recheck: `sh scripts/test-integration.sh` now detects the active internal network and passes the complete real-service suite in a disposable runner: 13 files, 41 tests, including PostgreSQL, Redis, MinIO, SMTP, telemetry, ClamAV, FFmpeg, and the media fixture. The earlier host-only failure remains historical evidence only.
 - Superseding E2E recheck: `sh scripts/test-e2e.sh` passes 3 files and 11 tests in the same isolated runner with real PostgreSQL and MinIO service DNS; no host ports or worker network boundary were exposed.
-- `sh scripts/probes/otel.sh` now passes through the real internal telemetry service when local host port forwarding is unavailable; the subsequent preflight returned to the genuine 15 unresolved external/legal requirements.
+- `sh scripts/probes/otel.sh` now passes through the real internal telemetry service when local host port forwarding is unavailable; the subsequent preflight reports the genuine 16 unresolved external/legal and hosted-sandbox requirements.
 - Current recheck: `sh scripts/probes/resend.sh` failed with `RESEND_API_KEY: unbound variable`; the historical authenticated domains probe is preserved as historical evidence, not current verification.
 - `sh scripts/backup.sh` -> `backup: ok`; a streaming AES-256-GCM encrypted PostgreSQL custom-format backup and SHA-256 sidecar were created under ignored `.artifacts/` (`family-historian-20260808T232447Z.dump.enc`).
 - `sh scripts/restore-check.sh .artifacts/backups/family-historian-20260808T232447Z.dump.enc` -> `restore-check: ok`; the encrypted backup decrypted into a disposable database and reported `schema_migrations=12`.
@@ -63,7 +63,7 @@ The following commands passed after the continuation changes:
 - `docker run --rm --entrypoint sh family-historian-worker:local -c 'for tool in ffmpeg ffprobe exiftool magick clamscan ocrmypdf python3; do command -v "$tool" >/dev/null || exit 1; done'` -> `worker-media-tools: ok`.
 - `docker run --rm --network ai-family-historian_family_historian_internal ... vitest --root /app run tests/integration/storage/object-storage.test.ts` -> real internal-network MinIO storage regression passed 3/3, including bounded streamed download termination; host-published MinIO ports were unavailable under the internal-only network and the network boundary was not weakened.
 - `docker compose --profile worker config --quiet` -> passed with the worker, PostgreSQL, Redis, and object-storage services on the internal-only `family_historian_internal` network; focused worker-sandbox tests passed.
-- `sh scripts/preflight.sh` -> all 35 table rows evaluated, local PostgreSQL/Redis/MinIO probes passed through Compose service DNS, then 15 `preflight: unresolved ...` lines followed by `preflight: FAIL - 15 unresolved requirements` (exit 1; complete external/legal inventory, not an engineering test failure).
+- `sh scripts/preflight.sh` -> all 36 table rows evaluated, local PostgreSQL/Redis/MinIO probes passed through Compose service DNS, then 16 `preflight: unresolved ...` lines followed by `preflight: FAIL - 16 unresolved requirements` (exit 1; complete external/legal/hosted-sandbox inventory, not an engineering test failure).
 - Codex Security standard scan `5bdf16f7-5442-4419-beb5-5e9eb6d3c1a7` -> completed against revision `b2bee83fc9ef9c97c52b88b42b14aa78f19c6033` with four source-backed medium findings: server-side session revocation/rotation, authenticated aggregate quotas, worker OS-level media resource ceilings, and per-archive KMS key management. The scan warns that the working tree changed during scanning; current API boundary fixes are verified separately.
 - A newer Codex Security standard scan `f35cd9aa-1f01-45fa-8947-45cfab54ce89` was launched against the pre-HARDENING-24 revision `496ff04`; its native discovery worker has remained at zero completed review rows after preflight despite bounded progress updates. It is preserved as running/stale rather than canceled or reported as a no-findings result; current revisions are covered by the source-backed hardening passes and local gates documented here.
 - Current-head Codex Security standard scan `de063598-2550-4213-97bc-8df54253a977` targets revision `846e03a39252f6f10bfbfc6c78bf549550304b59`; as of the last context check it remains running in discovery at `0/322` completed checks with no report artifact. No no-findings conclusion is inferred; the scan remains an external verification item.
@@ -111,7 +111,7 @@ HARDENING-75 verification note: multipart provider listings now reject malformed
 
 | Node | Status | Reason |
 |---|---|---|
-| EP-000 | In progress; externally unverified | Scheduler lease preserved; aggregated preflight currently reports 15 unresolved requirements. |
+| EP-000 | In progress; externally unverified | Scheduler lease preserved; aggregated preflight currently reports 16 unresolved requirements, including the required hosted worker sandbox attestation. |
 | EP-001 | Engineering complete; externally unverified | Foundation and toolchain gates passed locally; graph dependency remains EP-000. |
 | EP-002 | Engineering complete; externally unverified | Domain invariants and tests passed locally; graph dependency remains EP-000. |
 | EP-003 | Engineering complete; externally unverified | Migrations, RLS, storage and persistence tests passed locally; hosted probes remain. |
@@ -213,6 +213,7 @@ HARDENING-68 checkpoint: the AI gateway now rejects invalid, non-positive, or ov
 HARDENING-77 checkpoint: bounded object reads and multipart listings now reject oversized, malformed, duplicate, or unbounded provider responses; the disposable internal-network integration runner passes 13 files/41 tests with real PostgreSQL, Redis, MinIO, SMTP, telemetry, ClamAV, and FFmpeg; E2E passes 3 files/11 tests; and the OTLP probe reaches the real internal collector when host forwarding is unavailable. Preflight and production-readiness remain fail-closed on the genuine 15 external/legal requirements listed above.
 HARDENING-78 checkpoint: `ObjectStorage.completeMultipart` now independently validates and sorts provider-facing completion parts, rejecting empty, malformed, duplicate, out-of-range, and over-cardinality manifests before any S3 call. Typecheck passed and the full unit suite passed 27 files/104 tests; no external provider or production effect was invoked.
 HARDENING-79 checkpoint: privacy, export, and narration intake transactions now lock and verify their active outbox lease before authoritative status, audit, or deletion-hold writes. Media originals are row-locked and enter `scanning` through a tenant-scoped compare-and-set. Typecheck, format, unit (27/104), integration (13/41), E2E (3/11), build, security, secret-scan, and all sixteen live-fire proofs passed; production external/legal gates are unchanged.
+HARDENING-80 checkpoint: preflight now requires `WORKER_SANDBOX_EVIDENCE_FILE` and a bounded non-empty-file probe for hosted syscall, network-egress, cgroup/PID, read-only-root, and scratch controls. The current preflight fails closed with 16 unresolved requirements; no attestation or hosted isolation success is claimed.
 
 ## Final operator checklist
 
