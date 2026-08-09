@@ -1,3 +1,5 @@
 # Deployment
 
 Build one immutable OCI image per app and worker. GitHub Actions runs verify, builds and signs images, deploys staging, runs smoke and live-fire, and prepares production. Production is MANUAL: `IMAGE="ghcr.io/${GITHUB_REPOSITORY}:${RELEASE_TAG}" fly deploy --app "$FLY_APP_PRODUCTION" --image "$IMAGE" --strategy rolling`. `GITHUB_REPOSITORY` must be the exact owner/repository path used by the release workflow; do not substitute an unscoped owner variable. Run migrations with a release command before traffic only when backward compatible. Rollback uses the prior signed image and compatible schema.
+
+The worker Fly app is intentionally private: `fly.worker.toml` must not declare `[http_service]` or `[[services]]`, and the worker health server binds only to `127.0.0.1` inside the VM. Hosted sandbox attestation is still required for syscall, egress, cgroup/PID, read-only-root, and scratch controls; this ingress invariant is a local configuration guard, not a substitute for that evidence.

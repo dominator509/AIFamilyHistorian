@@ -2,13 +2,16 @@ import { readFile } from 'node:fs/promises';
 import { contentTypeMatchesSignature } from '../../packages/media/src/index.js';
 import { issueSessionToken, verifySessionToken } from '../../packages/auth/src/index.js';
 
-const [source, compose, dockerfile, verifyWorkflow, releaseWorkflow] = await Promise.all([
-  readFile('apps/api/src/app.ts', 'utf8'),
-  readFile('compose.yaml', 'utf8'),
-  readFile('Dockerfile', 'utf8'),
-  readFile('.github/workflows/verify.yml', 'utf8'),
-  readFile('.github/workflows/release.yml', 'utf8'),
-]);
+const [source, compose, dockerfile, flyWorker, workerSource, verifyWorkflow, releaseWorkflow] =
+  await Promise.all([
+    readFile('apps/api/src/app.ts', 'utf8'),
+    readFile('compose.yaml', 'utf8'),
+    readFile('Dockerfile', 'utf8'),
+    readFile('fly.worker.toml', 'utf8'),
+    readFile('apps/worker/src/index.ts', 'utf8'),
+    readFile('.github/workflows/verify.yml', 'utf8'),
+    readFile('.github/workflows/release.yml', 'utf8'),
+  ]);
 const requiredControls = ['redact', 'bodyLimit', 'helmet', 'corsOrigins', 'credentials: false'];
 for (const control of requiredControls) {
   if (!source.includes(control)) throw new Error(`security control missing: ${control}`);
@@ -36,6 +39,10 @@ if (
   !dockerfile.includes('USER node')
 )
   throw new Error('worker image must use the dedicated non-root runtime');
+if (flyWorker.includes('[http_service]') || flyWorker.includes('[[services]]'))
+  throw new Error('hosted worker must not declare public ingress');
+if (!workerSource.includes("healthServer.listen(healthPort, '127.0.0.1'"))
+  throw new Error('worker health server must bind loopback only');
 for (const match of dockerfile.matchAll(/^FROM\s+node:[^\n]+$/gim)) {
   if (!/@sha256:[0-9a-f]{64}/u.test(match[0]))
     throw new Error(`Docker base image is not pinned to an immutable digest: ${match[0]}`);

@@ -11,6 +11,10 @@ primary_region = "ord"
   PORT = "8080"
   CORS_ALLOWED_ORIGINS = "https://worker.invalid"
 
+# This process is a private queue worker. Do not add public service routing:
+# its health server binds loopback inside the VM and the worker must not
+# receive public ingress.
+
 [vm]
   cpu_kind = "shared"
   cpus = 2

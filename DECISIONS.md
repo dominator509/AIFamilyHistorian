@@ -549,3 +549,7 @@ Publication readiness items now cap labels at 256 characters, reasons at 2,048 c
 ### ADR-145: Bound multipart provider tokens
 
 Multipart completion contracts and storage-provider validation now cap ETag and optional checksum tokens at 1,024 characters. The same bound applies to provider-returned part listings, preventing oversized provider metadata from reaching completion requests or API responses.
+
+### ADR-146: Prevent public hosted worker ingress
+
+The Fly worker manifest now documents and tests the private-worker invariant: no public service routing may be declared, and the worker health server must bind loopback only. This reduces accidental exposure while preserving the separate hosted sandbox attestation gate for syscall, egress, cgroup/PID, read-only-root, and scratch controls.

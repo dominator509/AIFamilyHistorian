@@ -22,5 +22,7 @@ describe('worker OS sandbox declaration', () => {
     expect(fly).toContain('memory = "2048mb"');
     expect(fly).toContain('signal = "SIGTERM"');
     expect(fly).toContain('timeout = "30s"');
+    expect(fly).not.toContain('[http_service]');
+    expect(fly).not.toContain('[[services]]');
   });
 });
