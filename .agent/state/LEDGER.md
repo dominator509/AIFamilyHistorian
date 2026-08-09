@@ -315,3 +315,4 @@
 2026-08-09T02:03:00Z | codex | HARDENING-58 | SECURITY_FINDING | request-time membership_or_permission_checker_database_failures_were_mapped_to_generic_internal_error_500_instead_of_explicit_retryable_provider_unavailable
 2026-08-09T02:04:00Z | codex | HARDENING-58 | FIX_APPLIED | app_hook_and_route_authorization_checkers_now_redact_checker_errors_as_PROVIDER_UNAVAILABLE_503_retryable_true; false results retain_auth_or_permission_denials; unavailable-checker_regression_added
 2026-08-09T02:05:00Z | codex | HARDENING-58 | LOCAL_VERIFICATION | api_permission_focus8_tests_passed; full_unit24_files_86_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T02:07:00Z | codex | HARDENING-58 | LOCAL_VERIFICATION | membership_outage_regression_focus9_tests_passed; full_unit24_files_87_tests_passed; typecheck_and_prettier_check_passed; prior_build_security_secret_scan_evidence_unchanged
