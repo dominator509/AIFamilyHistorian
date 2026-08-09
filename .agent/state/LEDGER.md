@@ -386,3 +386,4 @@
 2026-08-09T05:52:00Z | codex | HARDENING-77 | SECURITY_FINDING | OTLP_preflight_required_host_port_forwarding_even_when_healthy_local_collector_was_reachable_only_on_internal_network; produced_false_external_blocker
 2026-08-09T05:53:00Z | codex | HARDENING-77 | FIX_APPLIED | otel_probe_falls_back_to_real_telemetry_service_DNS_from_disposable_worker_image_only_when_compose_container_and_network_are_present
 2026-08-09T05:54:00Z | codex | HARDENING-77 | LOCAL_VERIFICATION | otel_probe_passed_internal_path; preflight_now_reports_genuine_15_unresolved_requirements; no_hosted_telemetry_success_inferred
+2026-08-09T05:58:00Z | codex | HARDENING-77 | RELEASE_REASSESSMENT | production-readiness-check_exit1; 15_external_and_legal_requirements_remain; local_integration_and_e2e_are_now_green_through_internal_runner
