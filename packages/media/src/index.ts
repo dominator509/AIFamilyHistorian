@@ -335,6 +335,7 @@ export async function executeMediaPipelineStep(
       cwd: options.cwd,
       env: childEnv,
       shell: false,
+      detached: process.platform !== 'win32',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -353,8 +354,8 @@ export async function executeMediaPipelineStep(
     });
     const timeout = setTimeout(() => {
       timedOut = true;
-      child.kill('SIGTERM');
-      setTimeout(() => child.kill('SIGKILL'), 250).unref();
+      terminateProcessTree(child, 'SIGTERM');
+      setTimeout(() => terminateProcessTree(child, 'SIGKILL'), 250).unref();
     }, step.timeoutSeconds * 1000);
     child.once('error', (error: NodeJS.ErrnoException) => {
       clearTimeout(timeout);
@@ -391,6 +392,19 @@ export async function executeMediaPipelineStep(
       );
     });
   });
+}
+
+function terminateProcessTree(child: ReturnType<typeof spawn>, signal: NodeJS.Signals): void {
+  if (process.platform !== 'win32' && child.pid !== undefined) {
+    try {
+      process.kill(-child.pid, signal);
+      return;
+    } catch {
+      // Fall back to the direct child when the process already exited or the
+      // host does not permit signalling its process group.
+    }
+  }
+  child.kill(signal);
 }
 
 export function assertOriginalImmutable(

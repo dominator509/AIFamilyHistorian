@@ -153,6 +153,31 @@ describe('media pipeline boundaries', () => {
     ).rejects.toMatchObject<MediaExecutionError>({ code: 'MEDIA_TOOL_TIMEOUT' });
   });
 
+  it('runs timed tools in a dedicated process group for descendant cleanup', async () => {
+    if (process.platform === 'win32') return;
+    const result = await executeMediaPipelineStep(
+      {
+        name: 'process-group',
+        tool: 'ffprobe',
+        args: [
+          '-e',
+          "const fs=require('fs');const stat=fs.readFileSync('/proc/'+process.pid+'/stat','utf8');const end=stat.lastIndexOf(')');const fields=stat.slice(end+2).trim().split(' ');process.stdout.write(process.pid+':'+fields[2])",
+          'opaque/input',
+        ],
+        timeoutSeconds: 2,
+        inputObjectKey: 'opaque/input',
+      },
+      {
+        cwd: process.cwd(),
+        binaries: { ffprobe: process.execPath },
+        resolveObjectKey: (key) => join(process.cwd(), 'scratch', key.split('/').at(-1)!),
+      },
+    );
+    const [pid, processGroup] = result.stdout.split(':').map(Number);
+    expect(pid).toBeGreaterThan(0);
+    expect(processGroup).toBe(pid);
+  });
+
   it('rejects worker paths that escape the scratch directory', async () => {
     await expect(
       executeMediaPipelineStep(

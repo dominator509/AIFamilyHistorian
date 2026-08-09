@@ -369,3 +369,7 @@ Release CI first runs preflight against the configured nonproduction provider en
 ### ADR-100: Tear down CI dependencies on every failure path
 
 The release verification step installs its Compose teardown trap before starting any dependency or worker image build. A failed image build, readiness probe, verification gate, or production-readiness check therefore removes the disposable volumes and containers instead of leaving runner state behind.
+
+### ADR-101: Terminate media parser process groups on timeout
+
+Timed media tools now launch detached on POSIX workers and timeout handling signals the entire process group, escalating from `SIGTERM` to `SIGKILL` after 250 ms. Windows retains the direct-child fallback because negative process-group signaling is unavailable there. This closes the descendant-process escape from the executor's timeout boundary without changing tool arguments or permitting shell interpolation. The media unit suite covers the POSIX process-group identity and all existing timeout/error behavior remains fail-closed.
