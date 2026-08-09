@@ -27,7 +27,7 @@
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `f03ab26` (implementation plus current local verification; documentation update follows); `origin/master` is not yet synchronized.
+- Current source checkpoint: `519bd17` (implementation, documentation, and current local verification); `origin/master` is synchronized.
 - Current code checkpoint: `f03ab26` (provider header control rejection, dedicated worker role, scoped legacy-envelope rejection, tenant-scoped quarantine cleanup, archive-scoped multi-archive session claims, and all prior capabilities).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
