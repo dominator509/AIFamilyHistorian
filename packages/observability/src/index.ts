@@ -32,6 +32,12 @@ const NORMALIZED_SENSITIVE_KEYS = new Set([...SENSITIVE_KEYS].map(normalizeTelem
 export const MAX_TELEMETRY_DEPTH = 8;
 export const MAX_TELEMETRY_COLLECTION_ITEMS = 1_000;
 export const MAX_TELEMETRY_STRING_CHARS = 16_384;
+export const MAX_TELEMETRY_CONTEXT_CHARS = 512;
+export const MAX_TELEMETRY_METRIC_NAME_CHARS = 256;
+export const MAX_TELEMETRY_METRIC_UNIT_CHARS = 64;
+export const MAX_TELEMETRY_LABELS = 100;
+export const MAX_TELEMETRY_LABEL_KEY_CHARS = 128;
+export const MAX_TELEMETRY_LABEL_VALUE_CHARS = 512;
 
 export interface TelemetryContext {
   readonly service: string;
@@ -99,6 +105,16 @@ export function buildTelemetryEvent(
 ): TelemetryEvent {
   if (!Number.isFinite(context.durationMs) || context.durationMs < 0)
     throw new Error('durationMs must be a nonnegative finite number');
+  for (const [field, value] of Object.entries(context)) {
+    if (field === 'durationMs' || value === undefined) continue;
+    if (typeof value !== 'string' || value.length > MAX_TELEMETRY_CONTEXT_CHARS)
+      throw new Error('telemetry context field is invalid');
+  }
+  if (!Number.isNaN(Date.parse(timestamp)) && timestamp.length <= MAX_TELEMETRY_CONTEXT_CHARS) {
+    // Timestamp is intentionally accepted in any parseable RFC-compatible form.
+  } else {
+    throw new Error('telemetry timestamp is invalid');
+  }
   return Object.freeze({
     ...context,
     timestamp,
@@ -113,7 +129,24 @@ export function metricSample(
   labels: Readonly<Record<string, string>> = {},
   recordedAt = new Date().toISOString(),
 ): MetricSample {
-  if (!name.trim() || !unit.trim()) throw new Error('metric name and unit are required');
+  if (
+    !name.trim() ||
+    name.length > MAX_TELEMETRY_METRIC_NAME_CHARS ||
+    !unit.trim() ||
+    unit.length > MAX_TELEMETRY_METRIC_UNIT_CHARS
+  )
+    throw new Error('metric name and unit are invalid');
   if (!Number.isFinite(value)) throw new Error('metric value must be finite');
+  const labelEntries = Object.entries(labels);
+  if (labelEntries.length > MAX_TELEMETRY_LABELS)
+    throw new Error('metric labels exceed the allowed count');
+  for (const [key, labelValue] of labelEntries) {
+    if (
+      !key.trim() ||
+      key.length > MAX_TELEMETRY_LABEL_KEY_CHARS ||
+      labelValue.length > MAX_TELEMETRY_LABEL_VALUE_CHARS
+    )
+      throw new Error('metric label is invalid');
+  }
   return Object.freeze({ name, value, unit, labels: Object.freeze({ ...labels }), recordedAt });
 }

@@ -529,3 +529,7 @@ Session device labels, user-agent strings, and IP-address metadata are now valid
 ### ADR-140: Bound rate-limiter configuration and clock inputs
 
 Fixed-window and Redis-backed rate limiters now require safe integer limits and windows, cap request counts at 1,000,000, cap windows at seven days, cap in-memory buckets at 100,000, and reject negative or non-finite injected timestamps. This preserves deterministic test clocks while preventing malformed configuration from defeating memory bounds or generating invalid retry metadata.
+
+### ADR-141: Bound telemetry event and metric materialization
+
+Observability helpers now cap context fields at 512 characters, metric names at 256, units at 64, label cardinality at 100, label keys at 128, and label values at 512. They reject malformed timestamps and invalid labels before event or metric materialization; recursive detail redaction retains its existing depth, collection, content, and secret protections.

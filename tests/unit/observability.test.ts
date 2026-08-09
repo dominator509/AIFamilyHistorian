@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildTelemetryEvent,
+  MAX_TELEMETRY_LABELS,
+  MAX_TELEMETRY_METRIC_NAME_CHARS,
   metricSample,
   redactTelemetryValue,
 } from '../../packages/observability/src/index.js';
@@ -67,5 +69,49 @@ describe('observability redaction', () => {
       Array.from({ length: 1_001 }, (_, index) => [`field-${index}`, 'value']),
     );
     expect(redactTelemetryValue(oversizedObject)).toBe('[REDACTED_LIMIT]');
+  });
+
+  it('bounds metric labels, metric names, context fields, and timestamps', () => {
+    expect(() => metricSample('x'.repeat(MAX_TELEMETRY_METRIC_NAME_CHARS + 1), 1, 'count')).toThrow(
+      'metric name and unit are invalid',
+    );
+    expect(() =>
+      metricSample(
+        'bounded',
+        1,
+        'count',
+        Object.fromEntries(
+          Array.from({ length: MAX_TELEMETRY_LABELS + 1 }, (_, i) => [`k${i}`, 'v']),
+        ),
+      ),
+    ).toThrow('metric labels exceed the allowed count');
+    expect(() =>
+      buildTelemetryEvent(
+        {
+          service: 'api',
+          environment: 'test',
+          requestId: 'x'.repeat(513),
+          action: 'test',
+          outcome: 'ok',
+          durationMs: 1,
+        },
+        {},
+        'not-a-timestamp',
+      ),
+    ).toThrow('telemetry context field is invalid');
+    expect(() =>
+      buildTelemetryEvent(
+        {
+          service: 'api',
+          environment: 'test',
+          requestId: 'request-1',
+          action: 'test',
+          outcome: 'ok',
+          durationMs: 1,
+        },
+        {},
+        'not-a-timestamp',
+      ),
+    ).toThrow('telemetry timestamp is invalid');
   });
 });
