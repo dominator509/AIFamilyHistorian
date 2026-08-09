@@ -219,9 +219,9 @@ export class ObjectStorage {
   public async downloadToFile(
     key: string,
     destinationPath: string,
-    maxBytes?: number,
+    maxBytes = MAX_STREAMED_OBJECT_BYTES,
   ): Promise<{ sha256Base64: string; byteSize: number }> {
-    if (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1))
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_STREAMED_OBJECT_BYTES)
       throw new RangeError('object download byte ceiling is invalid');
     const response = await this.#client.send(
       new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
@@ -234,7 +234,7 @@ export class ObjectStorage {
     let byteSize = 0;
     try {
       for await (const chunk of body) {
-        if (maxBytes !== undefined && byteSize + chunk.byteLength > maxBytes)
+        if (byteSize + chunk.byteLength > maxBytes)
           throw new ObjectStorageLimitError('object exceeds the download byte ceiling');
         hash.update(chunk);
         byteSize += chunk.byteLength;

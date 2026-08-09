@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import {
   ObjectStorage,
   ObjectStorageLimitError,
+  MAX_STREAMED_OBJECT_BYTES,
   originalObjectKey,
   parseStorageConfig,
 } from '../../../packages/storage/src/index.js';
@@ -73,6 +74,9 @@ describe('S3-compatible object storage', () => {
     const workDir = await mkdtemp(join(tmpdir(), 'family-historian-storage-test-'));
     const destination = join(workDir, 'bounded.bin');
     try {
+      await expect(
+        storage.downloadToFile(key, destination, MAX_STREAMED_OBJECT_BYTES + 1),
+      ).rejects.toBeInstanceOf(RangeError);
       await storage.putOriginal(key, bytes, 'application/octet-stream', checksum);
       await expect(
         storage.downloadToFile(key, destination, bytes.byteLength - 1),

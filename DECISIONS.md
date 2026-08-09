@@ -517,3 +517,7 @@ Edition manifests now cap keys at 256, key length at 200 characters, and seriali
 ### ADR-137: Bound persisted session metadata
 
 Session device labels, user-agent strings, and IP-address metadata are now validated at the shared auth boundary before hashing or persistence. The caps (256, 2,048, and 128 characters respectively) apply to both registration and rotation and reject malformed runtime callers with `SESSION_METADATA_INVALID`, preventing direct service consumers from bypassing HTTP body limits or amplifying session-inventory storage.
+
+### ADR-138: Bound direct streamed object downloads
+
+`ObjectStorage.downloadToFile` now defaults to the authoritative 25 GiB streamed-object ceiling and rejects non-safe, non-positive, or larger ceilings before issuing an object-provider request. Production callers already pass the authoritative upload/original size; the default prevents worker, tooling, and future direct callers from accidentally creating an unbounded disk-write path.
