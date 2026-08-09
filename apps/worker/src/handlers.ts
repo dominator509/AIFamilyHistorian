@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, statfs } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -45,6 +45,22 @@ const narrationPayloadSchema = z.object({
 
 const MAX_DERIVATIVE_BYTES = 256 * 1024 * 1024;
 const MAX_TOTAL_DERIVATIVE_BYTES = 512 * 1024 * 1024;
+
+/** Reserve enough scratch space for the original plus the bounded derivative set. */
+export const REQUIRED_SCRATCH_RESERVE_BYTES = MAX_TOTAL_DERIVATIVE_BYTES;
+
+export function assertScratchCapacity(inputBytes: number, availableBytes: number): void {
+  if (!Number.isSafeInteger(inputBytes) || inputBytes < 1)
+    throw new WorkerJobError('media input size is invalid', 'MEDIA_INPUT_INVALID', false);
+  if (!Number.isSafeInteger(availableBytes) || availableBytes < 0)
+    throw new WorkerJobError('media scratch capacity is invalid', 'MEDIA_SCRATCH_INVALID', false);
+  if (availableBytes < inputBytes + REQUIRED_SCRATCH_RESERVE_BYTES)
+    throw new WorkerJobError(
+      'media scratch capacity is insufficient for this input',
+      'MEDIA_SCRATCH_INSUFFICIENT',
+      false,
+    );
+}
 
 export interface WorkerHandlerOptions {
   readonly storage: ObjectStorage;
@@ -361,6 +377,9 @@ async function handleMediaScan(
     descriptor = loaded.descriptor;
     const workDir = await mkdtemp(join(tmpdir(), 'family-historian-worker-'));
     try {
+      const scratch = await statfs(workDir);
+      const availableScratchBytes = Number(scratch.bavail) * Number(scratch.bsize);
+      assertScratchCapacity(Number(original.byte_size), availableScratchBytes);
       const originalPath = join(workDir, 'original.bin');
       const actual = await options.storage.downloadToFile(
         original.object_key,
@@ -471,9 +490,11 @@ async function handleMediaScan(
     const code =
       error instanceof ObjectStorageLimitError
         ? 'MEDIA_INPUT_TOO_LARGE'
-        : error instanceof MediaExecutionError
-          ? error.code
-          : 'MEDIA_SCAN_FAILED';
+        : error instanceof Error && (error as NodeJS.ErrnoException).code === 'ENOSPC'
+          ? 'MEDIA_SCRATCH_INSUFFICIENT'
+          : error instanceof MediaExecutionError
+            ? error.code
+            : 'MEDIA_SCAN_FAILED';
     const retryable =
       code === 'MEDIA_TOOL_TIMEOUT' || code === 'MEDIA_TOOL_FAILED' || code === 'MEDIA_SCAN_FAILED';
     throw new WorkerJobError('media scan failed', code, retryable);

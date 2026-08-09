@@ -309,3 +309,11 @@ Provider adapters now enforce response-size ceilings before JSON parsing or audi
 ### ADR-085: Apply response ceilings to the DeepSeek boundary
 
 The DeepSeek adapter has its own package boundary and now applies the same 8 MiB streaming JSON ceiling before schema parsing. Oversized declared or streamed responses fail closed, while bounded valid completions retain the existing structured-output and usage behavior.
+
+### ADR-086: Preflight worker scratch capacity before media download
+
+Media jobs now inspect the worker filesystem capacity after creating their scratch directory and require room for the authoritative original plus the bounded derivative reserve before downloading any bytes. A capacity shortfall fails non-retryably as `MEDIA_SCRATCH_INSUFFICIENT`; a runtime `ENOSPC` is mapped to the same non-retryable code. This avoids repeatedly transferring inputs that cannot fit the configured worker scratch budget while preserving the 25 GiB API contract for deployments that provision adequate scratch.
+
+### ADR-087: Never authorize archive routes without an authoritative checker
+
+Archive membership and permission checkers are now mandatory at archive route execution. If either dependency is absent, the route returns retryable `PROVIDER_UNAVAILABLE` instead of relying on a global bearer-token permission list. Production wiring already supplies database-backed checkers; this change makes test or future runtime misconfiguration fail closed and prevents cross-archive permission scope confusion.

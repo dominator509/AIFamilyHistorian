@@ -358,3 +358,11 @@
 2026-08-09T04:31:00Z | codex | HARDENING-70 | SECURITY_FINDING | DeepSeek_adapter_remained_outside_shared_provider_helper_and_materialized_response.json_without_a_byte_ceiling
 2026-08-09T04:32:00Z | codex | HARDENING-70 | FIX_APPLIED | DeepSeek_streaming_JSON_reader_caps_response_at_8MiB_and_aborts_oversized_bodies; direct_valid_and_oversized_regressions_added
 2026-08-09T04:33:00Z | codex | HARDENING-70 | LOCAL_VERIFICATION | full_unit25_files_97_tests_passed; typecheck_lint_build_security_secret_scan_format_passed
+2026-08-09T04:46:00Z | codex | HARDENING-71 | SECURITY_FINDING | 25GiB_media_input_contract_could_exceed_worker_tmpfs_scratch; download_ENOSPC_was_classified_as_retryable_media_scan_failure
+2026-08-09T04:47:00Z | codex | HARDENING-71 | FIX_APPLIED | statfs_preflight_requires_original_plus_512MiB_derivative_reserve_before_download; ENOSPC_maps_to_nonretryable_MEDIA_SCRATCH_INSUFFICIENT; pure_capacity_regressions_added
+2026-08-09T04:48:00Z | codex | HARDENING-71 | LOCAL_VERIFICATION | full_unit26_files_100_tests_passed_then_fixture_correction; final_full_unit26_files_101_tests_passed; typecheck_lint_build_security_secret_scan_format_passed; live_fire_all16_passed
+2026-08-09T04:49:00Z | codex | HARDENING-71 | COMMAND_FAILED | sh_scripts_test-e2e.sh_exit_1_ECONNREFUSED_127.0.0.1:35432; host-only_ports_not_published; no_source_or_data_mutation
+2026-08-09T04:50:00Z | codex | HARDENING-71 | COMMAND_FAILED | internal_docker_e2e_attempt_failed_due_to_shell_env_rewrite_and_container_DNS_base; no_test_success_inferred
+2026-08-09T04:51:00Z | codex | HARDENING-72 | SECURITY_FINDING | archive_route_authorization_could_fall_back_to_global_token_permissions_when_authoritative_checkers_were_omitted; cross_archive_scope_confusion_risk
+2026-08-09T04:52:00Z | codex | HARDENING-72 | FIX_APPLIED | archive_membership_and_permission_checkers_are_required; missing_checker_returns_retryable_PROVIDER_UNAVAILABLE; archive_route_fixture_and_missing_checker_regressions_added
+2026-08-09T04:53:00Z | codex | HARDENING-72 | LOCAL_VERIFICATION | full_unit26_files_101_tests_passed; typecheck_lint_build_security_secret_scan_format_passed; live_fire_all16_passed; direct_e2e_host_ports_remain_unavailable

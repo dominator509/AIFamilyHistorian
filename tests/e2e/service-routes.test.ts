@@ -23,7 +23,13 @@ const foreignContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
 const userId = uuidV7();
 const foreignMediaId = uuidV7();
 const service = new ArchiveService(pool, encryptionKey, storage);
-const app = await createApp({ service, sessionSecret });
+const app = await createApp({
+  service,
+  sessionSecret,
+  sessionMembershipChecker: (archiveContext, user) => service.isArchiveMember(archiveContext, user),
+  sessionPermissionChecker: (archiveContext, user, permission) =>
+    service.hasArchivePermission(archiveContext, user, permission),
+});
 const token = issueSessionToken(sessionSecret, {
   userId,
   organizationId: context.organizationId,
@@ -36,6 +42,12 @@ beforeAll(async () => {
   await migrate(pool);
   await bootstrapArchive(pool, context, 'API family', 'API archive');
   await bootstrapArchive(pool, foreignContext, 'Foreign family', 'Foreign archive');
+  await withTenantTransaction(pool, context, async (client) => {
+    await client.query(
+      "insert into memberships(id, organization_id, family_archive_id, user_id, role) values ($1, $2, $3, $4, 'archive_owner')",
+      [uuidV7(), context.organizationId, context.familyArchiveId, userId],
+    );
+  });
   await withTenantTransaction(pool, foreignContext, async (client) => {
     await client.query(
       "insert into media_assets(id, organization_id, family_archive_id, media_type, rights_status) values ($1,$2,$3,'audio','verified')",

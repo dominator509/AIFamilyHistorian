@@ -117,7 +117,8 @@ async function assertCurrentArchiveMembership(
   value: SessionPrincipal,
   archiveId: string,
 ): Promise<void> {
-  if (!dependencies.sessionMembershipChecker) return;
+  if (!dependencies.sessionMembershipChecker)
+    throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Archive authorization is not configured', true);
   let current: boolean;
   try {
     current = await dependencies.sessionMembershipChecker(
@@ -136,7 +137,8 @@ async function assertCurrentArchivePermission(
   archiveId: string,
   permission: string,
 ): Promise<void> {
-  if (!dependencies.sessionPermissionChecker) return;
+  if (!dependencies.sessionPermissionChecker)
+    throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Archive authorization is not configured', true);
   let current: boolean;
   try {
     current = await dependencies.sessionPermissionChecker(
@@ -349,17 +351,8 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.get('/v1/archives', async (request) => {
     const value = principal(request, dependencies.sessionSecret);
-    if (dependencies.sessionMembershipChecker) {
-      for (const archiveId of value.archiveIds) {
-        if (
-          !(await dependencies.sessionMembershipChecker(
-            { organizationId: value.organizationId, familyArchiveId: archiveId },
-            value.userId,
-          ))
-        )
-          throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
-      }
-    }
+    for (const archiveId of value.archiveIds)
+      await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const archives = (
       await Promise.all(
         value.archiveIds.map((archiveId) =>
