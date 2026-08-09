@@ -30,6 +30,7 @@ export const MAX_STREAMED_OBJECT_BYTES = 25 * 1024 * 1024 * 1024;
 export const MAX_MULTIPART_PARTS = 10_000;
 export const MAX_SIGNED_URL_EXPIRES_SECONDS = 60 * 60;
 export const MAX_OBJECT_KEY_CHARS = 1_024;
+export const MAX_PROVIDER_UPLOAD_ID_CHARS = 1_024;
 
 export function validateObjectKey(key: string): void {
   const hasControlCharacter =
@@ -45,6 +46,34 @@ export function validateObjectKey(key: string): void {
     hasControlCharacter
   )
     throw new RangeError('object storage key is invalid');
+}
+
+export function validateProviderUploadId(uploadId: string): void {
+  if (
+    typeof uploadId !== 'string' ||
+    uploadId.length < 1 ||
+    uploadId.length > MAX_PROVIDER_UPLOAD_ID_CHARS ||
+    [...uploadId].some((character) => {
+      const code = character.codePointAt(0) ?? 0;
+      return code < 0x20 || code === 0x7f;
+    })
+  )
+    throw new RangeError('object storage upload id is invalid');
+}
+
+export function validateStorageContentType(contentType: string): void {
+  if (
+    typeof contentType !== 'string' ||
+    contentType.length < 1 ||
+    contentType.length > 255 ||
+    !/^[a-z0-9][a-z0-9!#$&^_.+-]{0,126}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}$/u.test(contentType)
+  )
+    throw new RangeError('object storage content type is invalid');
+}
+
+export function validateSha256Base64(value: string): void {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9+/]{43}=$/u.test(value))
+    throw new RangeError('object storage SHA-256 checksum is invalid');
 }
 
 export class ObjectStorage {
@@ -67,6 +96,8 @@ export class ObjectStorage {
     sha256Base64: string,
   ): Promise<string> {
     validateObjectKey(key);
+    validateStorageContentType(contentType);
+    validateSha256Base64(sha256Base64);
     const response = await this.#client.send(
       new CreateMultipartUploadCommand({
         Bucket: this.config.bucket,
@@ -76,6 +107,7 @@ export class ObjectStorage {
       }),
     );
     if (!response.UploadId) throw new Error('object storage did not return an upload id');
+    validateProviderUploadId(response.UploadId);
     return response.UploadId;
   }
 
@@ -86,6 +118,8 @@ export class ObjectStorage {
     sha256Base64: string,
   ): Promise<void> {
     validateObjectKey(key);
+    validateStorageContentType(contentType);
+    validateSha256Base64(sha256Base64);
     await this.#client.send(
       new PutObjectCommand({
         Bucket: this.config.bucket,
@@ -106,6 +140,7 @@ export class ObjectStorage {
     expiresIn = 900,
   ): Promise<string> {
     validateObjectKey(key);
+    validateProviderUploadId(uploadId);
     if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > 10_000)
       throw new RangeError('multipart part number is invalid');
     if (!Number.isInteger(expiresIn) || expiresIn < 1 || expiresIn > MAX_SIGNED_URL_EXPIRES_SECONDS)
@@ -128,6 +163,7 @@ export class ObjectStorage {
     parts: readonly CompletedUploadPart[],
   ): Promise<void> {
     validateObjectKey(key);
+    validateProviderUploadId(uploadId);
     const validatedParts = validateCompletedUploadParts(parts);
     await this.#client.send(
       new CompleteMultipartUploadCommand({
@@ -144,6 +180,7 @@ export class ObjectStorage {
 
   public async abortMultipart(key: string, uploadId: string): Promise<void> {
     validateObjectKey(key);
+    validateProviderUploadId(uploadId);
     await this.#client.send(
       new AbortMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
     );
@@ -154,6 +191,7 @@ export class ObjectStorage {
     uploadId: string,
   ): Promise<readonly { partNumber: number; etag: string; byteSize: number }[]> {
     validateObjectKey(key);
+    validateProviderUploadId(uploadId);
     const parts: { partNumber: number; etag: string; byteSize: number }[] = [];
     const seenPartNumbers = new Set<number>();
     let marker: string | undefined;

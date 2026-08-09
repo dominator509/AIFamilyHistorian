@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { MAX_MULTIPART_TOKEN_CHARS } from '../../packages/contracts/src/index.js';
 import {
   MAX_OBJECT_KEY_CHARS,
+  MAX_PROVIDER_UPLOAD_ID_CHARS,
   ObjectStorageLimitError,
+  validateProviderUploadId,
+  validateSha256Base64,
+  validateStorageContentType,
   validateObjectKey,
   validateCompletedUploadParts,
 } from '../../packages/storage/src/service.js';
@@ -15,6 +19,21 @@ describe('multipart completion validation', () => {
     );
     expect(() => validateObjectKey('safe/\u0000-key')).toThrow('object storage key is invalid');
     expect(() => validateObjectKey('tenants/archive/originals/object-1')).not.toThrow();
+  });
+
+  it('rejects malformed provider upload metadata before provider calls', () => {
+    expect(() => validateProviderUploadId('')).toThrow('object storage upload id is invalid');
+    expect(() => validateProviderUploadId('x'.repeat(MAX_PROVIDER_UPLOAD_ID_CHARS + 1))).toThrow(
+      'object storage upload id is invalid',
+    );
+    expect(() => validateStorageContentType('not-a-mime')).toThrow(
+      'object storage content type is invalid',
+    );
+    expect(() => validateStorageContentType('application/octet-stream')).not.toThrow();
+    expect(() => validateSha256Base64('not-a-checksum')).toThrow(
+      'object storage SHA-256 checksum is invalid',
+    );
+    expect(() => validateSha256Base64('A'.repeat(43) + '=')).not.toThrow();
   });
 
   it('normalizes valid parts into provider order', () => {

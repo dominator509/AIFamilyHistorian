@@ -569,3 +569,7 @@ Provider adapters now convert schema-validation failures into stable non-retryab
 ### ADR-150: Validate storage object keys at every access boundary
 
 All `ObjectStorage` key-bearing methods now reject empty, overlong, or control-character keys before issuing provider commands. The 1,024-character ceiling and control-code rejection apply to direct callers as well as API/worker-generated keys, reducing malformed-key and provider-request amplification risk.
+
+### ADR-151: Validate storage upload metadata at direct boundaries
+
+Storage methods now validate provider upload IDs, MIME content types, and SHA-256 base64 checksums before creating, signing, completing, or aborting multipart uploads and before immutable puts. This prevents direct callers from bypassing the API’s upload metadata contracts.
