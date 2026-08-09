@@ -691,7 +691,10 @@ export class ArchiveService {
             'MEDIA_UNSAFE',
             'Completed object content does not match upload intent',
           );
-        const actual = await storage.sha256Base64(upload.object_key);
+        const actual = await storage.sha256Base64(
+          upload.object_key,
+          Number(upload.expected_byte_size),
+        );
         if (
           actual.byteSize !== Number(upload.expected_byte_size) ||
           actual.sha256Base64 !== upload.expected_sha256_base64

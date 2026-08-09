@@ -417,3 +417,7 @@ The deterministic PDF renderer now emits a minimal tagged-document structure: th
 ### ADR-112: Make accessibility semantics a verification gate
 
 `scripts/accessibility-check.sh` now runs a deterministic semantic probe over the PDF and EPUB renderers. It requires tagged-PDF catalog/page/MCID/structure markers and EPUB language, heading, navigation, and package metadata, and is wired into `scripts/verify.sh` and the immutable-action CI verification workflow. This is a local structural gate, not a substitute for formal PDF/UA or screen-reader review.
+
+### ADR-113: Bound streamed object fixity verification
+
+`ObjectStorage.sha256Base64` now accepts and enforces a streamed byte ceiling (defaulting to the 25 GiB media contract). Upload completion passes the authoritative session byte size, so a provider/object race cannot cause the fixity pass to read more bytes than the accepted upload contract even after the initial HEAD check. The hash remains streamed and non-buffering; oversized streams fail with `ObjectStorageLimitError` before persistence.

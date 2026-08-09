@@ -36,6 +36,9 @@ describe('S3-compatible object storage', () => {
       sha256Base64: checksum,
       byteSize: bytes.byteLength,
     });
+    await expect(storage.sha256Base64(key, bytes.byteLength - 1)).rejects.toBeInstanceOf(
+      ObjectStorageLimitError,
+    );
     const replacement = new TextEncoder().encode('mutated');
     const replacementChecksum = createHash('sha256').update(replacement).digest('base64');
     await expect(

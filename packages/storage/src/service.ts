@@ -25,6 +25,7 @@ export class ObjectStorageLimitError extends Error {
 
 /** Maximum object size that may be materialized into a single in-memory value. */
 export const MAX_IN_MEMORY_OBJECT_BYTES = 256 * 1024 * 1024;
+export const MAX_STREAMED_OBJECT_BYTES = 25 * 1024 * 1024 * 1024;
 export const MAX_MULTIPART_PARTS = 10_000;
 
 export class ObjectStorage {
@@ -250,7 +251,12 @@ export class ObjectStorage {
   }
 
   /** Stream an object once to verify its actual bytes without buffering the payload. */
-  public async sha256Base64(key: string): Promise<{ sha256Base64: string; byteSize: number }> {
+  public async sha256Base64(
+    key: string,
+    maxBytes = MAX_STREAMED_OBJECT_BYTES,
+  ): Promise<{ sha256Base64: string; byteSize: number }> {
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_STREAMED_OBJECT_BYTES)
+      throw new RangeError('object hash byte ceiling is invalid');
     const response = await this.#client.send(
       new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
     );
@@ -260,6 +266,8 @@ export class ObjectStorage {
     const hash = createHash('sha256');
     let byteSize = 0;
     for await (const chunk of body) {
+      if (byteSize + chunk.byteLength > maxBytes)
+        throw new ObjectStorageLimitError('object hash exceeded the byte ceiling');
       hash.update(chunk);
       byteSize += chunk.byteLength;
     }
