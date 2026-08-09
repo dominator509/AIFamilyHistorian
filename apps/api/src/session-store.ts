@@ -183,29 +183,40 @@ export class PostgresSessionStore implements SessionStore {
     );
   }
 
-  public async revokeAllForUser(userId: string, exceptSessionId?: string): Promise<number> {
+  public async revokeAllForUser(
+    userId: string,
+    exceptSessionId?: string,
+    organizationId?: string,
+  ): Promise<number> {
     assertUuid(userId, 'userId');
     if (exceptSessionId) assertUuid(exceptSessionId, 'exceptSessionId');
+    if (organizationId) assertUuid(organizationId, 'organizationId');
     const result = await this.pool.query(
       `update auth_sessions
           set revoked_at = coalesce(revoked_at, now()), revoked_reason = coalesce(revoked_reason, 'administrative')
         where user_id = $1
+          and ($3::uuid is null or organization_id = $3::uuid)
           and revoked_at is null
           and ($2::uuid is null or session_id <> $2::uuid)`,
-      [userId, exceptSessionId ?? null],
+      [userId, exceptSessionId ?? null, organizationId ?? null],
     );
     return result.rowCount ?? 0;
   }
 
-  public async listForUser(userId: string): Promise<readonly StoredSession[]> {
+  public async listForUser(
+    userId: string,
+    organizationId?: string,
+  ): Promise<readonly StoredSession[]> {
     assertUuid(userId, 'userId');
+    if (organizationId) assertUuid(organizationId, 'organizationId');
     const result = await this.pool.query<SessionRow>(
       `select session_id, user_id, organization_id, archive_ids, permissions,
               created_at, last_seen_at, expires_at, revoked_at, device_label
          from auth_sessions
         where user_id = $1
+          and ($2::uuid is null or organization_id = $2::uuid)
         order by created_at desc`,
-      [userId],
+      [userId, organizationId ?? null],
     );
     return Object.freeze(result.rows.map(rowToSession));
   }

@@ -29,7 +29,11 @@ export interface SessionStore {
     metadata?: SessionMetadata,
   ): Promise<void>;
   revoke(sessionId: string, reason: string): Promise<void>;
-  revokeAllForUser(userId: string, exceptSessionId?: string): Promise<number>;
-  listForUser(userId: string): Promise<readonly StoredSession[]>;
+  revokeAllForUser(
+    userId: string,
+    exceptSessionId?: string,
+    organizationId?: string,
+  ): Promise<number>;
+  listForUser(userId: string, organizationId?: string): Promise<readonly StoredSession[]>;
   find(sessionId: string): Promise<StoredSession | null>;
 }

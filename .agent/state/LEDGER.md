@@ -301,3 +301,6 @@
 2026-08-09T01:26:00Z | codex | HARDENING-54 | SECURITY_FINDING | media_scan_catch_path_could_mark_scanning_original_error_without_confirming_the_active_outbox_lock_token_after_lease_reclaim
 2026-08-09T01:27:00Z | codex | HARDENING-54 | FIX_APPLIED | stale_media_error_transition_now_asserts_and_locks_worker_lease_before_quarantine_error_update
 2026-08-09T01:28:00Z | codex | HARDENING-54 | LOCAL_VERIFICATION | api_permission_focus7_tests_passed; typecheck_lint_format_passed; e2e_database_suite_not_run_ECONNREFUSED_127.0.0.1:35432; no_external_success_inferred
+2026-08-09T01:36:00Z | codex | HARDENING-55 | SECURITY_FINDING | session_inventory_list_and_revoke_all_queries_were_scoped_by_user_id_only; multi-organization users could enumerate or revoke sessions outside the active organization
+2026-08-09T01:37:00Z | codex | HARDENING-55 | FIX_APPLIED | SessionStore_listForUser_and_revokeAllForUser_accept_organization_scope; Postgres predicates and targeted_revoke_org_match_enforced; API routes pass authenticated organization_id
+2026-08-09T01:38:00Z | codex | HARDENING-55 | LOCAL_VERIFICATION | unit24_files_85_tests_passed; typecheck_lint_format_passed; database-backed session isolation regression remains pending until PostgreSQL host port 35432 is available

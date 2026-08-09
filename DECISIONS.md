@@ -245,3 +245,7 @@ Archive route authorization now performs an optional authoritative database perm
 ### ADR-069: Fence stale media quarantine failures
 
 The media scan error path now verifies and locks the active outbox lease before transitioning an object from `scanning` to `error`. If the lease was reclaimed, the stale handler cannot overwrite a newer attempt's quarantine state. This complements the existing lease checks around fixity and derivative publication; no lease-loss condition is treated as a successful scan.
+
+### ADR-070: Scope session inventory to the active organization
+
+Session listing and administrative revoke-all now include the authenticated organization in their PostgreSQL predicates. Targeted session revocation also requires the stored row to belong to the same organization as the caller. This prevents a user with sessions in multiple organizations from browsing or revoking another organization’s session inventory while preserving self-revocation and explicit administrative controls.

@@ -182,7 +182,9 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   app.get('/v1/session', async (request) => {
     const value = principal(request, dependencies.sessionSecret);
     const store = requireSessionStore(dependencies);
-    const sessions = await sessionStoreOperation(() => store.listForUser(value.userId));
+    const sessions = await sessionStoreOperation(() =>
+      store.listForUser(value.userId, value.organizationId),
+    );
     return {
       items: sessions.map((session) => ({
         sessionId: session.sessionId,
@@ -226,7 +228,11 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
     const target = uuidSchema.parse((request.params as { sessionId?: unknown }).sessionId);
     const store = requireSessionStore(dependencies);
     const session = await sessionStoreOperation(() => store.find(target));
-    if (!session || session.userId !== value.userId)
+    if (
+      !session ||
+      session.userId !== value.userId ||
+      session.organizationId !== value.organizationId
+    )
       throw new ApiProblem('AUTH_REQUIRED', 'Session is not available');
     if (
       target !== value.sessionId &&
@@ -246,9 +252,11 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
     if (!value.sessionId)
       throw new ApiProblem('AUTH_REQUIRED', 'Session does not support revocation');
     const store = requireSessionStore(dependencies);
-    const sessions = await sessionStoreOperation(() => store.listForUser(value.userId));
+    const sessions = await sessionStoreOperation(() =>
+      store.listForUser(value.userId, value.organizationId),
+    );
     const count = await sessionStoreOperation(() =>
-      store.revokeAllForUser(value.userId, value.sessionId),
+      store.revokeAllForUser(value.userId, value.sessionId, value.organizationId),
     );
     if (dependencies.sessionRevocationStore) {
       await Promise.all(
