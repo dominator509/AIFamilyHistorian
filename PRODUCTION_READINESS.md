@@ -35,6 +35,10 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 
 ## Engineering work still pending
 
+### Current security scan
+
+The current-head standard scan `47580dd9-5d31-4143-bfc2-68f6cfc185f9` completed against `d243fc3` with complete 335-file coverage and two high findings: broad worker `SET ROLE family_historian_runtime` activation across tenant tables and hosted worker sandbox controls absent or unproven. The source-level scratch mount is declared; hosted enforcement and the broader worker-role redesign remain release blockers.
+
 - Implement and verify privacy fulfillment, export generation, transcription, narration synthesis, and deletion execution workers. Current intake handlers intentionally stop at review-required states and unsupported job types fail closed.
 - Complete native Better Auth/passkey/WebAuthn and Argon2id identity issuance, migration, device lifecycle, and live-fire coverage.
 - Tagged PDF structure semantics and EPUB language/navigation metadata are implemented and regression-tested; complete formal accessibility/PDF/EPUB audits, large-transfer/recovery rehearsal, hosted queue topology/fairness, production KMS wrapping/restore drills, and hosted media/provider fixtures remain pending.

@@ -23,6 +23,8 @@
 
 ### Current security scan
 
+- Latest current-head scan `47580dd9-5d31-4143-bfc2-68f6cfc185f9` completed against immutable commit `d243fc3cec270b02aa1431b79c298409a0d761a5` with complete 335-file coverage and two open high findings: worker broad-runtime-role activation across tenant tables and hosted worker sandbox controls absent/unproven. The source-level scratch-volume declaration is present; hosted enforcement and the broader worker-role redesign remain pending. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\d243fc3cec270b02aa1431b79c298409a0d761a5_20260809T165551Z_g89fjlq_\report.md`.
+
 - Historical pre-HARDENING-159 scan `0efbcd50-aacd-493f-8571-0f81f8865d90` remains retained against immutable revision `b792abd35e2e81652778d79f370468a5ea941a47`; its archive-global permission finding is addressed by later source changes.
 - The hosted sandbox and scratch-capacity findings remain release/deployment blockers. The archive-global claim finding is addressed in the current source by archive-scoped issuance, authorization, and persistence; a future security scan should recheck issuer coverage and token migration behavior.
 - Historical scan `9f2f9e2a-1c13-434c-8034-402f6bceeab0` remains retained for provenance only; its owner-credential and provider-header findings were remediated by HARDENING-155/156 and are not current findings. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\3a7ece4d540b83d704226de36941359365591c1e_20260809T134428Z_7zgh35ie\report.md`.
