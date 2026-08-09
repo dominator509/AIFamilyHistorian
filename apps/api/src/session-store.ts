@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
-import type {
-  SessionMetadata,
-  SessionPrincipal,
-  SessionStore,
-  StoredSession,
+import {
+  validateSessionMetadata,
+  type SessionMetadata,
+  type SessionPrincipal,
+  type SessionStore,
+  type StoredSession,
 } from '@family-historian/auth';
 import type { DatabasePool } from '@family-historian/database';
 
@@ -64,6 +65,7 @@ export class PostgresSessionStore implements SessionStore {
     principal: SessionPrincipal,
     metadata: SessionMetadata = {},
   ): Promise<StoredSession | null> {
+    const validatedMetadata = validateSessionMetadata(metadata);
     assertUuid(principal.sessionId ?? '', 'sessionId');
     assertUuid(principal.userId, 'userId');
     assertUuid(principal.organizationId, 'organizationId');
@@ -80,9 +82,9 @@ export class PostgresSessionStore implements SessionStore {
         principal.organizationId,
         principal.archiveIds,
         principal.permissions,
-        metadata.deviceLabel ?? null,
-        hashMetadata(metadata.userAgent),
-        hashMetadata(metadata.ipAddress),
+        validatedMetadata.deviceLabel ?? null,
+        hashMetadata(validatedMetadata.userAgent),
+        hashMetadata(validatedMetadata.ipAddress),
         principal.expiresAt,
       ],
     );
@@ -113,6 +115,7 @@ export class PostgresSessionStore implements SessionStore {
     replacement: SessionPrincipal,
     metadata: SessionMetadata = {},
   ): Promise<void> {
+    const validatedMetadata = validateSessionMetadata(metadata);
     assertUuid(currentSessionId, 'currentSessionId');
     assertUuid(replacement.sessionId ?? '', 'replacement sessionId');
     const client = await this.pool.connect();
@@ -158,9 +161,9 @@ export class PostgresSessionStore implements SessionStore {
           replacement.organizationId,
           replacement.archiveIds,
           replacement.permissions,
-          metadata.deviceLabel ?? null,
-          hashMetadata(metadata.userAgent),
-          hashMetadata(metadata.ipAddress),
+          validatedMetadata.deviceLabel ?? null,
+          hashMetadata(validatedMetadata.userAgent),
+          hashMetadata(validatedMetadata.ipAddress),
           replacement.expiresAt,
         ],
       );

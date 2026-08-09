@@ -11,6 +11,8 @@ import {
   parseAuthorizationHeader,
   verifySessionToken,
   verifyTotpCode,
+  MAX_SESSION_DEVICE_LABEL_CHARS,
+  validateSessionMetadata,
 } from '../../packages/auth/src/index.js';
 import {
   decryptRestrictedText,
@@ -82,6 +84,16 @@ describe('session principal and auth policy', () => {
     expect(() => verifySessionToken(secret, `v1.${'a'.repeat(70_000)}.invalid`)).toThrow(
       'AUTH_REQUIRED',
     );
+  });
+
+  it('bounds server-side session metadata before hashing or persistence', () => {
+    expect(() =>
+      validateSessionMetadata({ deviceLabel: 'x'.repeat(MAX_SESSION_DEVICE_LABEL_CHARS + 1) }),
+    ).toThrow('SESSION_METADATA_INVALID');
+    expect(() => validateSessionMetadata({ userAgent: 'x'.repeat(2_049) })).toThrow(
+      'SESSION_METADATA_INVALID',
+    );
+    expect(validateSessionMetadata({ deviceLabel: 'laptop' })).toEqual({ deviceLabel: 'laptop' });
   });
 
   it('authorizes scoped archive access only with permission', () => {

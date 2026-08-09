@@ -513,3 +513,7 @@ Edition manifests now cap keys at 256, key length at 200 characters, and seriali
 ### ADR-136: Bound Stripe callback persistence payloads
 
 `ArchiveService.recordStripeWebhook` now serializes provider callback payloads through a cycle-safe 1 MiB guard before opening the tenant transaction or issuing a JSONB insert. This preserves replay hashing while preventing direct service callers from bypassing the HTTP body limit or reaching the database with malformed payload objects.
+
+### ADR-137: Bound persisted session metadata
+
+Session device labels, user-agent strings, and IP-address metadata are now validated at the shared auth boundary before hashing or persistence. The caps (256, 2,048, and 128 characters respectively) apply to both registration and rotation and reject malformed runtime callers with `SESSION_METADATA_INVALID`, preventing direct service consumers from bypassing HTTP body limits or amplifying session-inventory storage.

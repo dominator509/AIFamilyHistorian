@@ -6,6 +6,36 @@ export interface SessionMetadata {
   readonly ipAddress?: string;
 }
 
+export const MAX_SESSION_DEVICE_LABEL_CHARS = 256;
+export const MAX_SESSION_USER_AGENT_CHARS = 2_048;
+export const MAX_SESSION_IP_ADDRESS_CHARS = 128;
+
+export function validateSessionMetadata(metadata: SessionMetadata = {}): SessionMetadata {
+  if (
+    metadata.deviceLabel !== undefined &&
+    (typeof metadata.deviceLabel !== 'string' ||
+      metadata.deviceLabel.length > MAX_SESSION_DEVICE_LABEL_CHARS)
+  )
+    throw new Error('SESSION_METADATA_INVALID');
+  if (
+    metadata.userAgent !== undefined &&
+    (typeof metadata.userAgent !== 'string' ||
+      metadata.userAgent.length > MAX_SESSION_USER_AGENT_CHARS)
+  )
+    throw new Error('SESSION_METADATA_INVALID');
+  if (
+    metadata.ipAddress !== undefined &&
+    (typeof metadata.ipAddress !== 'string' ||
+      metadata.ipAddress.length > MAX_SESSION_IP_ADDRESS_CHARS)
+  )
+    throw new Error('SESSION_METADATA_INVALID');
+  return Object.freeze({
+    ...(metadata.deviceLabel !== undefined ? { deviceLabel: metadata.deviceLabel } : {}),
+    ...(metadata.userAgent !== undefined ? { userAgent: metadata.userAgent } : {}),
+    ...(metadata.ipAddress !== undefined ? { ipAddress: metadata.ipAddress } : {}),
+  });
+}
+
 export interface StoredSession extends Omit<SessionPrincipal, 'archiveIds' | 'permissions'> {
   readonly sessionId: string;
   readonly archiveIds: readonly string[];
