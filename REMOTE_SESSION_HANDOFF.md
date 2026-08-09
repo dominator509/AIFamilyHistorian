@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175/176)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175/176/178)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -25,6 +25,7 @@
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
 - HARDENING-173 adds a production-only worker startup gate that fails closed unless Linux exposes no-new-privileges, zero effective capabilities, seccomp filtering, a read-only root, noexec/nosuid `/tmp`, and bounded PID/memory/CPU cgroups. Unit coverage passed 30 files/158 tests; egress and deployment identity remain external attestation properties.
 - Post-checkpoint verification: `sh scripts/graph-next.sh` returned `RESUME EP-000`; `sh scripts/preflight.sh` remains fail-closed with 18 unresolved requirements, including the separately named private production worker app. The current commit is available from `git rev-parse HEAD` and must match `git ls-remote origin refs/heads/master`.
+- HARDENING-178 makes publication readiness evidence IDs single-use across rights, consent, and citation categories. The focused unit gate passed 30 files/159 tests; format, typecheck, and security checks passed. This is an engineering hardening only and does not satisfy external rights, consent, or legal approval evidence.
 
 ### Current security scan
 
@@ -37,7 +38,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-176`; provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, explicit private production worker-app targeting, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `HARDENING-178`; publication evidence IDs are now single-use across rights, consent, and citation categories, in addition to provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, explicit private production worker-app targeting, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
