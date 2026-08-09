@@ -34,6 +34,8 @@ const checks: readonly PreservationCheck[] = [
   'new_interviews',
   'export_readiness',
 ];
+export const MAX_PRESERVATION_FINDINGS = checks.length;
+export const MAX_PRESERVATION_DETAIL_CHARS = 2_048;
 
 export function createAnnualPreservationReview(input: {
   id: EntityId;
@@ -45,7 +47,31 @@ export function createAnnualPreservationReview(input: {
   uuidSchema.parse(input.archiveId);
   if (!Number.isFinite(Date.parse(input.reviewedAt)))
     throw new DomainError('VALIDATION_FAILED', 'review date is invalid');
-  const byCheck = new Map(input.findings.map((finding) => [finding.check, finding]));
+  const findingsValue: unknown = input.findings;
+  if (!Array.isArray(findingsValue) || findingsValue.length > MAX_PRESERVATION_FINDINGS)
+    throw new DomainError('VALIDATION_FAILED', 'preservation finding count is invalid');
+  const seen = new Set<PreservationCheck>();
+  const validatedFindings: PreservationFinding[] = [];
+  for (const candidate of findingsValue) {
+    if (candidate === null || typeof candidate !== 'object')
+      throw new DomainError('VALIDATION_FAILED', 'preservation finding is invalid');
+    const record = candidate as Record<string, unknown>;
+    const check = record.check;
+    const status = record.status;
+    const detail = record.detail;
+    if (!isPreservationCheck(check) || seen.has(check))
+      throw new DomainError('VALIDATION_FAILED', 'preservation checks must be unique and known');
+    if (
+      (status !== 'clear' && status !== 'action_required') ||
+      typeof detail !== 'string' ||
+      !detail.trim() ||
+      detail.length > MAX_PRESERVATION_DETAIL_CHARS
+    )
+      throw new DomainError('VALIDATION_FAILED', 'preservation finding is invalid');
+    seen.add(check);
+    validatedFindings.push({ check, status, detail });
+  }
+  const byCheck = new Map(validatedFindings.map((finding) => [finding.check, finding]));
   for (const check of checks) {
     const finding = byCheck.get(check);
     if (!finding)
@@ -64,6 +90,10 @@ export function createAnnualPreservationReview(input: {
     findings,
     status,
   });
+}
+
+function isPreservationCheck(value: unknown): value is PreservationCheck {
+  return typeof value === 'string' && checks.includes(value as PreservationCheck);
 }
 
 export function assertPreservationReviewReady(review: AnnualPreservationReview): void {

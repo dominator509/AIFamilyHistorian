@@ -82,4 +82,30 @@ describe('billing and preservation invariants', () => {
     });
     expect(() => assertPreservationReviewReady(blocked)).toThrow('unresolved actions');
   });
+
+  it('rejects duplicate, unknown, or oversized preservation findings', () => {
+    const base = {
+      id: '01900000-0000-7000-8000-000000000014',
+      archiveId: '01900000-0000-7000-8000-000000000015',
+      reviewedAt: '2026-08-06T00:00:00.000Z',
+    };
+    const finding = { check: 'permissions' as const, status: 'clear' as const, detail: 'ok' };
+    expect(() => createAnnualPreservationReview({ ...base, findings: [finding, finding] })).toThrow(
+      'preservation checks must be unique and known',
+    );
+    expect(() =>
+      createAnnualPreservationReview({
+        ...base,
+        findings: [{ check: 'unknown' as never, status: 'clear' as const, detail: 'ok' }],
+      }),
+    ).toThrow('preservation checks must be unique and known');
+    expect(() =>
+      createAnnualPreservationReview({
+        ...base,
+        findings: [
+          { check: 'permissions' as const, status: 'clear' as const, detail: 'x'.repeat(2_049) },
+        ],
+      }),
+    ).toThrow('preservation finding is invalid');
+  });
 });

@@ -533,3 +533,7 @@ Fixed-window and Redis-backed rate limiters now require safe integer limits and 
 ### ADR-141: Bound telemetry event and metric materialization
 
 Observability helpers now cap context fields at 512 characters, metric names at 256, units at 64, label cardinality at 100, label keys at 128, and label values at 512. They reject malformed timestamps and invalid labels before event or metric materialization; recursive detail redaction retains its existing depth, collection, content, and secret protections.
+
+### ADR-142: Enforce complete annual preservation check sets
+
+Annual preservation reviews now validate finding objects through an unknown-safe boundary, reject unknown or duplicate check names, require valid statuses and non-empty bounded details, and cap the finding set to the seven required checks. The review can no longer silently overwrite duplicate checks in a map or accept malformed direct callers that bypass the API schema.
