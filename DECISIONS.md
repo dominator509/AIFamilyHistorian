@@ -329,3 +329,15 @@ Archive membership and permission checkers are now mandatory at archive route ex
 ### ADR-090: Enforce the multipart protocol cardinality at the provider boundary
 
 `ObjectStorage.listMultipartParts` now rejects missing, out-of-range, malformed, duplicate, or more-than-10,000 provider parts. The S3 part-number ceiling is enforced independently of page count, preventing a nonconforming provider from inflating the status response or causing unbounded part accumulation.
+
+### ADR-091: Run integration tests inside the isolated Compose network
+
+The integration wrapper now detects healthy Compose services and a worker image, then runs all integration tests in a disposable container on `family_historian_internal` with current source trees mounted read-only. It rewrites only local service hostnames, mounts the ClamAV signature volume for the media fixture, and retains the host fallback when the local runner is unavailable. This preserves the network boundary while making the prescribed integration command test real dependencies instead of failing on intentionally unpublished host ports.
+
+### ADR-092: Run E2E tests inside the isolated Compose network
+
+The E2E wrapper uses the same disposable internal runner and read-only source mounts, with PostgreSQL and MinIO service DNS overrides. This keeps API/storage E2E coverage available when host service ports are intentionally unpublished and leaves the host fallback unchanged for environments without the local stack.
+
+### ADR-093: Probe local OTLP through the isolated service network when needed
+
+The OTLP preflight probe first checks the configured endpoint directly, then—only when the local worker image and healthy Compose telemetry container exist—probes the real collector at `telemetry:4318` from the internal network. This removes a host-port-forwarding false negative while preserving fail-closed behavior when the collector or runner is absent; it does not mark hosted telemetry credentials or delivery as verified.

@@ -380,3 +380,9 @@
 2026-08-09T05:35:00Z | codex | HARDENING-75 | SECURITY_FINDING | listMultipartParts_could_accumulate_provider_pages_beyond_the_10k_S3_part_number_ceiling_and_silently_skip_malformed_entries
 2026-08-09T05:36:00Z | codex | HARDENING-75 | FIX_APPLIED | provider_part_numbers_sizes_etags_and_duplicates_validated; MAX_MULTIPART_PARTS_10000_enforced_across_pages
 2026-08-09T05:37:00Z | codex | HARDENING-75 | LOCAL_VERIFICATION | real_internal_MinIO_signed_multipart_upload_and_list_passed; typecheck_lint_format_unit26_files_101_tests_build_security_secret_scan_live_fire16_passed
+2026-08-09T05:45:00Z | codex | HARDENING-76 | SECURITY_FINDING | prescribed_test_integration_and_test_e2e_wrappers_failed_on_intentionally_unpublished_host_ports_and_did_not_reuse_the_proven_internal_runner
+2026-08-09T05:46:00Z | codex | HARDENING-76 | FIX_APPLIED | integration_and_e2e_wrappers_detect_internal_compose_network; mount_current_src_readonly; rewrite_service_DNS; mount_ClamAV_signatures_for_media_fixture; retain_host_fallback
+2026-08-09T05:47:00Z | codex | HARDENING-76 | LOCAL_VERIFICATION | integration13_files_41_tests_passed; e2e3_files_11_tests_passed; compose_config_and_shell_syntax_passed; media_fixture_passed_with_real_ClamAV_FFmpeg_MinIO_PostgreSQL
+2026-08-09T05:52:00Z | codex | HARDENING-77 | SECURITY_FINDING | OTLP_preflight_required_host_port_forwarding_even_when_healthy_local_collector_was_reachable_only_on_internal_network; produced_false_external_blocker
+2026-08-09T05:53:00Z | codex | HARDENING-77 | FIX_APPLIED | otel_probe_falls_back_to_real_telemetry_service_DNS_from_disposable_worker_image_only_when_compose_container_and_network_are_present
+2026-08-09T05:54:00Z | codex | HARDENING-77 | LOCAL_VERIFICATION | otel_probe_passed_internal_path; preflight_now_reports_genuine_15_unresolved_requirements; no_hosted_telemetry_success_inferred

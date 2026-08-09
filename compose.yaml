@@ -87,6 +87,7 @@ services:
 
   smtp:
     image: axllent/mailpit:v1.27.7
+    networks: [family_historian_internal]
     ports:
       - '127.0.0.1:11025:1025'
       - '127.0.0.1:18025:8025'
@@ -99,6 +100,7 @@ services:
 
   telemetry:
     image: otel/opentelemetry-collector-contrib:0.130.1
+    networks: [family_historian_internal]
     command: ['--config=/etc/otelcol-contrib/config.yaml']
     volumes:
       - ./infra/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
