@@ -55,9 +55,20 @@ interface RouteDependencies {
   stripeWebhookSecret?: string;
 }
 
+const STRIPE_EVENT_ID_MAX_CHARS = 256;
+const STRIPE_EVENT_TYPE_MAX_CHARS = 200;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
+
 const stripeWebhookEventSchema = z.object({
-  id: z.string().regex(/^evt_[A-Za-z0-9]+$/u),
-  type: z.string().min(1).max(200),
+  id: z
+    .string()
+    .max(STRIPE_EVENT_ID_MAX_CHARS)
+    .regex(/^evt_[A-Za-z0-9]+$/u),
+  type: z
+    .string()
+    .min(1)
+    .max(STRIPE_EVENT_TYPE_MAX_CHARS)
+    .refine((value) => !CONTROL_CHARACTER_PATTERN.test(value), 'event type contains controls'),
   data: z.object({ object: z.record(z.string(), z.unknown()) }),
 });
 

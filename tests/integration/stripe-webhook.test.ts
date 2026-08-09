@@ -187,4 +187,29 @@ describe('Stripe webhook ingestion', () => {
     );
     expect(rows.rowCount).toBe(0);
   });
+
+  it('rejects signed event metadata containing control characters before persistence', async () => {
+    const eventId = `evt_${organizationId.replaceAll('-', '')}5`;
+    const payload = JSON.stringify({
+      id: eventId,
+      type: 'invoice.\npaid',
+      data: {
+        object: {
+          metadata: { organization_id: organizationId, family_archive_id: familyArchiveId },
+        },
+      },
+    });
+    const response = await app.inject({
+      method: 'POST',
+      url: '/v1/webhooks/stripe',
+      headers: { 'content-type': 'application/json', 'stripe-signature': signedPayload(payload) },
+      payload,
+    });
+    expect(response.statusCode).toBe(400);
+    const rows = await pool.query(
+      'select 1 from provider_callback_events where provider_event_id = $1',
+      [eventId],
+    );
+    expect(rows.rowCount).toBe(0);
+  });
 });
