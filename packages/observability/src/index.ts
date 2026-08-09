@@ -29,6 +29,10 @@ const normalizeTelemetryKey = (key: string): string =>
 const NORMALIZED_CONTENT_KEYS = new Set([...CONTENT_KEYS].map(normalizeTelemetryKey));
 const NORMALIZED_SENSITIVE_KEYS = new Set([...SENSITIVE_KEYS].map(normalizeTelemetryKey));
 
+export const MAX_TELEMETRY_DEPTH = 8;
+export const MAX_TELEMETRY_COLLECTION_ITEMS = 1_000;
+export const MAX_TELEMETRY_STRING_CHARS = 16_384;
+
 export interface TelemetryContext {
   readonly service: string;
   readonly environment: string;
@@ -57,20 +61,26 @@ export interface MetricSample {
 }
 
 export function redactTelemetryValue(value: unknown, key?: string, depth = 0): unknown {
-  if (depth > 8) return '[REDACTED_DEPTH]';
+  if (depth > MAX_TELEMETRY_DEPTH) return '[REDACTED_DEPTH]';
   const normalizedKey = key ? normalizeTelemetryKey(key) : undefined;
   if (normalizedKey && NORMALIZED_CONTENT_KEYS.has(normalizedKey)) return '[CONTENT_REDACTED]';
   if (normalizedKey && NORMALIZED_SENSITIVE_KEYS.has(normalizedKey)) return '[SECRET_REDACTED]';
-  if (typeof value === 'string')
-    return value
+  if (typeof value === 'string') {
+    const redacted = value
       .replaceAll(PRIVATE_KEY_PATTERN, '[SECRET_REDACTED]')
       .replaceAll(SECRET_PATTERN, '[SECRET_REDACTED]')
       .replaceAll(EMAIL_PATTERN, '[IDENTIFIER_REDACTED]');
-  if (Array.isArray(value))
+    return redacted.length > MAX_TELEMETRY_STRING_CHARS ? '[REDACTED_LIMIT]' : redacted;
+  }
+  if (Array.isArray(value)) {
+    if (value.length > MAX_TELEMETRY_COLLECTION_ITEMS) return '[REDACTED_LIMIT]';
     return value.map((item) => redactTelemetryValue(item, undefined, depth + 1));
+  }
   if (value && typeof value === 'object') {
+    const entries = Object.entries(value);
+    if (entries.length > MAX_TELEMETRY_COLLECTION_ITEMS) return '[REDACTED_LIMIT]';
     const result: Record<string, unknown> = {};
-    for (const [childKey, childValue] of Object.entries(value))
+    for (const [childKey, childValue] of entries)
       Object.defineProperty(result, childKey, {
         configurable: true,
         enumerable: true,

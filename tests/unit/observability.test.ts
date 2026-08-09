@@ -57,4 +57,15 @@ describe('observability redaction', () => {
     );
     expect(Object.prototype.hasOwnProperty.call(redacted, '__proto__')).toBe(true);
   });
+
+  it('fails closed on oversized telemetry values and collections', () => {
+    expect(redactTelemetryValue('x'.repeat(16_385))).toBe('[REDACTED_LIMIT]');
+    expect(redactTelemetryValue(Array.from({ length: 1_001 }, () => 'value'))).toBe(
+      '[REDACTED_LIMIT]',
+    );
+    const oversizedObject = Object.fromEntries(
+      Array.from({ length: 1_001 }, (_, index) => [`field-${index}`, 'value']),
+    );
+    expect(redactTelemetryValue(oversizedObject)).toBe('[REDACTED_LIMIT]');
+  });
 });

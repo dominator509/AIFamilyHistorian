@@ -473,3 +473,7 @@ Annotated candidate extraction now caps fan-out at 1,000 records. Evidence asser
 ### ADR-126: Bound narration manifest materialization
 
 Narration manifest construction now requires a non-empty edition scope, non-empty paragraph text, no more than 10,000 chapters, and no more than 16 MiB of UTF-8 narration text. The validated string collection is copied before freezing the manifest, preventing malformed runtime values and unbounded provider-bound narration materialization from crossing the publication boundary.
+
+### ADR-127: Bound telemetry redaction traversal
+
+Telemetry redaction now caps recursive depth at 8, rejects collections larger than 1,000 items, and replaces strings over 16,384 characters with a redacted-limit marker after secret/content replacement. This keeps observability fail-closed against oversized or cyclic detail payloads without allowing log amplification or raw-content bypass.
