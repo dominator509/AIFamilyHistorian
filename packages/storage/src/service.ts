@@ -30,7 +30,12 @@ export const MAX_STREAMED_OBJECT_BYTES = 25 * 1024 * 1024 * 1024;
 export const MAX_MULTIPART_PARTS = 10_000;
 export const MAX_SIGNED_URL_EXPIRES_SECONDS = 60 * 60;
 export const MAX_OBJECT_KEY_CHARS = 1_024;
+/** S3 object keys are limited by UTF-8 encoded byte length, not JavaScript code units. */
+export const MAX_OBJECT_KEY_BYTES = 1_024;
 export const MAX_PROVIDER_UPLOAD_ID_CHARS = 1_024;
+/** Keep opaque provider upload identifiers bounded in the wire representation too. */
+export const MAX_PROVIDER_UPLOAD_ID_BYTES = 1_024;
+export const MAX_STORAGE_CONTENT_TYPE_BYTES = 255;
 
 export function validateObjectKey(key: string): void {
   const hasControlCharacter =
@@ -43,6 +48,7 @@ export function validateObjectKey(key: string): void {
     typeof key !== 'string' ||
     key.length < 1 ||
     key.length > MAX_OBJECT_KEY_CHARS ||
+    Buffer.byteLength(key, 'utf8') > MAX_OBJECT_KEY_BYTES ||
     hasControlCharacter
   )
     throw new RangeError('object storage key is invalid');
@@ -53,6 +59,7 @@ export function validateProviderUploadId(uploadId: string): void {
     typeof uploadId !== 'string' ||
     uploadId.length < 1 ||
     uploadId.length > MAX_PROVIDER_UPLOAD_ID_CHARS ||
+    Buffer.byteLength(uploadId, 'utf8') > MAX_PROVIDER_UPLOAD_ID_BYTES ||
     [...uploadId].some((character) => {
       const code = character.codePointAt(0) ?? 0;
       return code < 0x20 || code === 0x7f;
@@ -66,6 +73,7 @@ export function validateStorageContentType(contentType: string): void {
     typeof contentType !== 'string' ||
     contentType.length < 1 ||
     contentType.length > 255 ||
+    Buffer.byteLength(contentType, 'utf8') > MAX_STORAGE_CONTENT_TYPE_BYTES ||
     !/^[a-z0-9][a-z0-9!#$&^_.+-]{0,126}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}$/u.test(contentType)
   )
     throw new RangeError('object storage content type is invalid');

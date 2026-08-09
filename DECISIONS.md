@@ -581,3 +581,7 @@ The shared AI gateway now rejects source text over 4 MiB before policy redaction
 ### ADR-153: Bound materialized Deepgram input
 
 `DeepgramTranscriber` now rejects audio payloads larger than 128 MiB before copying the `Uint8Array` into a fetch body. The adapter is intentionally materialized rather than streamed; larger source media must use a future bounded chunking workflow instead of silently creating an unbounded provider request.
+
+### ADR-154: Enforce byte-accurate storage metadata limits
+
+Object-storage keys, opaque multipart upload IDs, and content types now enforce UTF-8 byte ceilings in addition to character/shape validation. Provider limits are byte-oriented, so multibyte values that fit JavaScript character counts must fail before any S3-compatible request is issued.
