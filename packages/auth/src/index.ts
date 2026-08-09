@@ -52,8 +52,10 @@ export function issueSessionToken(
 export function verifySessionToken(secret: string, token: string): SessionPrincipal {
   if (secret.length < 32) throw new Error('session secret is too short');
   if (token.length > MAX_SESSION_TOKEN_LENGTH) throw new Error('AUTH_REQUIRED');
-  const [version, payload, supplied] = token.split('.');
-  if (version !== 'v1' || !payload || !supplied) throw new Error('AUTH_REQUIRED');
+  const segments = token.split('.');
+  const [version, payload, supplied] = segments;
+  if (segments.length !== 3 || version !== 'v1' || !payload || !supplied)
+    throw new Error('AUTH_REQUIRED');
   if (payload.length > MAX_SESSION_PAYLOAD_LENGTH) throw new Error('AUTH_REQUIRED');
   const expected = signSession(secret, payload);
   const suppliedBuffer = Buffer.from(supplied, 'base64url');
@@ -123,14 +125,25 @@ export function verifyTotpCode(
   window = 1,
 ): number | null {
   if (
+    !secretBase32.trim() ||
     secretBase32.length > MAX_TOTP_SECRET_LENGTH ||
+    !/^[A-Z2-7=\s-]+$/iu.test(secretBase32) ||
     !/^\d{6}$/u.test(code) ||
+    !Number.isFinite(atMilliseconds) ||
+    atMilliseconds < 0 ||
+    !Number.isSafeInteger(Math.floor(atMilliseconds)) ||
     !Number.isInteger(window) ||
     window < 0 ||
     window > 2
   )
     return null;
-  const key = decodeBase32(secretBase32);
+  let key: Buffer;
+  try {
+    key = decodeBase32(secretBase32);
+  } catch {
+    return null;
+  }
+  if (key.length === 0) return null;
   const currentStep = Math.floor(atMilliseconds / 30_000);
   for (let offset = -window; offset <= window; offset += 1) {
     const step = currentStep + offset;

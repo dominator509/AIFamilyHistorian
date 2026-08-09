@@ -485,3 +485,7 @@ PDF and EPUB rendering now validate title, author, paragraph types, paragraph co
 ### ADR-129: Bound provider request materialization
 
 Provider adapters now validate request-side metadata, query cardinality, narration text, email recipients and bodies, Turnstile metadata, and Stripe checkout URLs before dispatch. The bounds prevent oversized headers/forms/payloads and unsafe redirect URLs from reaching external providers while retaining the existing adapter contracts and response ceilings.
+
+### ADR-130: Canonicalize bearer tokens and fail closed on malformed TOTP input
+
+Session verification now requires exactly three token segments, preventing ignored suffixes from being accepted as canonical bearer tokens. TOTP verification now rejects empty or malformed Base32 secrets and non-finite/unsafe timestamps by returning null, preserving its non-throwing verification contract for untrusted inputs.

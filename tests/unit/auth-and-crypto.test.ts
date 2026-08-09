@@ -51,6 +51,7 @@ describe('session principal and auth policy', () => {
     const [version, payload] = token.split('.');
     const forged = `${version}.${payload}.${createHmac('sha256', secret).update('mismatch').digest('base64url')}`;
     expect(() => verifySessionToken(secret, forged)).toThrow('AUTH_REQUIRED');
+    expect(() => verifySessionToken(secret, `${token}.extra`)).toThrow('AUTH_REQUIRED');
   });
 
   it('rejects expired and excessively long-lived sessions at issuance', () => {
@@ -123,6 +124,9 @@ describe('session principal and auth policy', () => {
       createTotpEnrollment({ userId: principal.userId, label: 'x'.repeat(257) }),
     ).toThrow('MFA_ENROLLMENT_INVALID');
     expect(verifyTotpCode('A'.repeat(129), '000000')).toBeNull();
+    expect(verifyTotpCode('', '000000')).toBeNull();
+    expect(verifyTotpCode('not-base32', '000000')).toBeNull();
+    expect(verifyTotpCode('GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ', '000000', Number.NaN)).toBeNull();
     expect(() => hashRecoveryCode('x'.repeat(65))).toThrow('RECOVERY_CODE_INVALID');
     expect(() =>
       consumeRecoveryCode(
