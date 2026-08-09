@@ -360,4 +360,48 @@ describe('PostgreSQL persistence invariants', () => {
     );
     expect(counts.rows[0]).toEqual({ sessions: '1', audits: '1' });
   });
+
+  it('rejects unsafe or expired idempotency records at the database boundary', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(
+      pool,
+      context,
+      'Idempotency boundary family',
+      'Idempotency boundary archive',
+    );
+    const base = [
+      uuidV7(),
+      context.organizationId,
+      context.familyArchiveId,
+      'POST',
+      '/v1/test',
+      201,
+      {},
+    ];
+    await expect(
+      pool.query(
+        `insert into api_idempotency_keys
+          (id, organization_id, family_archive_id, idempotency_key, method, route, response_status, response_body, expires_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,now() + interval '24 hours')`,
+        [
+          base[0],
+          base[1],
+          base[2],
+          `key${String.fromCharCode(10)}unsafe`,
+          base[3],
+          base[4],
+          base[5],
+          base[6],
+        ],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `insert into api_idempotency_keys
+          (id, organization_id, family_archive_id, idempotency_key, method, route, response_status, response_body, expires_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,now() - interval '1 second')`,
+        [base[0], base[1], base[2], `key-${'x'.repeat(20)}`, base[3], base[4], base[5], base[6]],
+      ),
+    ).rejects.toThrow();
+  });
 });
