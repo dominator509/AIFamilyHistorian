@@ -88,4 +88,14 @@ describe('DeepSeek adapter contract', () => {
     await expect(provider.complete(request)).rejects.toThrow('DeepSeek circuit is open');
     expect(calls).toBe(2);
   });
+
+  it('rejects control characters in the authorization credential before dispatch', () => {
+    expect(
+      () =>
+        new DeepSeekProvider({
+          apiKey: 'sk-test-contract-key\r\nX-Injected: true',
+          baseUrl: 'http://127.0.0.1:1',
+        }),
+    ).toThrow('DeepSeek API key shape is invalid');
+  });
 });

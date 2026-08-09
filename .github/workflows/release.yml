@@ -38,6 +38,7 @@ jobs:
       - name: Verify with configured nonproduction providers
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          WORKER_DATABASE_URL: ${{ secrets.WORKER_DATABASE_URL }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}

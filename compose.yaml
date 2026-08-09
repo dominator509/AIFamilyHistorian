@@ -152,7 +152,8 @@ services:
       # The worker has no cross-origin API surface; this reserved HTTPS origin
       # only satisfies the shared production configuration contract.
       CORS_ALLOWED_ORIGINS: https://worker.invalid
-      DATABASE_URL: postgresql://family_historian:${LOCAL_POSTGRES_PASSWORD:?generate .env first}@postgres:5432/family_historian
+      DATABASE_URL: postgresql://family_historian_worker:${LOCAL_WORKER_POSTGRES_PASSWORD:?generate .env first}@postgres:5432/family_historian
+      WORKER_DATABASE_URL: postgresql://family_historian_worker:${LOCAL_WORKER_POSTGRES_PASSWORD:?generate .env first}@postgres:5432/family_historian
       REDIS_URL: redis://:${LOCAL_REDIS_PASSWORD:?generate .env first}@redis:6379
       R2_ACCOUNT_ID: local
       R2_ACCESS_KEY_ID: ${LOCAL_S3_ROOT_USER:?generate .env first}

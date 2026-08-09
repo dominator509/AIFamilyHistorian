@@ -2,6 +2,18 @@
 
 ## Executive status
 
+### Current continuation (HARDENING-155/156)
+
+- Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
+- Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
+- The local host port-forward remains unavailable (`127.0.0.1:35432`), so the package migration command and host-only integration suite are not claimed as executed in this checkpoint. The SQL was applied and verified inside the preserved local container; the next operator run should execute the package migration and verifier through the internal runner.
+- This continuation adds `EXT-024` for the production worker login. Production remains blocked by the worker credential, hosted sandbox attestation, provider credentials, and legal/business evidence.
+
+### Current security scan
+
+- Codex Security standard scan `9f2f9e2a-1c13-434c-8034-402f6bceeab0` is complete against immutable revision `3a7ece4d540b83d704226de36941359365591c1e` with partial semantic coverage and two source-backed findings: high `worker-database-overprivilege` and low `provider-header-control-chars`.
+- Both findings were remediated in the current working tree through HARDENING-155/156; the scan intentionally remains historical to the scanned revision and does not certify the uncommitted fixes. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\3a7ece4d540b83d704226de36941359365591c1e_20260809T134428Z_7zgh35ie\report.md`.
+
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
 - Latest implementation continuation: `9aad90b` (`HARDENING-144`); storage object keys, multipart upload IDs, and content types now enforce UTF-8 byte ceilings before provider dispatch. HARDENING-143 Deepgram input bounds, HARDENING-141 shared AI gateway bounds, HARDENING-140 storage metadata validation, HARDENING-139 object-key validation, HARDENING-138 adapter error normalization, HARDENING-137 parsed provider bounds, HARDENING-136 readiness evidence, HARDENING-135 no-public-ingress enforcement, HARDENING-134 multipart token bounds, HARDENING-133 publication readiness bounds, HARDENING-132 quotation offset fidelity, HARDENING-131 annual preservation review validation, HARDENING-130 observability bounds, HARDENING-129 rate-limiter bounds, HARDENING-128 presigned URL bounds, HARDENING-127 streamed-download bounds, HARDENING-126 session metadata bounds, HARDENING-125 callback payload bounds, HARDENING-124 edition manifests, HARDENING-123 provenance, HARDENING-122 portable export, HARDENING-121 provider response, HARDENING-120 Stripe signature, HARDENING-119 auth, and earlier gates remain active.

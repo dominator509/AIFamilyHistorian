@@ -585,3 +585,11 @@ The shared AI gateway now rejects source text over 4 MiB before policy redaction
 ### ADR-154: Enforce byte-accurate storage metadata limits
 
 Object-storage keys, opaque multipart upload IDs, and content types now enforce UTF-8 byte ceilings in addition to character/shape validation. Provider limits are byte-oriented, so multibyte values that fit JavaScript character counts must fail before any S3-compatible request is issued.
+
+### ADR-155: Reject control characters at provider header boundaries
+
+Provider API keys and header-bearing metadata now reject C0 controls and DEL before request construction. This applies to generic adapters and the DeepSeek authorization header, preventing transport-dependent header injection or malformed outbound requests. The regression suite covers CR/LF credentials and idempotency/content-type metadata without dispatching a network request.
+
+### ADR-156: Remove the owner database credential from the media worker
+
+The worker now requires `WORKER_DATABASE_URL`, provisions a dedicated `family_historian_worker` login, and uses it for queue dispatch and tenant transactions. The role is non-superuser, non-privileged for role/database creation, cannot bypass RLS, and receives queue-control privileges plus explicit membership in the existing RLS-enforcing runtime role. Compose, local-env generation, release workflow configuration, preflight, migration, verification, and security checks all enforce the dedicated credential. Hosted deployment must still prove the worker role secret, RLS policy behavior, and OS/network sandbox before release.

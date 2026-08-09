@@ -15,6 +15,7 @@ field_key=$(openssl rand -base64 32 | tr -d '\r\n')
 download_secret=$(openssl rand -hex 32)
 backup_key=$(openssl rand -base64 32 | tr -d '\r\n')
 postgres_password=$(openssl rand -hex 24)
+worker_postgres_password=$(openssl rand -hex 24)
 redis_password=$(openssl rand -hex 24)
 s3_user="local$(openssl rand -hex 8)"
 s3_password=$(openssl rand -hex 24)
@@ -24,6 +25,7 @@ trap 'rm -f "$tmp"' EXIT
 {
   echo '# Local development configuration. Generated secrets are not production credentials.'
   printf 'LOCAL_POSTGRES_PASSWORD=%s\n' "$postgres_password"
+  printf 'LOCAL_WORKER_POSTGRES_PASSWORD=%s\n' "$worker_postgres_password"
   printf 'LOCAL_REDIS_PASSWORD=%s\n' "$redis_password"
   printf 'LOCAL_S3_ROOT_USER=%s\n' "$s3_user"
   printf 'LOCAL_S3_ROOT_PASSWORD=%s\n' "$s3_password"
@@ -32,6 +34,7 @@ trap 'rm -f "$tmp"' EXIT
   echo 'MAILPIT_HTTP_URL=http://localhost:18025'
   echo 'CORS_ALLOWED_ORIGINS='
   printf 'DATABASE_URL=postgresql://family_historian:%s@127.0.0.1:35432/family_historian\n' "$postgres_password"
+  printf 'WORKER_DATABASE_URL=postgresql://family_historian_worker:%s@127.0.0.1:35432/family_historian\n' "$worker_postgres_password"
   printf 'REDIS_URL=redis://:%s@127.0.0.1:36379\n' "$redis_password"
   echo 'R2_ACCOUNT_ID=local'
   printf 'R2_ACCESS_KEY_ID=%s\n' "$s3_user"

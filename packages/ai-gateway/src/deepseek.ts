@@ -114,7 +114,15 @@ export class DeepSeekProvider implements AiProvider {
   #circuitOpenUntil = 0;
 
   public constructor(private readonly config: DeepSeekConfig) {
-    if (!config.apiKey.startsWith('sk-')) throw new Error('DeepSeek API key shape is invalid');
+    if (
+      !config.apiKey.startsWith('sk-') ||
+      config.apiKey.length > MAX_DEEPSEEK_METADATA_CHARS ||
+      [...config.apiKey].some((character) => {
+        const code = character.codePointAt(0) ?? 0;
+        return code < 0x20 || code === 0x7f;
+      })
+    )
+      throw new Error('DeepSeek API key shape is invalid');
     const baseUrl = config.baseUrl ?? 'https://api.deepseek.com';
     let parsed: URL;
     try {

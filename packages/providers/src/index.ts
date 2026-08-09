@@ -187,7 +187,7 @@ function circuitState(options: ProviderAdapterOptions): CircuitState {
 }
 
 function validateProviderOptions(options: ProviderAdapterOptions, provider: string): void {
-  if (!options.apiKey.trim())
+  if (!options.apiKey.trim() || hasControlCharacter(options.apiKey))
     throw new ProviderAdapterError(`${provider} API key is required`, provider);
   if (options.apiKey.length > MAX_PROVIDER_METADATA_CHARS)
     throw new ProviderAdapterError(`${provider} API key is too long`, provider);
@@ -236,8 +236,15 @@ function assertProviderText(value: string, label: string, provider: string): voi
 }
 
 function assertProviderMetadata(value: string, label: string, provider: string): void {
-  if (!value.trim() || value.length > MAX_PROVIDER_METADATA_CHARS)
+  if (!value.trim() || value.length > MAX_PROVIDER_METADATA_CHARS || hasControlCharacter(value))
     throw new ProviderAdapterError(`${provider} ${label} is invalid`, provider);
+}
+
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return code < 0x20 || code === 0x7f;
+  });
 }
 
 function assertHttpsUrl(value: string, label: string, provider: string): void {

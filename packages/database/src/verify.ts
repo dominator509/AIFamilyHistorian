@@ -74,6 +74,39 @@ try {
   );
   if (migrationPrivilege.rows[0]?.has_privilege)
     throw new Error('runtime role can mutate migration history');
+  const workerRole = await pool.query<{
+    rolcanlogin: boolean;
+    rolsuper: boolean;
+    rolcreaterole: boolean;
+    rolcreatedb: boolean;
+    rolinherit: boolean;
+    rolbypassrls: boolean;
+  }>(
+    `select rolcanlogin, rolsuper, rolcreaterole, rolcreatedb, rolinherit, rolbypassrls
+       from pg_roles
+      where rolname = 'family_historian_worker'`,
+  );
+  const worker = workerRole.rows[0];
+  if (
+    !worker ||
+    !worker.rolcanlogin ||
+    worker.rolsuper ||
+    worker.rolcreaterole ||
+    worker.rolcreatedb ||
+    worker.rolinherit ||
+    worker.rolbypassrls
+  )
+    throw new Error('worker database role is not least privileged');
+  const workerQueuePrivilege = await pool.query<{ has_privilege: boolean }>(
+    "select has_table_privilege('family_historian_worker', 'job_outbox', 'SELECT,UPDATE') as has_privilege",
+  );
+  if (!workerQueuePrivilege.rows[0]?.has_privilege)
+    throw new Error('worker database role lacks queue privileges');
+  const workerDataPrivilege = await pool.query<{ has_privilege: boolean }>(
+    "select has_table_privilege('family_historian_worker', 'people', 'SELECT') as has_privilege",
+  );
+  if (workerDataPrivilege.rows[0]?.has_privilege)
+    throw new Error('worker database role directly accesses tenant tables');
   console.log('database verify: ok');
 } finally {
   await pool.end();

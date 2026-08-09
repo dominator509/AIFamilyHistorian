@@ -40,6 +40,7 @@ export const runtimeEnvironmentSchema = z
     PORT: z.coerce.number().int().positive().max(65535).default(3001),
     CORS_ALLOWED_ORIGINS: z.string().default(''),
     DATABASE_URL: z.url(),
+    WORKER_DATABASE_URL: z.url().optional(),
     REDIS_URL: z.url(),
     SESSION_SECRET: secret,
     FIELD_ENCRYPTION_MASTER_KEY: secret,

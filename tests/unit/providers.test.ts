@@ -401,6 +401,39 @@ describe('provider adapters', () => {
     expect(calls).toBe(0);
   });
 
+  it('rejects control characters in provider headers and metadata before dispatch', async () => {
+    let calls = 0;
+    const fetchImpl = () => {
+      calls += 1;
+      return Promise.resolve(new Response('{}'));
+    };
+    await expect(
+      new DeepgramTranscriber({ baseUrl, apiKey: 'test-key', fetchImpl }).transcribe(
+        new Uint8Array([1]),
+        'audio/wav\r\nX-Injected: yes',
+      ),
+    ).rejects.toMatchObject({ provider: 'deepgram', retryable: false });
+    await expect(
+      new ResendMailer({ baseUrl, apiKey: 'test-key', fetchImpl }).send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'request-1\nX-Injected: yes',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend', retryable: false });
+    await expect(
+      new ResendMailer({ baseUrl, apiKey: 'test-key\r\nX-Injected: yes', fetchImpl }).send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'request-2',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend', retryable: false });
+    expect(calls).toBe(0);
+  });
+
   it('rejects oversized Deepgram audio before copying or dispatching the request', async () => {
     let calls = 0;
     const fetchImpl = () => {

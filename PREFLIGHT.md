@@ -7,6 +7,7 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 | Service or evidence | Purpose | Variables or artifact | Minimum scope | Cost | Probe or gate |
 |---|---|---|---|---|---|
 | Neon PostgreSQL | All persistence and real integration tests | DATABASE_URL | Dedicated nonproduction database owner for setup; runtime least-privilege user later | Paid or free tier | scripts/probes/database_url.sh |
+| Worker PostgreSQL role | Least-privilege queue and tenant-runtime access for media workers | WORKER_DATABASE_URL | Dedicated non-owner login; no superuser, role-creation, or RLS-bypass privileges | Included with database | scripts/probes/database_url.sh |
 | Upstash Redis | Queues, locks, limits, exact-result cache | REDIS_URL | One isolated database | Paid or free tier | scripts/probes/redis_url.sh |
 | Cloudflare R2 | Originals, derivatives, exports | R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, R2_ENDPOINT | Object read/write/delete only for project bucket | Usage based | scripts/probes/r2.sh |
 | DeepSeek | Interview planning and editorial generation | DEEPSEEK_API_KEY | API inference only | Usage based | scripts/probes/deepseek_api_key.sh |
@@ -32,6 +33,7 @@ Release CI keeps approval and sandbox evidence out of Git: it maps the `*_CONTEN
 
 PREFLIGHT-TABLE-BEGIN
 DATABASE_URL|REQUIRED|scripts/probes/database_url.sh
+WORKER_DATABASE_URL|REQUIRED|scripts/probes/database_url.sh
 REDIS_URL|REQUIRED|scripts/probes/redis_url.sh
 R2_ACCOUNT_ID|REQUIRED|-
 R2_ACCESS_KEY_ID|REQUIRED|-

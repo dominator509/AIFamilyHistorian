@@ -12,7 +12,6 @@ const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
   redact: ['database_url', 'redis_url', 'req.headers.authorization', 'req.headers.cookie'],
 });
-const pool = createPool(environment.DATABASE_URL);
 const storage = new ObjectStorage(parseStorageConfig(process.env));
 const redis = new Redis(environment.REDIS_URL, {
   lazyConnect: true,
@@ -39,6 +38,8 @@ const healthServer = createServer((request, response) => {
 const healthPort = Number.parseInt(process.env.PORT ?? '8080', 10);
 if (!Number.isInteger(healthPort) || healthPort < 1 || healthPort > 65_535)
   throw new Error('worker health port is invalid');
+if (!environment.WORKER_DATABASE_URL)
+  throw new Error('WORKER_DATABASE_URL is required for the worker process');
 await new Promise<void>((resolve, reject) => {
   healthServer.once('error', reject);
   healthServer.listen(healthPort, '127.0.0.1', () => resolve());
@@ -47,8 +48,9 @@ await new Promise<void>((resolve, reject) => {
 await redis.connect();
 await redis.ping();
 ready = true;
+const workerPool = createPool(environment.WORKER_DATABASE_URL);
 const dispatcher = new OutboxDispatcher({
-  pool,
+  pool: workerPool,
   logger,
   handlers: createDefaultHandlers({ storage }),
 });
@@ -67,4 +69,4 @@ await dispatcher.run(controller.signal);
 healthServer.close();
 await redis.quit();
 storage.destroy();
-await pool.end();
+await workerPool.end();
