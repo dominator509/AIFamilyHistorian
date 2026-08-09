@@ -354,3 +354,4 @@
 2026-08-09T04:21:00Z | codex | HARDENING-69 | FIX_APPLIED | streaming_bounded_provider_reader_caps_json_at_8MiB_and_narration_audio_at_128MiB; declared_content_length_rejected_before_read; Deepgram_Resend_Turnstile_Stripe_and_ElevenLabs_use_helper
 2026-08-09T04:22:00Z | codex | HARDENING-69 | LOCAL_VERIFICATION | full_unit24_files_95_tests_passed; typecheck_lint_build_security_secret_scan_passed; prettier_format_check_passed
 2026-08-09T04:24:00Z | codex | HARDENING-69 | COMMAND_FAILED | sh_scripts_verify.sh_exit_1_preflight_reports_same_15_unresolved_external_legal_requirements; provider_hardening_static_gates_remain_green; no_gate_weakened
+2026-08-09T04:27:00Z | codex | HARDENING-69 | CHECKPOINT | committed_2833c2d_and_36afe49; pushed_origin_master; git_HEAD_equals_origin_master; graph_next_RESUME_EP-000
