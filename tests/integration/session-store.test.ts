@@ -106,6 +106,8 @@ describe('PostgreSQL server-side sessions', () => {
     await expect(
       store.listForUser(first.userId, foreignContext.organizationId),
     ).resolves.toHaveLength(1);
+    await store.revoke(foreign.sessionId, 'wrong-organization', context.organizationId);
+    await expect(store.find(foreign.sessionId)).resolves.toMatchObject({ revokedAt: null });
     await expect(
       store.revokeAllForUser(first.userId, first.sessionId, context.organizationId),
     ).resolves.toBe(1);

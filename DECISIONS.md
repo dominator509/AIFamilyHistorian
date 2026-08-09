@@ -248,7 +248,7 @@ The media scan error path now verifies and locks the active outbox lease before 
 
 ### ADR-070: Scope session inventory to the active organization
 
-Session listing and administrative revoke-all now include the authenticated organization in their PostgreSQL predicates. Targeted session revocation also requires the stored row to belong to the same organization as the caller. This prevents a user with sessions in multiple organizations from browsing or revoking another organization’s session inventory while preserving self-revocation and explicit administrative controls.
+Session listing, targeted revoke, and administrative revoke-all now include the authenticated organization in their PostgreSQL predicates. Targeted session revocation requires both the stored row and the low-level `SessionStore.revoke` primitive to match the caller’s organization. This prevents a user with sessions in multiple organizations from browsing or revoking another organization’s session inventory while preserving self-revocation and explicit administrative controls.
 
 ### ADR-071: Renew outbox leases during long-running handlers
 

@@ -28,7 +28,7 @@ export interface SessionStore {
     replacement: SessionPrincipal,
     metadata?: SessionMetadata,
   ): Promise<void>;
-  revoke(sessionId: string, reason: string): Promise<void>;
+  revoke(sessionId: string, reason: string, organizationId?: string): Promise<void>;
   revokeAllForUser(
     userId: string,
     exceptSessionId?: string,

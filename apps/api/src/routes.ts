@@ -241,7 +241,11 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
     )
       throw new ApiProblem('PERMISSION_DENIED', 'Session administration permission is required');
     await sessionStoreOperation(() =>
-      store.revoke(target, target === value.sessionId ? 'self' : 'administrative'),
+      store.revoke(
+        target,
+        target === value.sessionId ? 'self' : 'administrative',
+        value.organizationId,
+      ),
     );
     await dependencies.sessionRevocationStore?.revoke(target, session.expiresAt);
     return reply.status(204).send();

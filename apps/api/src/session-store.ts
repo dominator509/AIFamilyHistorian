@@ -173,13 +173,15 @@ export class PostgresSessionStore implements SessionStore {
     }
   }
 
-  public async revoke(sessionId: string, reason: string): Promise<void> {
+  public async revoke(sessionId: string, reason: string, organizationId?: string): Promise<void> {
     assertUuid(sessionId, 'sessionId');
+    if (organizationId) assertUuid(organizationId, 'organizationId');
     await this.pool.query(
       `update auth_sessions
           set revoked_at = coalesce(revoked_at, now()), revoked_reason = coalesce(revoked_reason, $2)
-        where session_id = $1`,
-      [sessionId, reason],
+        where session_id = $1
+          and ($3::uuid is null or organization_id = $3::uuid)`,
+      [sessionId, reason, organizationId ?? null],
     );
   }
 
