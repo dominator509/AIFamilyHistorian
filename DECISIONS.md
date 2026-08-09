@@ -545,3 +545,7 @@ Quotation source spans now require `endOffset - startOffset` to equal the quotat
 ### ADR-144: Bound publication readiness reports
 
 Publication readiness items now cap labels at 256 characters, reasons at 2,048 characters, and each rights, consent, or citation category at 256 items. The release gate remains fail-closed while preventing direct callers from creating oversized readiness diagnostics or unbounded review collections.
+
+### ADR-145: Bound multipart provider tokens
+
+Multipart completion contracts and storage-provider validation now cap ETag and optional checksum tokens at 1,024 characters. The same bound applies to provider-returned part listings, preventing oversized provider metadata from reaching completion requests or API responses.

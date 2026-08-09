@@ -14,6 +14,7 @@ import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import { finished } from 'node:stream/promises';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { MAX_MULTIPART_TOKEN_CHARS } from '@family-historian/contracts';
 import type { StorageConfig } from './config.js';
 
 export class ObjectStorageLimitError extends Error {
@@ -151,6 +152,7 @@ export class ObjectStorage {
           partNumber < 1 ||
           partNumber > MAX_MULTIPART_PARTS ||
           !part.ETag ||
+          part.ETag.length > MAX_MULTIPART_TOKEN_CHARS ||
           !Number.isSafeInteger(byteSize) ||
           byteSize < 0
         )
@@ -336,7 +338,11 @@ export function validateCompletedUploadParts(
       partNumber > MAX_MULTIPART_PARTS ||
       typeof etag !== 'string' ||
       etag.trim().length === 0 ||
-      etag.length > 1024
+      etag.length > MAX_MULTIPART_TOKEN_CHARS ||
+      (part.ChecksumSHA256 !== undefined &&
+        (typeof part.ChecksumSHA256 !== 'string' ||
+          part.ChecksumSHA256.trim().length === 0 ||
+          part.ChecksumSHA256.length > MAX_MULTIPART_TOKEN_CHARS))
     )
       throw new Error('multipart completion contains an invalid part');
     if (seen.has(partNumber))

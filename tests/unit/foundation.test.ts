@@ -6,6 +6,7 @@ import {
   MAX_EDITION_MANIFEST_KEYS,
   factInputSchema,
   healthStatusSchema,
+  MAX_MULTIPART_TOKEN_CHARS,
 } from '../../packages/contracts/src/index.js';
 import {
   MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES,
@@ -32,6 +33,25 @@ describe('foundation contracts', () => {
         ],
       }),
     ).toThrow('multipart part numbers must be unique');
+  });
+
+  it('bounds provider multipart tokens before provider completion', () => {
+    expect(() =>
+      completeUploadInputSchema.parse({
+        parts: [{ ETag: 'x'.repeat(MAX_MULTIPART_TOKEN_CHARS + 1), PartNumber: 1 }],
+      }),
+    ).toThrow();
+    expect(() =>
+      completeUploadInputSchema.parse({
+        parts: [
+          {
+            ETag: 'etag-1',
+            PartNumber: 1,
+            ChecksumSHA256: 'x'.repeat(MAX_MULTIPART_TOKEN_CHARS + 1),
+          },
+        ],
+      }),
+    ).toThrow();
   });
 
   it('bounds evidence-link fan-out before SQL persistence', () => {

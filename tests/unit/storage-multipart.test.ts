@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_MULTIPART_TOKEN_CHARS } from '../../packages/contracts/src/index.js';
 import {
   ObjectStorageLimitError,
   validateCompletedUploadParts,
@@ -30,6 +31,11 @@ describe('multipart completion validation', () => {
     expect(() => validateCompletedUploadParts([{ PartNumber: 1, ETag: '   ' }])).toThrow(
       'invalid part',
     );
+    expect(() =>
+      validateCompletedUploadParts([
+        { PartNumber: 1, ETag: 'etag', ChecksumSHA256: 'x'.repeat(MAX_MULTIPART_TOKEN_CHARS + 1) },
+      ]),
+    ).toThrow('invalid part');
   });
 
   it('caps completion cardinality', () => {

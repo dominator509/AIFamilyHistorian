@@ -37,10 +37,11 @@ export const uploadPartParamsSchema = archiveParamsSchema.extend({
   partNumber: z.coerce.number().int().min(1).max(10_000),
 });
 export const uploadParamsSchema = archiveParamsSchema.extend({ uploadId: uuidSchema });
+export const MAX_MULTIPART_TOKEN_CHARS = 1_024;
 export const completedPartSchema = z.object({
-  ETag: z.string().min(1),
+  ETag: z.string().min(1).max(MAX_MULTIPART_TOKEN_CHARS),
   PartNumber: z.number().int().min(1).max(10_000),
-  ChecksumSHA256: z.string().min(1).optional(),
+  ChecksumSHA256: z.string().min(1).max(MAX_MULTIPART_TOKEN_CHARS).optional(),
 });
 export const completeUploadInputSchema = z
   .object({
