@@ -3,6 +3,8 @@ import { z } from 'zod';
 import {
   AiGateway,
   MAX_AI_CACHE_VALUE_BYTES,
+  MAX_AI_INPUT_TEXT_BYTES,
+  MAX_AI_PROVIDER_CONTENT_BYTES,
   RedisAiResultCache,
   type AiProvider,
   type ProviderRequest,
@@ -221,5 +223,60 @@ describe('AI gateway', () => {
       'AI input budget is invalid',
     );
     expect(provider.requests).toHaveLength(0);
+  });
+
+  it('rejects oversized direct-call source text before policy or provider work', async () => {
+    const provider = new RecordingProvider('{"claims":[]}');
+    const gateway = new AiGateway(provider);
+    const base = {
+      organizationId: '01900000-0000-7000-8000-000000000001',
+      familyArchiveId: '01900000-0000-7000-8000-000000000002',
+      purpose: 'chapter_drafting' as const,
+      consentPurposes: ['chapter_drafting' as const],
+      aiProcessingEnabled: true,
+      promptFamily: 'chapter-drafting',
+      promptVersion: '1',
+      policyVersion: '1',
+      model: 'deepseek-chat',
+      input: {},
+      outputSchema: z.object({ claims: z.array(z.never()) }),
+      maxInputTokens: 2_000,
+    };
+    await expect(
+      gateway.execute({ ...base, inputText: 'x'.repeat(MAX_AI_INPUT_TEXT_BYTES + 1) }),
+    ).rejects.toThrow('AI input text exceeds the allowed size');
+    expect(provider.requests).toHaveLength(0);
+  });
+
+  it('rejects oversized or malformed generic provider responses before JSON parsing', async () => {
+    const oversized = new RecordingProvider(
+      `{"claims":[],"padding":"${'x'.repeat(MAX_AI_PROVIDER_CONTENT_BYTES)}"}`,
+    );
+    const gateway = new AiGateway(oversized);
+    const base = {
+      organizationId: '01900000-0000-7000-8000-000000000001',
+      familyArchiveId: '01900000-0000-7000-8000-000000000002',
+      purpose: 'fact_extraction' as const,
+      consentPurposes: ['fact_extraction' as const],
+      aiProcessingEnabled: true,
+      promptFamily: 'facts',
+      promptVersion: '1',
+      policyVersion: '1',
+      model: 'deepseek-chat',
+      input: {},
+      inputText: 'source',
+      outputSchema: z.object({ claims: z.array(z.never()) }),
+      maxInputTokens: 2_000,
+    };
+    await expect(gateway.execute(base)).rejects.toThrow('Provider returned an invalid response');
+    const malformedUsage = new RecordingProvider('{"claims":[]}');
+    malformedUsage.complete = () =>
+      Promise.resolve({
+        content: '{"claims":[]}',
+        usage: { inputTokens: Number.NaN, outputTokens: 0, cacheHitTokens: 0, cacheMissTokens: 0 },
+      });
+    await expect(new AiGateway(malformedUsage).execute(base)).rejects.toThrow(
+      'Provider returned invalid usage telemetry',
+    );
   });
 });

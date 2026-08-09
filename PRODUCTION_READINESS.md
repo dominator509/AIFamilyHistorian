@@ -15,6 +15,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-138 normalizes malformed provider and DeepSeek response shapes to stable non-retryable adapter errors, preventing raw schema details from crossing adapter boundaries.
 - HARDENING-139 validates storage object keys for bounded length and control characters before any provider command, signing, read, or delete operation.
 - HARDENING-140 validates provider upload IDs, MIME content types, and SHA-256 base64 metadata at direct storage boundaries before provider calls.
+- HARDENING-141 bounds shared AI gateway source text, generic provider response content, provider request IDs, and usage telemetry before policy/provider results are parsed or cached.
 - The read-only runtime image preinstalls pinned pnpm under an image-owned Corepack home; the rebuilt worker stayed `Up (healthy)` in the real internal Compose stack. The local rehearsal is explicitly development-mode for its internal HTTP MinIO endpoint; hosted Fly remains production/HTTPS-only.
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.
 

@@ -10,6 +10,12 @@ import {
 import type { AiProvider, ProviderUsage } from './provider.js';
 
 export const MAX_AI_CACHE_VALUE_BYTES = 16 * 1024 * 1024;
+/** Keep direct gateway callers from redacting or serializing unbounded source text. */
+export const MAX_AI_INPUT_TEXT_BYTES = 4 * 1024 * 1024;
+/** Generic providers must not return an arbitrarily large structured response. */
+export const MAX_AI_PROVIDER_CONTENT_BYTES = 8 * 1024 * 1024;
+const MAX_AI_PROVIDER_METADATA_CHARS = 512;
+const MAX_AI_PROVIDER_USAGE_TOKENS = 1_000_000_000;
 
 export interface GatewayRequest<T> {
   organizationId: string;
@@ -142,6 +148,11 @@ export class AiGateway {
       request.maxInputTokens > 1_000_000
     )
       throw new Error('AI input budget is invalid');
+    if (
+      typeof request.inputText !== 'string' ||
+      Buffer.byteLength(request.inputText, 'utf8') > MAX_AI_INPUT_TEXT_BYTES
+    )
+      throw new Error('AI input text exceeds the allowed size');
     const policy = enforceOutboundPolicy({
       purpose: request.purpose,
       consentPurposes: request.consentPurposes,
@@ -211,6 +222,30 @@ export class AiGateway {
       dynamicInput,
       temperature: 0,
     });
+    if (
+      response === null ||
+      typeof response !== 'object' ||
+      typeof response.content !== 'string' ||
+      Buffer.byteLength(response.content, 'utf8') > MAX_AI_PROVIDER_CONTENT_BYTES ||
+      (response.providerRequestId !== undefined &&
+        (typeof response.providerRequestId !== 'string' ||
+          response.providerRequestId.length > MAX_AI_PROVIDER_METADATA_CHARS))
+    )
+      throw new Error('Provider returned an invalid response');
+    const usageValues = [
+      response.usage?.inputTokens,
+      response.usage?.outputTokens,
+      response.usage?.cacheHitTokens,
+      response.usage?.cacheMissTokens,
+    ];
+    if (
+      !response.usage ||
+      usageValues.some(
+        (value) =>
+          !Number.isSafeInteger(value) || value < 0 || value > MAX_AI_PROVIDER_USAGE_TOKENS,
+      )
+    )
+      throw new Error('Provider returned invalid usage telemetry');
     let decoded: unknown;
     try {
       decoded = JSON.parse(response.content);

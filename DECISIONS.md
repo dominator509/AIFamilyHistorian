@@ -573,3 +573,7 @@ All `ObjectStorage` key-bearing methods now reject empty, overlong, or control-c
 ### ADR-151: Validate storage upload metadata at direct boundaries
 
 Storage methods now validate provider upload IDs, MIME content types, and SHA-256 base64 checksums before creating, signing, completing, or aborting multipart uploads and before immutable puts. This prevents direct callers from bypassing the API’s upload metadata contracts.
+
+### ADR-152: Bound shared AI gateway payloads and telemetry
+
+The shared AI gateway now rejects source text over 4 MiB before policy redaction, generic provider content over 8 MiB before JSON parsing, oversized provider request IDs, and non-finite, negative, or overlarge usage counters. Provider-specific adapters retain their stricter schemas; the shared boundary prevents alternate providers or direct callers from bypassing those limits and polluting cache or cost telemetry.
