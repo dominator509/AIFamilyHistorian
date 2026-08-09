@@ -465,3 +465,7 @@ Quotation construction now requires non-negative, safe integer source offsets be
 ### ADR-124: Bound generated and disputed evidence collections
 
 Generated chapter revisions and disputed claims now validate every evidence link against the canonical contract and cap claims, dispute accounts, and per-item evidence at 1,000 entries. Factual generated claims still require at least one evidence link. This prevents malformed or excessively wide evidence graphs from reaching authoritative domain state.
+
+### ADR-125: Enforce annotation provenance bounds and marker fidelity
+
+Annotated candidate extraction now caps fan-out at 1,000 records. Evidence assertion validates candidate UUIDs, kind membership, safe source offsets, and exact marker kind/value fidelity against the authoritative source text before a candidate can be treated as evidenced. This prevents tampered spans, unknown candidate kinds, and excessively wide annotation payloads from crossing the domain boundary.
