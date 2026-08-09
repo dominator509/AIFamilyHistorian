@@ -477,3 +477,7 @@ Narration manifest construction now requires a non-empty edition scope, non-empt
 ### ADR-127: Bound telemetry redaction traversal
 
 Telemetry redaction now caps recursive depth at 8, rejects collections larger than 1,000 items, and replaces strings over 16,384 characters with a redacted-limit marker after secret/content replacement. This keeps observability fail-closed against oversized or cyclic detail payloads without allowing log amplification or raw-content bypass.
+
+### ADR-128: Bound publication document rendering
+
+PDF and EPUB rendering now validate title, author, paragraph types, paragraph count, and total UTF-8 text before materializing document lines or ZIP entries. The limits are 500 characters per title/author, 10,000 paragraphs, and 16 MiB total text. This prevents malformed or oversized publication inputs from causing unbounded renderer work while preserving approved empty-paragraph layout semantics.

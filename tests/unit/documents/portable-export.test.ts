@@ -7,7 +7,11 @@ import {
 import {
   ExportCanonicalizationError,
   MAX_EXPORT_CANONICAL_DEPTH,
+  MAX_BOOK_PARAGRAPHS,
+  MAX_BOOK_TEXT_BYTES,
   buildPortableManifest,
+  renderAccessibleEpub,
+  renderAccessiblePdf,
   renderCsvIndex,
   renderJsonLines,
   type ExportEntry,
@@ -120,5 +124,24 @@ describe('portable documents and release reports', () => {
       ],
     };
     expect(() => assertReleaseReady(report)).toThrow(/too_small|array/u);
+  });
+
+  it('bounds PDF and EPUB document materialization', () => {
+    expect(() => renderAccessiblePdf({ title: '', paragraphs: [] })).toThrow('title');
+    expect(() =>
+      renderAccessibleEpub({
+        title: 'Family',
+        paragraphs: Array.from({ length: MAX_BOOK_PARAGRAPHS + 1 }, () => 'chapter'),
+      }),
+    ).toThrow('paragraph count');
+    expect(() =>
+      renderAccessiblePdf({
+        title: 'Family',
+        paragraphs: ['x'.repeat(MAX_BOOK_TEXT_BYTES + 1)],
+      }),
+    ).toThrow('text exceeds');
+    expect(() => renderAccessibleEpub({ title: 'Family', paragraphs: [null as never] })).toThrow(
+      'paragraph',
+    );
   });
 });

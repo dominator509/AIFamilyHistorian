@@ -116,16 +116,55 @@ export interface BookDocument {
   readonly paragraphs: readonly string[];
 }
 
+export const MAX_BOOK_PARAGRAPHS = 10_000;
+export const MAX_BOOK_TEXT_BYTES = 16 * 1024 * 1024;
+export const MAX_BOOK_FIELD_CHARS = 500;
+
+function validateBookDocument(document: BookDocument): BookDocument {
+  const candidate = document as unknown as {
+    title?: unknown;
+    author?: unknown;
+    paragraphs?: unknown;
+  };
+  if (typeof candidate.title !== 'string' || candidate.title.trim().length === 0)
+    throw new Error('book title is required');
+  if (candidate.title.length > MAX_BOOK_FIELD_CHARS) throw new Error('book title is too long');
+  if (candidate.author !== undefined) {
+    if (typeof candidate.author !== 'string') throw new Error('book author is invalid');
+    if (candidate.author.length > MAX_BOOK_FIELD_CHARS) throw new Error('book author is too long');
+  }
+  const paragraphs = candidate.paragraphs as readonly unknown[];
+  if (!Array.isArray(paragraphs)) throw new Error('book paragraphs are required');
+  if (paragraphs.length > MAX_BOOK_PARAGRAPHS)
+    throw new Error('book paragraph count exceeds the limit');
+  let totalBytes = new TextEncoder().encode(candidate.title).byteLength;
+  if (typeof candidate.author === 'string')
+    totalBytes += new TextEncoder().encode(candidate.author).byteLength;
+  const validatedParagraphs: string[] = [];
+  for (const paragraph of paragraphs) {
+    if (typeof paragraph !== 'string') throw new Error('book paragraph is invalid');
+    totalBytes += new TextEncoder().encode(paragraph).byteLength;
+    if (totalBytes > MAX_BOOK_TEXT_BYTES) throw new Error('book text exceeds the limit');
+    validatedParagraphs.push(paragraph);
+  }
+  return Object.freeze({
+    title: candidate.title,
+    ...(typeof candidate.author === 'string' ? { author: candidate.author } : {}),
+    paragraphs: Object.freeze(validatedParagraphs),
+  });
+}
+
 /**
  * Render a deterministic, text-first PDF. The renderer intentionally accepts
  * only already-approved document text; it does not generate or infer content.
  */
 export function renderAccessiblePdf(document: BookDocument): Uint8Array {
-  const title = pdfText(document.title);
+  const validated = validateBookDocument(document);
+  const title = pdfText(validated.title);
   const lines = [
-    document.title,
-    ...(document.author ? [`By ${document.author}`] : []),
-    ...document.paragraphs.flatMap((paragraph) => [paragraph, '']),
+    validated.title,
+    ...(validated.author ? [`By ${validated.author}`] : []),
+    ...validated.paragraphs.flatMap((paragraph) => [paragraph, '']),
   ];
   const commands = ['BT', '/F1 18 Tf', '72 760 Td'];
   for (const [index, line] of lines.entries()) {
@@ -176,17 +215,18 @@ function pdfText(value: string): string {
 
 /** Render a standards-shaped EPUB 3 archive with uncompressed, deterministic ZIP entries. */
 export function renderAccessibleEpub(document: BookDocument): Uint8Array {
+  const validated = validateBookDocument(document);
   const escapeXml = (value: string): string =>
     value
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')
       .replaceAll('"', '&quot;');
-  const paragraphs = document.paragraphs
+  const paragraphs = validated.paragraphs
     .map((paragraph) => `<p>${escapeXml(paragraph)}</p>`)
     .join('');
-  const title = escapeXml(document.title);
-  const author = escapeXml(document.author ?? 'AI Family Historian');
+  const title = escapeXml(validated.title);
+  const author = escapeXml(validated.author ?? 'AI Family Historian');
   const entries: readonly ZipEntry[] = [
     { name: 'mimetype', data: new TextEncoder().encode('application/epub+zip') },
     {
