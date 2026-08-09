@@ -346,3 +346,7 @@
 2026-08-09T03:35:00Z | codex | HARDENING-68 | SECURITY_FINDING | AI_gateway_maxInputTokens_allowed_NaN_or_nonpositive_values_to_bypass_budget_comparison
 2026-08-09T03:36:00Z | codex | HARDENING-68 | FIX_APPLIED | gateway_rejects_nonfinite_nonpositive_or_overlarge_input_budgets_before_policy_and_provider_dispatch
 2026-08-09T03:37:00Z | codex | HARDENING-68 | LOCAL_VERIFICATION | gateway_focus6_tests_passed; full_unit24_files_94_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T04:08:00Z | codex | HARDENING-68 | LOCAL_VERIFICATION | live_fire_all16_proofs_passed_internal_runner_enabled_for_archive_membership_and_multipart
+2026-08-09T04:09:00Z | codex | HARDENING-68 | COMMAND_FAILED | corepack_pnpm_test_integration_exit_1_host_only_wrapper_ECONNREFUSED_127.0.0.1:35432_39000; real_services_are_running_on_internal_only_compose_network; no_source_or_data_mutation
+2026-08-09T04:10:00Z | codex | HARDENING-68 | COMMAND_FAILED | sh_scripts_verify.sh_exit_1_and_sh_scripts_production-readiness-check.sh_exit_1_preflight_reports_15_unresolved_external_legal_requirements; no_gate_weakened
+2026-08-09T04:11:00Z | codex | HARDENING-68 | COMMAND_FAILED | sh_scripts_probes_resend.sh_exit_1_RESEND_API_KEY_unbound_in_direct_shell; no_provider_success_inferred
