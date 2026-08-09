@@ -22,7 +22,7 @@ export const portableArchiveManifestSchema = z.object({
 export type PortableArchiveManifest = z.infer<typeof portableArchiveManifestSchema>;
 
 export function renderJsonLines(entries: readonly ExportEntry[]): Uint8Array {
-  const lines = entries.map((entry) => JSON.stringify(exportEntrySchema.parse(entry)));
+  const lines = entries.map((entry) => canonicalJson(exportEntrySchema.parse(entry)));
   return new TextEncoder().encode(lines.length === 0 ? '' : `${lines.join('\n')}\n`);
 }
 
@@ -53,6 +53,11 @@ export function buildPortableManifest(
   jsonLines: Uint8Array,
   entryCount: number,
 ): PortableArchiveManifest {
+  if (!Number.isSafeInteger(entryCount) || entryCount < 0) throw new Error('EXPORT_COUNT_INVALID');
+  const decoded = new TextDecoder().decode(jsonLines);
+  const lines = decoded.length === 0 ? [] : decoded.split('\n').filter((line) => line.length > 0);
+  for (const line of lines) exportEntrySchema.parse(JSON.parse(line));
+  if (lines.length !== entryCount) throw new Error('EXPORT_COUNT_MISMATCH');
   return portableArchiveManifestSchema.parse({
     schemaVersion: '1',
     archiveId,
@@ -61,6 +66,22 @@ export function buildPortableManifest(
     entryCount,
     formats: ['jsonl', 'csv', 'media'],
   });
+}
+
+function canonicalJson(value: unknown): string {
+  const normalized = normalizeJson(value);
+  return JSON.stringify(normalized) ?? 'null';
+}
+
+function normalizeJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(normalizeJson);
+  if (value !== null && typeof value === 'object')
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, normalizeJson(nested)]),
+    );
+  return value;
 }
 
 export interface BookDocument {

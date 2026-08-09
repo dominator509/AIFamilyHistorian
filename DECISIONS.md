@@ -265,3 +265,7 @@ Request-time membership and permission checks now convert database/checker failu
 ### ADR-074: Bound signed session claim fan-out
 
 Signed session principals now cap archive memberships and permissions, cap individual permission lengths, and reject oversized bearer payloads before HMAC verification or JSON parsing. The limits preserve normal multi-archive use while preventing a trusted-but-pathological identity assertion from causing unbounded archive fan-out, claim comparisons, or parser work at the request boundary.
+
+### ADR-075: Make portable export fixity deterministic and self-consistent
+
+Portable JSONL export now canonicalizes nested object keys before serialization, and its manifest validates every JSONL line plus the exact entry count before recording fixity. This prevents equivalent records from producing different hashes due to caller key order and prevents a mismatched manifest count from presenting an incomplete or malformed export as complete.

@@ -319,3 +319,6 @@
 2026-08-09T02:15:00Z | codex | HARDENING-59 | SECURITY_FINDING | signed_session_claim_archive_and_permission_arrays_were_unbounded_and_verifySessionToken_parsed_unbounded_payloads
 2026-08-09T02:16:00Z | codex | HARDENING-59 | FIX_APPLIED | sessionSchema_caps_archive_memberships_permissions_and_permission_length; verifySessionToken_rejects_oversized_token_or_payload_before_decode
 2026-08-09T02:17:00Z | codex | HARDENING-59 | LOCAL_VERIFICATION | auth_focus9_tests_passed; full_unit24_files_88_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T02:25:00Z | codex | HARDENING-60 | SECURITY_FINDING | portable_export_JSONL_preserved_caller_object_key_order_and_manifest_trusted_caller_entry_count
+2026-08-09T02:26:00Z | codex | HARDENING-60 | FIX_APPLIED | documents_renderJsonLines_uses_recursive_canonical_json; buildPortableManifest_validates_each_JSONL_entry_and_exact_entry_count
+2026-08-09T02:27:00Z | codex | HARDENING-60 | LOCAL_VERIFICATION | portable_export_focus4_tests_passed; full_unit24_files_89_tests_passed; build_security_typecheck_lint_format_secret_scan_passed

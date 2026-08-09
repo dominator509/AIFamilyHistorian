@@ -33,6 +33,28 @@ describe('portable documents and release reports', () => {
     expect(new TextDecoder().decode(renderCsvIndex([entry]))).toContain('"confirmed_fact"');
   });
 
+  it('canonicalizes payload key order and binds the manifest count to JSONL entries', () => {
+    const left = {
+      ...entry,
+      payload: { z: 'last', a: 'first' },
+    };
+    const right = {
+      ...entry,
+      payload: { a: 'first', z: 'last' },
+    };
+    const leftJsonl = renderJsonLines([left]);
+    const rightJsonl = renderJsonLines([right]);
+    expect(new TextDecoder().decode(leftJsonl)).toBe(new TextDecoder().decode(rightJsonl));
+    expect(() =>
+      buildPortableManifest(
+        '01900000-0000-7000-8000-000000000003',
+        '2026-08-06T00:00:00.000Z',
+        leftJsonl,
+        2,
+      ),
+    ).toThrow('EXPORT_COUNT_MISMATCH');
+  });
+
   it('fails closed when any rights, consent, or citation item is blocked', () => {
     const report: ReleaseReadinessReport = {
       editionId: '01900000-0000-7000-8000-000000000003',
