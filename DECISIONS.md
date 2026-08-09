@@ -273,3 +273,7 @@ Portable JSONL export now canonicalizes nested object keys before serialization,
 ### ADR-076: Bound evidence-link fan-out at the API contract
 
 Confirmed-fact requests now cap evidence-link identifiers at 1,000 before the tenant-scoped `ANY(uuid[])` lookup and per-link inserts. This keeps evidence integrity checks intact while bounding query and transaction work for a single request; the cap is enforced at the shared Zod trust boundary rather than relying on body size alone.
+
+### ADR-077: Reject invalid resumable-export completion sets
+
+Resumable export completion now rejects duplicate part numbers and any part not present in the generated manifest before computing missing parts. This prevents extra or replayed provider parts from being silently ignored and keeps completion proof bound to the exact planned chunk set.

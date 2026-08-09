@@ -72,7 +72,9 @@ export function missingExportParts(
   completedPartNumbers: readonly number[],
 ): readonly number[] {
   const completed = new Set(completedPartNumbers);
-  if ([...completed].some((part) => !Number.isInteger(part) || part < 1))
+  if (completed.size !== completedPartNumbers.length) throw new Error('EXPORT_PART_DUPLICATE');
+  const expected = new Set(manifest.chunks.map((chunk) => chunk.partNumber));
+  if ([...completed].some((part) => !Number.isInteger(part) || part < 1 || !expected.has(part)))
     throw new Error('EXPORT_PART_INVALID');
   return Object.freeze(
     manifest.chunks

@@ -325,3 +325,6 @@
 2026-08-09T02:32:00Z | codex | HARDENING-61 | SECURITY_FINDING | fact_evidence_link_ids_were_unbounded_before_ANY_uuid_array_lookup_and_per_link_insert_fanout
 2026-08-09T02:33:00Z | codex | HARDENING-61 | FIX_APPLIED | factInputSchema_evidenceLinkIds_max_1000_added_at_shared_request_boundary
 2026-08-09T02:34:00Z | codex | HARDENING-61 | LOCAL_VERIFICATION | foundation_contract_focus3_tests_passed; full_unit24_files_90_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T02:40:00Z | codex | HARDENING-62 | SECURITY_FINDING | resumable_export_missingExportParts_ignored_duplicate_and_out_of_manifest_completed_part_numbers
+2026-08-09T02:41:00Z | codex | HARDENING-62 | FIX_APPLIED | missingExportParts_rejects_duplicate_parts_and_parts_not_in_manifest
+2026-08-09T02:42:00Z | codex | HARDENING-62 | LOCAL_VERIFICATION | resumable_export_focus3_tests_passed; full_unit24_files_91_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
