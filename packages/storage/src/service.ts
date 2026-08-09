@@ -176,21 +176,7 @@ export class ObjectStorage {
     const body = response.Body as AsyncIterable<Uint8Array> | undefined;
     if (!body || typeof body[Symbol.asyncIterator] !== 'function')
       throw new Error('object body is not streamable');
-    const chunks: Uint8Array[] = [];
-    let byteSize = 0;
-    for await (const chunk of body) {
-      if (byteSize + chunk.byteLength > maxBytes)
-        throw new ObjectStorageLimitError('object exceeds the in-memory byte ceiling');
-      chunks.push(chunk);
-      byteSize += chunk.byteLength;
-    }
-    const result = new Uint8Array(byteSize);
-    let offset = 0;
-    for (const chunk of chunks) {
-      result.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return result;
+    return readBoundedBody(body, maxBytes, 'object in-memory byte ceiling');
   }
 
   /** Read only a bounded object prefix for content-signature validation. */
@@ -204,8 +190,10 @@ export class ObjectStorage {
         Range: `bytes=0-${maxBytes - 1}`,
       }),
     );
-    if (!response.Body) throw new Error('object body is missing');
-    return response.Body.transformToByteArray();
+    const body = response.Body as AsyncIterable<Uint8Array> | undefined;
+    if (!body || typeof body[Symbol.asyncIterator] !== 'function')
+      throw new Error('object body is not streamable');
+    return readBoundedBody(body, maxBytes, 'object prefix byte ceiling');
   }
 
   /** Stream an object to a worker-owned file without buffering the full payload in memory. */
@@ -267,6 +255,28 @@ export class ObjectStorage {
   public destroy(): void {
     this.#client.destroy();
   }
+}
+
+async function readBoundedBody(
+  body: AsyncIterable<Uint8Array>,
+  maxBytes: number,
+  label: string,
+): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let byteSize = 0;
+  for await (const chunk of body) {
+    if (byteSize + chunk.byteLength > maxBytes)
+      throw new ObjectStorageLimitError(`${label} exceeded`);
+    chunks.push(chunk);
+    byteSize += chunk.byteLength;
+  }
+  const result = new Uint8Array(byteSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
 }
 
 export interface CompletedUploadPart {

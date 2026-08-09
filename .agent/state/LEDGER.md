@@ -373,3 +373,6 @@
 2026-08-09T05:11:00Z | codex | HARDENING-73 | FIX_APPLIED | readBytes_streams_chunks_and_enforces_256MiB_MAX_IN_MEMORY_OBJECT_BYTES; oversized_body_raises_ObjectStorageLimitError_before_materialization
 2026-08-09T05:12:00Z | codex | HARDENING-73 | LOCAL_VERIFICATION | typecheck_lint_format_unit26_files_101_tests_build_security_secret_scan_live_fire16_passed; internal_MinIO_storage_regression3_tests_passed; host_test_integration_exit1_ECONNREFUSED_35432_36379_39000_no_success_inferred
 2026-08-09T05:18:00Z | codex | HARDENING-73 | RELEASE_REASSESSMENT | preflight_and_production-readiness-check_exit1; same_15_external_and_legal_requirements_unresolved; no_release_gate_weakened
+2026-08-09T05:25:00Z | codex | HARDENING-74 | SECURITY_FINDING | readPrefix_trusted_provider_Range_and_materialized_response_body_without_an_independent_ceiling; nonconforming_or_compromised_provider_could_bypass_prefix_memory_budget
+2026-08-09T05:26:00Z | codex | HARDENING-74 | FIX_APPLIED | shared_bounded_body_collector_enforces_prefix_and_full_read_limits; provider_range_behavior_no_longer_controls_heap_bound
+2026-08-09T05:27:00Z | codex | HARDENING-74 | LOCAL_VERIFICATION | typecheck_lint_format_unit26_files_101_tests_security_secret_scan_live_fire16_passed; internal_MinIO_storage_regression3_tests_passed

@@ -321,3 +321,7 @@ Archive membership and permission checkers are now mandatory at archive route ex
 ### ADR-088: Bound in-memory object reads
 
 `ObjectStorage.readBytes` now validates a 256 MiB maximum, consumes the provider body as a stream, and raises `ObjectStorageLimitError` before materializing an oversized object. Callers that need larger exports must use a streaming API instead of turning an unbounded object into a single heap allocation.
+
+### ADR-089: Enforce prefix limits independently of provider range behavior
+
+`ObjectStorage.readPrefix` now consumes the response body through the same bounded collector as full in-memory reads. A provider that ignores or widens the requested HTTP range therefore cannot cause an unbounded prefix materialization; the method fails with `ObjectStorageLimitError` once the declared prefix ceiling is exceeded.

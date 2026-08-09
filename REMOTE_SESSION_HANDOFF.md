@@ -98,6 +98,8 @@ HARDENING-72 verification note: archive routes now fail closed with retryable `P
 
 HARDENING-73 verification note: `ObjectStorage.readBytes` now streams and caps in-memory materialization at 256 MiB, with oversized-body regression coverage against the real internal MinIO service (3/3 storage tests). Host-only integration remains unavailable because the active Compose service ports are not published; no network boundary was weakened.
 
+HARDENING-74 verification note: `ObjectStorage.readPrefix` now enforces the same limit while consuming the body, so an ignored or widened provider `Range` response cannot bypass the prefix memory ceiling. Typecheck, lint, format, unit (26/101), security, secret scan, live-fire (16/16), and real internal MinIO storage tests remain green.
+
 ## Graph status
 
 | Node | Status | Reason |
