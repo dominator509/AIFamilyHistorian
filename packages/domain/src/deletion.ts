@@ -3,6 +3,7 @@ import { uuidSchema } from '@family-historian/contracts';
 import { DomainError } from './errors.js';
 
 export type DeletionState = 'grace_period' | 'deleting' | 'verifying' | 'completed';
+export const MAX_DELETION_REFERENCE_CHARS = 2_048;
 
 export interface DeletionEvidence {
   readonly target: 'primary_storage' | 'derivatives' | 'processor' | 'backup_tombstone';
@@ -94,9 +95,20 @@ function validateEvidence(evidence: DeletionEvidence, nowMs: number): void {
     !['primary_storage', 'derivatives', 'processor', 'backup_tombstone'].includes(
       evidence.target,
     ) ||
-    !evidence.reference.trim() ||
+    !isSafeReference(evidence.reference) ||
     !Number.isFinite(verifiedAtMs) ||
     verifiedAtMs > nowMs
   )
     throw new DomainError('VALIDATION_FAILED', 'deletion evidence is invalid');
+}
+
+function isSafeReference(reference: string): boolean {
+  return (
+    reference.trim().length > 0 &&
+    reference.length <= MAX_DELETION_REFERENCE_CHARS &&
+    ![...reference].some((character) => {
+      const code = character.codePointAt(0) ?? 0;
+      return code < 0x20 || code === 0x7f;
+    })
+  );
 }
