@@ -337,3 +337,6 @@
 2026-08-09T03:05:00Z | codex | HARDENING-65 | SECURITY_FINDING | media_scan_final_clean_transition_overwrote_authoritative_quarantine_state_without_compare_and_set
 2026-08-09T03:06:00Z | codex | HARDENING-65 | FIX_APPLIED | media_scan_locks_original_row_and_requires_scanning_before_clean; infected_or_unexpected_state_is_preserved_and_mapped_to_media_unsafe_or_retryable_conflict
 2026-08-09T03:07:00Z | codex | HARDENING-65 | COMMAND_FAILED | corepack_pnpm_exec_vitest_run_tests/integration/media-worker.test.ts_exit_1_ECONNREFUSED_127.0.0.1:35432; real_PostgreSQL/MinIO_media_fixture_not_started; no_source_or_data_mutation
+2026-08-09T03:15:00Z | codex | HARDENING-66 | SECURITY_FINDING | assertQuotaAvailable_compared_Date_parse_NaN_values_and_could_fail_open_on_invalid_grace_or_current_time
+2026-08-09T03:16:00Z | codex | HARDENING-66 | FIX_APPLIED | billing_quota_now_and_grace_end_times_are_required_to_be_finite_before_expiry_evaluation
+2026-08-09T03:17:00Z | codex | HARDENING-66 | LOCAL_VERIFICATION | billing_focus3_tests_passed; full_unit24_files_93_tests_passed; build_security_typecheck_lint_format_secret_scan_passed

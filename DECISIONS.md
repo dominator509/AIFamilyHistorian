@@ -289,3 +289,7 @@ Deletion workflow transitions now reject non-finite request, grace-period, and t
 ### ADR-080: Compare-and-set media quarantine publication
 
 Media scans now lock the authoritative original row and require `scanning` state before publishing `clean`. A concurrent infected or terminal state is never overwritten, and unexpected state changes produce an explicit retryable conflict. The lease fence remains checked before the row lock, so stale handlers cannot publish a successful quarantine transition.
+
+### ADR-081: Reject invalid billing quota times
+
+Quota checks now parse and validate both the current time and subscription grace-period end before evaluating past-due access. Invalid temporal metadata fails closed with `VALIDATION_FAILED` instead of treating `NaN` comparisons as an unexpired grace period.

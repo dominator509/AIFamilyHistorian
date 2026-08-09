@@ -216,9 +216,13 @@ export function assertQuotaAvailable(
 ): void {
   if (!Number.isFinite(additionalAmount) || additionalAmount < 0)
     throw new DomainError('VALIDATION_FAILED', 'requested usage must be nonnegative');
+  const nowMs = Date.parse(now);
+  const graceEndsAtMs = Date.parse(subscription.graceEndsAt);
+  if (!Number.isFinite(nowMs) || !Number.isFinite(graceEndsAtMs))
+    throw new DomainError('VALIDATION_FAILED', 'billing quota time is invalid');
   if (subscription.status === 'cancelled')
     throw new DomainError('QUOTA_EXCEEDED', 'subscription is cancelled');
-  if (subscription.status === 'past_due' && Date.parse(now) > Date.parse(subscription.graceEndsAt))
+  if (subscription.status === 'past_due' && nowMs > graceEndsAtMs)
     throw new DomainError('QUOTA_EXCEEDED', 'subscription grace period has expired');
   const snapshot = quotaSnapshot(subscription, records, kind);
   if (snapshot.used + additionalAmount > snapshot.limit)

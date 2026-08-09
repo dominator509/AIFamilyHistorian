@@ -42,6 +42,27 @@ describe('billing and preservation invariants', () => {
     ).toThrow('quota exceeded');
   });
 
+  it('rejects invalid quota timestamps instead of bypassing grace enforcement', () => {
+    const subscription = startSubscription({
+      id: '01900000-0000-7000-8000-000000000011',
+      organizationId: '01900000-0000-7000-8000-000000000012',
+      planCode: 'self_service',
+      startedAt: '2026-08-06T00:00:00.000Z',
+    });
+    expect(() =>
+      assertQuotaAvailable(subscription, [], 'storage_bytes', 1, 'not-a-timestamp'),
+    ).toThrow('billing quota time is invalid');
+    expect(() =>
+      assertQuotaAvailable(
+        { ...subscription, graceEndsAt: 'not-a-timestamp', status: 'past_due' },
+        [],
+        'storage_bytes',
+        1,
+        '2026-08-06T00:00:00.000Z',
+      ),
+    ).toThrow('billing quota time is invalid');
+  });
+
   it('requires every annual preservation check and blocks unresolved actions', () => {
     const review = createAnnualPreservationReview({
       id: '01900000-0000-7000-8000-000000000004',
