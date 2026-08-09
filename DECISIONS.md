@@ -501,3 +501,7 @@ Provider and DeepSeek response readers now reject bodyless responses that omit `
 ### ADR-133: Bound portable export materialization
 
 Portable export libraries now cap entries at 10,000, evidence IDs per entry at 1,000, textual fields at 500 characters, individual canonical entries at 1 MiB, and JSONL/CSV output at 16 MiB. Limits are enforced before joining or manifest parsing so direct callers cannot bypass the API body limit and trigger unbounded export work.
+
+### ADR-134: Bound provenance chain aggregation
+
+Provenance chain verification and manifest construction now cap event count at 10,000 and serialized manifest materialization at 16 MiB. Individual event canonicalization remains independently bounded, and the manifest builder now accumulates only within the aggregate ceiling before hashing.

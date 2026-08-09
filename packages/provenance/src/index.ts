@@ -18,6 +18,8 @@ const lineageSchema = z.record(z.string().min(1), lineageValueSchema);
 
 export const MAX_PROVENANCE_CANONICAL_DEPTH = 32;
 export const MAX_PROVENANCE_CANONICAL_BYTES = 16 * 1024 * 1024;
+export const MAX_PROVENANCE_EVENTS = 10_000;
+export const MAX_PROVENANCE_MANIFEST_BYTES = 16 * 1024 * 1024;
 export const MAX_CLAIM_EVIDENCE_SPANS = 1_000;
 
 export interface EvidenceSpan {
@@ -128,6 +130,8 @@ export function createProvenanceEvent(
 
 /** Verify every hash and link in an ordered append-only event chain. */
 export function verifyProvenanceChain(events: readonly ProvenanceEvent[]): void {
+  if (events.length > MAX_PROVENANCE_EVENTS)
+    throw new ProvenanceError('provenance event count exceeds the maximum');
   let previousHash: string | null = null;
   for (const event of events) {
     if (event.previousHash !== previousHash)
@@ -145,8 +149,19 @@ export function buildProvenanceManifest(events: readonly ProvenanceEvent[]): {
   readonly lastEventHash: string | null;
   readonly chainHash: string;
 } {
+  if (events.length > MAX_PROVENANCE_EVENTS)
+    throw new ProvenanceError('provenance event count exceeds the maximum');
   verifyProvenanceChain(events);
-  const serialized = events.map((event) => canonicalJson(event)).join('\n');
+  const serializedEvents: string[] = [];
+  let serializedBytes = 0;
+  for (const event of events) {
+    const serialized = canonicalJson(event);
+    serializedBytes += Buffer.byteLength(serialized, 'utf8') + 1;
+    if (serializedBytes > MAX_PROVENANCE_MANIFEST_BYTES)
+      throw new ProvenanceError('provenance manifest exceeds the maximum size');
+    serializedEvents.push(serialized);
+  }
+  const serialized = serializedEvents.join('\n');
   return Object.freeze({
     eventCount: events.length,
     firstEventHash: events[0]?.eventHash ?? null,

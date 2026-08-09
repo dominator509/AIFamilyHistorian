@@ -7,6 +7,7 @@ import {
   MAX_CLAIM_EVIDENCE_SPANS,
   MAX_PROVENANCE_CANONICAL_BYTES,
   MAX_PROVENANCE_CANONICAL_DEPTH,
+  MAX_PROVENANCE_EVENTS,
   ProvenanceError,
   verifyProvenanceChain,
 } from '../../packages/provenance/src/index.js';
@@ -137,5 +138,21 @@ describe('provenance integrity', () => {
         evidence: Array.from({ length: MAX_CLAIM_EVIDENCE_SPANS + 1 }, () => span),
       }),
     ).toThrow(/maximum span count/u);
+  });
+
+  it('bounds provenance chain and manifest cardinality', () => {
+    const first = createProvenanceEvent({
+      id: '01900000-0000-7000-8000-000000000014',
+      organizationId,
+      familyArchiveId: archiveId,
+      entityType: 'source',
+      entityId,
+      eventType: 'captured',
+      lineage: {},
+      occurredAt: '2026-08-07T00:00:00.000Z',
+    });
+    const oversized = Array.from({ length: MAX_PROVENANCE_EVENTS + 1 }, () => first);
+    expect(() => verifyProvenanceChain(oversized)).toThrow(/event count/u);
+    expect(() => buildProvenanceManifest(oversized)).toThrow(/event count/u);
   });
 });
