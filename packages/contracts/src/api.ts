@@ -66,7 +66,7 @@ export const transcriptInputSchema = z.object({
 export const factInputSchema = z.object({
   text: z.string().min(1),
   confirmerId: uuidSchema,
-  evidenceLinkIds: z.array(uuidSchema).min(1),
+  evidenceLinkIds: z.array(uuidSchema).min(1).max(1_000),
   status: factStatusSchema.default('confirmed'),
 });
 export const eventInputSchema = z.object({

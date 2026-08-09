@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   completeUploadInputSchema,
+  factInputSchema,
   healthStatusSchema,
 } from '../../packages/contracts/src/index.js';
 
@@ -24,5 +25,18 @@ describe('foundation contracts', () => {
         ],
       }),
     ).toThrow('multipart part numbers must be unique');
+  });
+
+  it('bounds evidence-link fan-out before SQL persistence', () => {
+    expect(() =>
+      factInputSchema.parse({
+        text: 'A fact',
+        confirmerId: '01900000-0000-7000-8000-000000000001',
+        evidenceLinkIds: Array.from(
+          { length: 1_001 },
+          () => '01900000-0000-7000-8000-000000000002',
+        ),
+      }),
+    ).toThrow();
   });
 });

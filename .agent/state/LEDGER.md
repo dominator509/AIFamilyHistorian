@@ -322,3 +322,6 @@
 2026-08-09T02:25:00Z | codex | HARDENING-60 | SECURITY_FINDING | portable_export_JSONL_preserved_caller_object_key_order_and_manifest_trusted_caller_entry_count
 2026-08-09T02:26:00Z | codex | HARDENING-60 | FIX_APPLIED | documents_renderJsonLines_uses_recursive_canonical_json; buildPortableManifest_validates_each_JSONL_entry_and_exact_entry_count
 2026-08-09T02:27:00Z | codex | HARDENING-60 | LOCAL_VERIFICATION | portable_export_focus4_tests_passed; full_unit24_files_89_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T02:32:00Z | codex | HARDENING-61 | SECURITY_FINDING | fact_evidence_link_ids_were_unbounded_before_ANY_uuid_array_lookup_and_per_link_insert_fanout
+2026-08-09T02:33:00Z | codex | HARDENING-61 | FIX_APPLIED | factInputSchema_evidenceLinkIds_max_1000_added_at_shared_request_boundary
+2026-08-09T02:34:00Z | codex | HARDENING-61 | LOCAL_VERIFICATION | foundation_contract_focus3_tests_passed; full_unit24_files_90_tests_passed; build_security_typecheck_lint_format_secret_scan_passed

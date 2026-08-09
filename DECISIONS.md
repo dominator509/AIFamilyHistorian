@@ -269,3 +269,7 @@ Signed session principals now cap archive memberships and permissions, cap indiv
 ### ADR-075: Make portable export fixity deterministic and self-consistent
 
 Portable JSONL export now canonicalizes nested object keys before serialization, and its manifest validates every JSONL line plus the exact entry count before recording fixity. This prevents equivalent records from producing different hashes due to caller key order and prevents a mismatched manifest count from presenting an incomplete or malformed export as complete.
+
+### ADR-076: Bound evidence-link fan-out at the API contract
+
+Confirmed-fact requests now cap evidence-link identifiers at 1,000 before the tenant-scoped `ANY(uuid[])` lookup and per-link inserts. This keeps evidence integrity checks intact while bounding query and transaction work for a single request; the cap is enforced at the shared Zod trust boundary rather than relying on body size alone.
