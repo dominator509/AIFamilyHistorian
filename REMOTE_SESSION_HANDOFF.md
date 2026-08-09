@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159)
+### Current continuation (HARDENING-155/156/157/158/159/160/161)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -11,27 +11,31 @@
 - Encryption compatibility hardening is now included: a scoped decrypt caller cannot open a legacy unscoped version-1 envelope; focused auth/crypto coverage passed 13/13.
 - Media quarantine cleanup is now explicitly tenant-scoped; the internal worker fixture covers checksum failure, quarantine `error`, and terminal outbox handling.
 - Multi-archive session permissions are now archive-scoped: issuance requires a complete per-archive claim map, authorization evaluates only the selected archive, and server-side sessions persist the map through migration `0014_archive_scoped_session_permissions.sql`. Legacy multi-archive tokens without the map fail closed.
+- Provider requests now reject redirects in both generic adapters and DeepSeek; focused request-option tests passed 31/31.
+- Worker access to global `auth_sessions` is revoked from both runtime and worker roles by migration `0015_revoke_worker_session_access.sql`; verifier and security harness enforce the invariant, and the local PostgreSQL probe returned `f|f`.
+- The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
 
 ### Current security scan
 
 - Current Codex Security standard scan `0efbcd50-aacd-493f-8571-0f81f8865d90` is complete against immutable revision `b792abd35e2e81652778d79f370468a5ea941a47` with complete repository coverage and three current source-backed findings: high hosted worker sandbox absence, medium worker scratch-capacity mismatch, and medium archive-global permission claims. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\b792abd35e2e81652778d79f370468a5ea941a47_20260809T150515Z_xtf6vjv8\report.md`.
 - The hosted sandbox and scratch-capacity findings remain release/deployment blockers. The archive-global claim finding is addressed in the current source by archive-scoped issuance, authorization, and persistence; a future security scan should recheck issuer coverage and token migration behavior.
 - Historical scan `9f2f9e2a-1c13-434c-8034-402f6bceeab0` remains retained for provenance only; its owner-credential and provider-header findings were remediated by HARDENING-155/156 and are not current findings. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\3a7ece4d540b83d704226de36941359365591c1e_20260809T134428Z_7zgh35ie\report.md`.
+- Replacement current-head scan `8aee458f-6c25-4e09-b188-07f86d4904b8` is complete against immutable commit `dac673813d87b8ad032997d02c2140f1ab019130` with complete 333-file coverage. It reports three open findings: high worker broad-runtime-role activation across tenant tables, high hosted worker sandbox controls absent/unattested, and medium hosted scratch capacity undeclared for the 25 GiB input ceiling. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\dac673813d87b8ad032997d02c2140f1ab019130_20260809T155249Z_ip5n91zv\report.md`.
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `f03ab26` (`HARDENING-155/156/157/158/159`); provider header controls, dedicated worker database credentials, scoped legacy-envelope rejection, tenant-scoped quarantine cleanup, and archive-scoped multi-archive session claims are now enforced. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `dac6738` (`HARDENING-160/161`); provider redirect rejection and worker `auth_sessions` privilege revocation are now enforced. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `b43c184` (implementation, documentation, and current local verification); `origin/master` is synchronized.
-- Current code checkpoint: `f03ab26` (provider header control rejection, dedicated worker role, scoped legacy-envelope rejection, tenant-scoped quarantine cleanup, archive-scoped multi-archive session claims, and all prior capabilities).
+- Current source checkpoint: `dac6738` (implementation checkpoint; documentation update is pending in this handoff).
+- Current code checkpoint: `dac6738` (provider redirect rejection, worker `auth_sessions` revocation, and all prior capabilities).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
-- Latest continuation recheck: internal media-worker coverage passed 2/2; integration passed 13 files/43 tests, unit 27 files/145 tests, E2E 3 files/11 tests, all 16 live-fire proofs, accessibility (`pdf_tagged=true epub_semantics=true`), and performance (`requests=100 p95=0.56ms`) passed. Build, typecheck, lint, format, security, secret, dependency, and reality gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
+- Latest continuation recheck: internal media-worker coverage passed 2/2; integration passed 13 files/43 tests, unit 27 files/147 tests, E2E 3 files/11 tests, all 16 live-fire proofs, accessibility (`pdf_tagged=true epub_semantics=true`), and performance (`requests=100 p95=1.19ms`) passed. Build, typecheck, lint, format, security, secret, dependency, and reality gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
 - Standard Codex Security scan `2ac638eb-66d7-4f36-b4e9-ec3792ca0574` completed against the prior `4d0614b` snapshot with one high, source-backed finding: hosted worker syscall, egress, cgroup/PID, read-only-root, and bounded-scratch enforcement remain unproven outside local Compose. The report is at `C:\\tmp\\codex-security-scans-k9cTF9\\AIFamilyHistorian\\4d0614ba1feda0eb9d2a604c4d71c59ec8df746e_20260809T130503Z_mm7xex28\\report.md`; the requirement remains fail-closed as `EXT-023`.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`

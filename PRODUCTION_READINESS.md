@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 27 files / 145 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 27 files / 147 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -22,6 +22,8 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-157 rejects scoped decryption of legacy unscoped version-1 encrypted envelopes while preserving explicitly unscoped migration reads; archive-scoped version-2 envelopes still require an exact scope match.
 - HARDENING-158 scopes media quarantine error cleanup by organization, archive, original identifier, and active scanning state; the real internal worker fixture covers checksum-failure terminal handling.
 - HARDENING-159 makes multi-archive session permissions archive-scoped, persists the map in server-side sessions, and fails closed when a multi-archive token lacks complete per-archive claims.
+- HARDENING-160 makes provider requests fail closed on redirects in the generic adapters and DeepSeek gateway; focused tests assert `redirect: 'error'` before dispatch.
+- HARDENING-161 revokes `auth_sessions` privileges from both worker roles, adds verifier coverage, and proves the local PostgreSQL roles return `false` for session-table DML.
 - HARDENING-144 enforces UTF-8 byte ceilings for storage object keys, multipart upload IDs, and content types before provider dispatch.
 - The read-only runtime image preinstalls pinned pnpm under an image-owned Corepack home; the rebuilt worker stayed `Up (healthy)` in the real internal Compose stack. The local rehearsal is explicitly development-mode for its internal HTTP MinIO endpoint; hosted Fly remains production/HTTPS-only.
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.
@@ -32,6 +34,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - Complete native Better Auth/passkey/WebAuthn and Argon2id identity issuance, migration, device lifecycle, and live-fire coverage.
 - Tagged PDF structure semantics and EPUB language/navigation metadata are implemented and regression-tested; complete formal accessibility/PDF/EPUB audits, large-transfer/recovery rehearsal, hosted queue topology/fairness, production KMS wrapping/restore drills, and hosted media/provider fixtures remain pending.
 - `sh scripts/accessibility-check.sh` now provides a deterministic local semantic probe for those PDF/EPUB invariants; it does not claim formal PDF/UA or screen-reader conformance.
+- The current repository-wide security recheck reports three open findings: broad worker `SET ROLE family_historian_runtime` activation across tenant tables (high), hosted worker sandbox controls not source-attested (high), and hosted scratch capacity not declared for the 25 GiB input ceiling (medium). HARDENING-161 closes only the worker's global `auth_sessions` table access; it does not resolve the broader runtime-role boundary.
 
 ## External and release gates
 

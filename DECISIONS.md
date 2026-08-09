@@ -605,3 +605,11 @@ Media-scan failure cleanup now requires the authoritative organization and archi
 ### ADR-159: Make multi-archive session permissions archive-scoped
 
 Session principals now carry an optional archive-to-permission map. Issuance rejects multi-archive tokens without a complete map, authorization evaluates the selected archive's claims instead of a global permission union, and server-side session persistence stores and compares the map through a new JSONB migration. Single-archive sessions retain the existing permission representation for compatibility; multi-archive tokens without scoped claims fail closed.
+
+### ADR-160: Fail closed on provider redirects
+
+The shared provider request helper and DeepSeek gateway now set `redirect: 'error'` on every outbound fetch. Redirects could otherwise forward API keys and sensitive payloads to an unvalidated host. Regression tests capture request options for Resend and DeepSeek and require redirect rejection before network dispatch.
+
+### ADR-161: Remove worker access to global server sessions
+
+Migration `0015_revoke_worker_session_access.sql` revokes `auth_sessions` DML from both `family_historian_runtime` and `family_historian_worker`; database verification fails if either role regains it. A real local PostgreSQL probe returned `false` for both roles. This is a targeted least-privilege reduction; the broader worker `SET LOCAL ROLE family_historian_runtime` design remains an open high-severity production blocker because RLS trusts mutable session settings after worker compromise.
