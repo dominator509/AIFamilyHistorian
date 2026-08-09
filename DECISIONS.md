@@ -441,3 +441,7 @@ TOTP enrollment, verification, and recovery-code primitives now reject oversized
 ### ADR-118: Bound restricted-data encryption envelopes
 
 Restricted-text encryption now caps plaintext at 16 MiB and serialized envelopes at 32 MiB. Decryption validates URL-safe base64 component syntax, exact AES-GCM IV/tag sizes, and ciphertext/plaintext ceilings before decoding or opening the cipher. This keeps malformed database or API blobs from causing unbounded JSON/base64 allocation while preserving archive-scoped key separation.
+
+### ADR-119: Fail closed on export canonicalization
+
+Portable export JSONL canonicalization now rejects cyclic values, unsupported JSON values, non-finite numbers, and nesting deeper than 32 levels before serialization and fixity computation. Object keys remain deterministically sorted, while invalid payloads raise an explicit `ExportCanonicalizationError` instead of being silently dropped or coerced by `JSON.stringify`. This keeps manifest hashes and exported evidence bound to valid, reproducible JSON; the full export-fulfillment worker remains a separate blueprint task.

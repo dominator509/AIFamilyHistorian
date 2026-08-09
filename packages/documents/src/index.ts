@@ -1,6 +1,15 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 
+export const MAX_EXPORT_CANONICAL_DEPTH = 32;
+
+export class ExportCanonicalizationError extends Error {
+  public constructor(message: string) {
+    super(message);
+    this.name = 'ExportCanonicalizationError';
+  }
+}
+
 export const exportEntrySchema = z.object({
   type: z.string().min(1),
   id: z.uuid(),
@@ -69,19 +78,36 @@ export function buildPortableManifest(
 }
 
 function canonicalJson(value: unknown): string {
-  const normalized = normalizeJson(value);
-  return JSON.stringify(normalized) ?? 'null';
+  const normalized = normalizeJson(value, 0, new WeakSet<object>());
+  const encoded = JSON.stringify(normalized);
+  if (encoded === undefined)
+    throw new ExportCanonicalizationError('export value is not serializable');
+  return encoded;
 }
 
-function normalizeJson(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(normalizeJson);
-  if (value !== null && typeof value === 'object')
+function normalizeJson(value: unknown, depth: number, seen: WeakSet<object>): unknown {
+  if (depth > MAX_EXPORT_CANONICAL_DEPTH)
+    throw new ExportCanonicalizationError('export value exceeds the maximum nesting depth');
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value))
+      throw new ExportCanonicalizationError('export value contains a non-finite number');
+    return value;
+  }
+  if (typeof value !== 'object')
+    throw new ExportCanonicalizationError('export value contains an unsupported value');
+  if (seen.has(value)) throw new ExportCanonicalizationError('export value contains a cycle');
+  seen.add(value);
+  try {
+    if (Array.isArray(value)) return value.map((nested) => normalizeJson(nested, depth + 1, seen));
     return Object.fromEntries(
       Object.entries(value)
         .sort(([left], [right]) => left.localeCompare(right))
-        .map(([key, nested]) => [key, normalizeJson(nested)]),
+        .map(([key, nested]) => [key, normalizeJson(nested, depth + 1, seen)]),
     );
-  return value;
+  } finally {
+    seen.delete(value);
+  }
 }
 
 export interface BookDocument {

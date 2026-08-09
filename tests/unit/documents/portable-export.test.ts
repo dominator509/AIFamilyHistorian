@@ -5,6 +5,8 @@ import {
   type ReleaseReadinessReport,
 } from '../../../packages/reports/src/index.js';
 import {
+  ExportCanonicalizationError,
+  MAX_EXPORT_CANONICAL_DEPTH,
   buildPortableManifest,
   renderCsvIndex,
   renderJsonLines,
@@ -31,6 +33,18 @@ describe('portable documents and release reports', () => {
     );
     expect(manifest.entriesSha256).toBe(createHash('sha256').update(jsonl).digest('hex'));
     expect(new TextDecoder().decode(renderCsvIndex([entry]))).toContain('"confirmed_fact"');
+  });
+
+  it('fails closed on unsupported, non-finite, cyclic, and deeply nested payload values', () => {
+    const withPayload = (payload: unknown): ExportEntry => ({ ...entry, payload });
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() => renderJsonLines([withPayload(cyclic)])).toThrowError(ExportCanonicalizationError);
+    expect(() => renderJsonLines([withPayload({ value: Number.NaN })])).toThrowError(/non-finite/u);
+    expect(() => renderJsonLines([withPayload({ value: undefined })])).toThrowError(/unsupported/u);
+    let nested: unknown = 'leaf';
+    for (let index = 0; index <= MAX_EXPORT_CANONICAL_DEPTH; index += 1) nested = { nested };
+    expect(() => renderJsonLines([withPayload(nested)])).toThrowError(/nesting depth/u);
   });
 
   it('canonicalizes payload key order and binds the manifest count to JSONL entries', () => {
