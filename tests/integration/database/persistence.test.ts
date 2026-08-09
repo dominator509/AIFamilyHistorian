@@ -211,6 +211,21 @@ describe('PostgreSQL persistence invariants', () => {
     ).rejects.toThrow();
   });
 
+  it('keeps queued job tenant scope immutable after enqueue', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Outbox family', 'Outbox archive');
+    const jobId = uuidV7();
+    await withTenantTransaction(pool, context, (client) =>
+      client.query(
+        'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+        [jobId, context.organizationId, context.familyArchiveId, 'privacy.request', {}],
+      ),
+    );
+    await expect(
+      pool.query('update job_outbox set organization_id = $2 where id = $1', [jobId, uuidV7()]),
+    ).rejects.toThrow(/tenant scope is immutable/u);
+  });
+
   it('enforces one immutable derivative recipe per original object', async () => {
     const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     await bootstrapArchive(pool, context, 'Derivative family', 'Derivative archive');
