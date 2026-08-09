@@ -6,6 +6,7 @@ import {
   consumeRecoveryCode,
   createTotpEnrollment,
   generateRecoveryCodes,
+  hashRecoveryCode,
   issueSessionToken,
   parseAuthorizationHeader,
   verifySessionToken,
@@ -110,6 +111,20 @@ describe('session principal and auth policy', () => {
     expect(() => consumeRecoveryCode(consumed, recovery.codes[0]!)).toThrow(
       'RECOVERY_CODE_INVALID',
     );
+  });
+
+  it('bounds MFA and recovery-code primitive inputs before processing', () => {
+    expect(() =>
+      createTotpEnrollment({ userId: principal.userId, label: 'x'.repeat(257) }),
+    ).toThrow('MFA_ENROLLMENT_INVALID');
+    expect(verifyTotpCode('A'.repeat(129), '000000')).toBeNull();
+    expect(() => hashRecoveryCode('x'.repeat(65))).toThrow('RECOVERY_CODE_INVALID');
+    expect(() =>
+      consumeRecoveryCode(
+        { hashes: Array.from({ length: 21 }, () => 'a'.repeat(64)), generatedAt: '' },
+        '00000-00000-00000-00000',
+      ),
+    ).toThrow('RECOVERY_CODE_INVALID');
   });
 });
 

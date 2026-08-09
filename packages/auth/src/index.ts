@@ -10,6 +10,11 @@ const MAX_SESSION_PERMISSIONS = 256;
 const MAX_SESSION_PERMISSION_LENGTH = 128;
 const MAX_SESSION_TOKEN_LENGTH = 64 * 1024;
 const MAX_SESSION_PAYLOAD_LENGTH = 48 * 1024;
+const MAX_TOTP_SECRET_LENGTH = 128;
+const MAX_TOTP_LABEL_LENGTH = 256;
+const MAX_TOTP_ISSUER_LENGTH = 128;
+const MAX_RECOVERY_CODE_INPUT_LENGTH = 64;
+const MAX_RECOVERY_CODE_HASHES = 20;
 
 export const sessionSchema = z.object({
   sessionId: z.uuid().optional(),
@@ -97,8 +102,15 @@ export function createTotpEnrollment(input: {
   readonly label: string;
   readonly issuer?: string;
 }): TotpEnrollment {
-  if (!input.userId || !input.label) throw new Error('MFA_ENROLLMENT_INVALID');
+  if (
+    !z.uuid().safeParse(input.userId).success ||
+    !input.label.trim() ||
+    input.label.length > MAX_TOTP_LABEL_LENGTH
+  )
+    throw new Error('MFA_ENROLLMENT_INVALID');
   const issuer = input.issuer ?? 'AI Family Historian';
+  if (!issuer.trim() || issuer.length > MAX_TOTP_ISSUER_LENGTH)
+    throw new Error('MFA_ENROLLMENT_INVALID');
   const secretBase32 = encodeBase32(randomBytes(20));
   const otpauthUri = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(input.label)}?secret=${secretBase32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
   return Object.freeze({ ...input, issuer, secretBase32, otpauthUri });
@@ -110,7 +122,14 @@ export function verifyTotpCode(
   atMilliseconds = Date.now(),
   window = 1,
 ): number | null {
-  if (!/^\d{6}$/u.test(code) || !Number.isInteger(window) || window < 0 || window > 2) return null;
+  if (
+    secretBase32.length > MAX_TOTP_SECRET_LENGTH ||
+    !/^\d{6}$/u.test(code) ||
+    !Number.isInteger(window) ||
+    window < 0 ||
+    window > 2
+  )
+    return null;
   const key = decodeBase32(secretBase32);
   const currentStep = Math.floor(atMilliseconds / 30_000);
   for (let offset = -window; offset <= window; offset += 1) {
@@ -159,6 +178,8 @@ export function generateRecoveryCodes(count = 10): {
 }
 
 export function consumeRecoveryCode(set: RecoveryCodeSet, code: string): RecoveryCodeSet {
+  if (set.hashes.length > MAX_RECOVERY_CODE_HASHES || code.length > MAX_RECOVERY_CODE_INPUT_LENGTH)
+    throw new Error('RECOVERY_CODE_INVALID');
   const hash = hashRecoveryCode(code);
   const index = set.hashes.findIndex((candidate) => candidate === hash);
   if (index < 0) throw new Error('RECOVERY_CODE_INVALID');
@@ -169,6 +190,7 @@ export function consumeRecoveryCode(set: RecoveryCodeSet, code: string): Recover
 }
 
 export function hashRecoveryCode(code: string): string {
+  if (code.length > MAX_RECOVERY_CODE_INPUT_LENGTH) throw new Error('RECOVERY_CODE_INVALID');
   const normalized = code.replaceAll(/[-\s]/gu, '').toLowerCase();
   if (!/^[a-f0-9]{20}$/u.test(normalized)) throw new Error('RECOVERY_CODE_INVALID');
   return createHash('sha256').update(normalized, 'utf8').digest('hex');
@@ -209,6 +231,7 @@ function encodeBase32(bytes: Buffer): string {
 }
 
 function decodeBase32(input: string): Buffer {
+  if (input.length > MAX_TOTP_SECRET_LENGTH) throw new Error('MFA_SECRET_INVALID');
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
   const normalized = input.replaceAll(/[=\s-]/gu, '').toUpperCase();
   let buffer = 0;

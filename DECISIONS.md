@@ -433,3 +433,7 @@ The AI gateway canonical JSON serializer now rejects cycles, unsupported JSON va
 ### ADR-116: Normalize telemetry redaction keys
 
 Telemetry redaction now compares normalized key forms, so casing and separators cannot bypass content or secret-field protections (`Authorization`, `API_KEY`, and `source_text` are treated like their canonical forms). Object output uses property definitions rather than assignment so a telemetry key named `__proto__` remains data and cannot mutate the result prototype.
+
+### ADR-117: Bound MFA primitive inputs
+
+TOTP enrollment, verification, and recovery-code primitives now reject oversized labels, issuers, secrets, codes, and recovery-hash sets before URI construction, base32 decoding, or hashing. These bounds keep exported authentication helpers fail-fast even when called outside the API body limit and prevent unbounded attacker-controlled work in security-sensitive code.
