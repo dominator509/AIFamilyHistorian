@@ -121,6 +121,14 @@ if (
   !releaseWorkflow.includes('docker push "$WORKER_IMAGE:') ||
   !releaseWorkflow.includes('id: publish-digests') ||
   !releaseWorkflow.includes('docker buildx imagetools inspect') ||
+  !releaseWorkflow.includes('sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6') ||
+  !releaseWorkflow.includes(
+    'cosign sign --yes "$IMAGE@${{ steps.publish-digests.outputs.api_digest }}"',
+  ) ||
+  !releaseWorkflow.includes('cosign verify "$IMAGE@$API_DIGEST"') ||
+  !releaseWorkflow.includes(
+    'certificate-oidc-issuer https://token.actions.githubusercontent.com',
+  ) ||
   !releaseWorkflow.includes(
     'flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE@$WORKER_DIGEST"',
   ) ||
