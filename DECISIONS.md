@@ -489,3 +489,7 @@ Provider adapters now validate request-side metadata, query cardinality, narrati
 ### ADR-130: Canonicalize bearer tokens and fail closed on malformed TOTP input
 
 Session verification now requires exactly three token segments, preventing ignored suffixes from being accepted as canonical bearer tokens. TOTP verification now rejects empty or malformed Base32 secrets and non-finite/unsafe timestamps by returning null, preserving its non-throwing verification contract for untrusted inputs.
+
+### ADR-131: Canonicalize and bound Stripe webhook signatures
+
+Stripe signature verification now bounds payload and header sizes, rejects malformed or duplicate timestamp fields, validates every supplied signature digest, and accepts any valid `v1` digest for key rotation. Unknown well-formed signature fields remain compatible with Stripe delivery while ambiguous or oversized inputs fail closed before HMAC comparison.

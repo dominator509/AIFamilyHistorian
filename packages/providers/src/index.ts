@@ -32,6 +32,11 @@ export function verifyStripeWebhookSignature(
   if (!webhookSecret.trim())
     throw new ProviderAdapterError('Stripe webhook secret is required', 'stripe');
   if (
+    Buffer.byteLength(payload, 'utf8') > 16 * 1024 * 1024 ||
+    Buffer.byteLength(signatureHeader, 'utf8') > 4 * 1024
+  )
+    throw new ProviderAdapterError('Stripe webhook signature input is too large', 'stripe');
+  if (
     !Number.isSafeInteger(nowSeconds) ||
     nowSeconds < 0 ||
     !Number.isSafeInteger(toleranceSeconds) ||
@@ -39,30 +44,41 @@ export function verifyStripeWebhookSignature(
     toleranceSeconds > 86_400
   )
     throw new ProviderAdapterError('Stripe webhook clock settings are invalid', 'stripe');
-  const values = new Map(
-    signatureHeader
-      .split(',')
-      .map((part) => part.split('=').map((item) => item.trim()) as [string, string]),
-  );
-  const timestamp = Number(values.get('t'));
-  const supplied = values.get('v1');
+  const values = new Map<string, string[]>();
+  for (const part of signatureHeader.split(',')) {
+    const separator = part.indexOf('=');
+    if (separator <= 0 || separator === part.length - 1)
+      throw new ProviderAdapterError('Stripe webhook signature is invalid', 'stripe');
+    const key = part.slice(0, separator).trim();
+    const value = part.slice(separator + 1).trim();
+    if (!/^[a-z][a-z0-9_]{0,31}$/u.test(key) || !value)
+      throw new ProviderAdapterError('Stripe webhook signature is invalid', 'stripe');
+    const entries = values.get(key) ?? [];
+    entries.push(value);
+    values.set(key, entries);
+  }
+  const timestamps = values.get('t') ?? [];
+  const supplied = values.get('v1') ?? [];
+  const timestamp = Number(timestamps[0]);
   if (
+    timestamps.length !== 1 ||
     !Number.isInteger(timestamp) ||
-    !supplied ||
-    !/^[a-f0-9]{64}$/u.test(supplied) ||
+    supplied.length === 0 ||
+    !supplied.every((value) => /^[a-f0-9]{64}$/u.test(value)) ||
     Math.abs(nowSeconds - timestamp) > toleranceSeconds
   )
     throw new ProviderAdapterError('Stripe webhook signature is invalid or expired', 'stripe');
   const expected = createHmac('sha256', webhookSecret)
     .update(`${timestamp}.${payload}`, 'utf8')
     .digest('hex');
-  const suppliedBytes = Buffer.from(supplied, 'hex');
   const expectedBytes = Buffer.from(expected, 'hex');
-  if (
-    suppliedBytes.length !== expectedBytes.length ||
-    !timingSafeEqual(suppliedBytes, expectedBytes)
-  )
-    throw new ProviderAdapterError('Stripe webhook signature is invalid', 'stripe');
+  const valid = supplied.some((value) => {
+    const suppliedBytes = Buffer.from(value, 'hex');
+    return (
+      suppliedBytes.length === expectedBytes.length && timingSafeEqual(suppliedBytes, expectedBytes)
+    );
+  });
+  if (!valid) throw new ProviderAdapterError('Stripe webhook signature is invalid', 'stripe');
 }
 
 interface RequestOptions {

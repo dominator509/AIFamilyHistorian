@@ -124,6 +124,30 @@ describe('provider adapters', () => {
       stripe.verifyWebhookSignature(payload, `t=${timestamp},v1=${signature}`, secret, timestamp),
     ).not.toThrow();
     expect(() =>
+      stripe.verifyWebhookSignature(
+        payload,
+        `t=${timestamp},v1=${'0'.repeat(64)},v1=${signature}`,
+        secret,
+        timestamp,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      stripe.verifyWebhookSignature(
+        payload,
+        `t=${timestamp},t=${timestamp},v1=${signature}`,
+        secret,
+        timestamp,
+      ),
+    ).toThrow('Stripe webhook signature is invalid');
+    expect(() =>
+      stripe.verifyWebhookSignature(
+        payload,
+        `t=${timestamp},v1=${signature}${'0'.repeat(4096)}`,
+        secret,
+        timestamp,
+      ),
+    ).toThrow('Stripe webhook signature input is too large');
+    expect(() =>
       stripe.verifyWebhookSignature(payload, `t=${timestamp},v1=${signature}`, 'wrong', timestamp),
     ).toThrow(ProviderAdapterError);
     expect(() =>
