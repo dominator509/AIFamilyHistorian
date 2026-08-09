@@ -12,6 +12,8 @@ import { assertReleaseReady, type ReleaseReadinessReport } from '@family-histori
 
 export interface ApprovedPublicationEdition {
   readonly editionId: string;
+  /** Hash read from the authoritative current edition snapshot. */
+  readonly editionHash: string;
   readonly archiveId: string;
   readonly generatedAt: string;
   readonly title: string;
@@ -41,6 +43,10 @@ export function buildPublicationBundle(input: ApprovedPublicationEdition): Publi
   assertReleaseReady(input.readiness);
   if (input.readiness.editionId !== input.editionId)
     throw new Error('publication readiness report targets a different edition');
+  if (!/^[a-f0-9]{64}$/u.test(input.editionHash))
+    throw new Error('current edition hash is invalid');
+  if (input.readiness.editionHash !== input.editionHash)
+    throw new Error('publication readiness report targets a stale edition hash');
   const document: BookDocument = {
     title: input.title,
     ...(input.author ? { author: input.author } : {}),
@@ -62,7 +68,7 @@ export function buildPublicationBundle(input: ApprovedPublicationEdition): Publi
   return Object.freeze({
     editionId: input.editionId,
     archiveId: input.archiveId,
-    editionHash: input.readiness.editionHash,
+    editionHash: input.editionHash,
     artifacts: Object.freeze(artifacts),
     portableManifest,
   });

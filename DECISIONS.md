@@ -217,3 +217,7 @@ Media handlers now lock and verify the current `job_outbox` row/token before qua
 ### ADR-062: Reject revoked narration authorizations at worker intake
 
 Narration intake now joins the authoritative voice-authorization row inside the tenant transaction and fails non-retryably when `revoked_at` is set. This closes the revocation race between API enqueue and worker review handoff without claiming that downstream synthesis or publication fulfillment is implemented.
+
+### ADR-063: Bind publication readiness to the current edition hash
+
+The publication bundle contract now requires the authoritative current edition hash separately from the readiness report and rejects invalid or mismatched hashes before rendering. This prevents a readiness report for an older or unrelated edition revision from authorizing artifacts, while preserving the separate domain approval and rights gates.

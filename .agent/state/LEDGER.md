@@ -278,3 +278,6 @@
 2026-08-09T00:31:00Z | codex | HARDENING-49 | COMMAND_FAILED | disposable_real_PostgreSQL_privacy_worker_test_exit_1_expected_outbox_failed_observed_terminal_failed; dispatcher_sentinel_contract_mismatch_in_new_test_only
 2026-08-09T00:32:00Z | codex | HARDENING-49 | FIX_APPLIED | narration_intake_tenant_join_checks_voice_authorizations_revoked_at_and_raises_nonretryable_PERMISSION_DENIED; test_asserts_terminal_failed_and_queued_narration
 2026-08-09T00:33:00Z | codex | HARDENING-49 | LOCAL_VERIFICATION | disposable_real_PostgreSQL_privacy_worker_test_3_tests_passed; typecheck_lint_and_format_passed
+2026-08-09T00:36:00Z | codex | HARDENING-50 | SECURITY_FINDING | publication_bundle_trusted_readiness_report_edition_hash_without_binding_to_authoritative_current_edition_hash
+2026-08-09T00:37:00Z | codex | HARDENING-50 | FIX_APPLIED | ApprovedPublicationEdition_requires_current_edition_hash_and_buildPublicationBundle_rejects_invalid_or_stale_readiness_hash
+2026-08-09T00:38:00Z | codex | HARDENING-50 | LOCAL_VERIFICATION | publishing_focus_3_tests_passed; full_unit24_files_83_tests_passed; typecheck_lint_format_passed

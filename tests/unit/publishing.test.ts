@@ -6,6 +6,7 @@ import {
 
 const base = {
   editionId: '01900000-0000-7000-8000-000000000031',
+  editionHash: 'a'.repeat(64),
   archiveId: '01900000-0000-7000-8000-000000000032',
   generatedAt: '2026-08-07T00:00:00.000Z',
   title: 'A Verified Story',
@@ -46,6 +47,15 @@ describe('publication boundary', () => {
     ]);
     expect(bundle.artifacts.every((artifact) => artifact.sha256.length === 64)).toBe(true);
     expect(bundle.portableManifest.entryCount).toBe(1);
+  });
+
+  it('rejects readiness bound to a stale edition hash', () => {
+    expect(() =>
+      buildPublicationBundle({
+        ...base,
+        editionHash: 'b'.repeat(64),
+      }),
+    ).toThrow('stale edition hash');
   });
 
   it('keeps narration authorization explicit', () => {
