@@ -24,6 +24,9 @@ describe('S3-compatible object storage', () => {
     expect(key).not.toContain('fixture');
     await storage.putOriginal(key, bytes, 'application/octet-stream', checksum);
     expect(await storage.readBytes(key)).toEqual(bytes);
+    await expect(storage.readBytes(key, bytes.byteLength - 1)).rejects.toBeInstanceOf(
+      ObjectStorageLimitError,
+    );
     expect(await storage.readPrefix(key, 8)).toEqual(bytes.slice(0, 8));
     expect(await storage.head(key)).toMatchObject({
       byteSize: bytes.byteLength,

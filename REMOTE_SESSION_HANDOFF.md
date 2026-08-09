@@ -96,6 +96,8 @@ HARDENING-71 verification note: worker media intake now measures available scrat
 
 HARDENING-72 verification note: archive routes now fail closed with retryable `PROVIDER_UNAVAILABLE` when authoritative membership or permission checkers are absent, instead of relying on global bearer-token permissions. Production wiring supplies database-backed checkers; missing-checker and route-fixture regressions passed. Hosted worker sandbox isolation remains an external deployment gate.
 
+HARDENING-73 verification note: `ObjectStorage.readBytes` now streams and caps in-memory materialization at 256 MiB, with oversized-body regression coverage against the real internal MinIO service (3/3 storage tests). Host-only integration remains unavailable because the active Compose service ports are not published; no network boundary was weakened.
+
 ## Graph status
 
 | Node | Status | Reason |

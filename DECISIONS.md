@@ -317,3 +317,7 @@ Media jobs now inspect the worker filesystem capacity after creating their scrat
 ### ADR-087: Never authorize archive routes without an authoritative checker
 
 Archive membership and permission checkers are now mandatory at archive route execution. If either dependency is absent, the route returns retryable `PROVIDER_UNAVAILABLE` instead of relying on a global bearer-token permission list. Production wiring already supplies database-backed checkers; this change makes test or future runtime misconfiguration fail closed and prevents cross-archive permission scope confusion.
+
+### ADR-088: Bound in-memory object reads
+
+`ObjectStorage.readBytes` now validates a 256 MiB maximum, consumes the provider body as a stream, and raises `ObjectStorageLimitError` before materializing an oversized object. Callers that need larger exports must use a streaming API instead of turning an unbounded object into a single heap allocation.

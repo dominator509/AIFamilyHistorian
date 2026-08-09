@@ -23,6 +23,9 @@ export class ObjectStorageLimitError extends Error {
   }
 }
 
+/** Maximum object size that may be materialized into a single in-memory value. */
+export const MAX_IN_MEMORY_OBJECT_BYTES = 256 * 1024 * 1024;
+
 export class ObjectStorage {
   readonly #client: S3Client;
   public constructor(private readonly config: StorageConfig) {
@@ -164,12 +167,30 @@ export class ObjectStorage {
     };
   }
 
-  public async readBytes(key: string): Promise<Uint8Array> {
+  public async readBytes(key: string, maxBytes = MAX_IN_MEMORY_OBJECT_BYTES): Promise<Uint8Array> {
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_IN_MEMORY_OBJECT_BYTES)
+      throw new RangeError('object in-memory byte ceiling is invalid');
     const response = await this.#client.send(
       new GetObjectCommand({ Bucket: this.config.bucket, Key: key }),
     );
-    if (!response.Body) throw new Error('object body is missing');
-    return response.Body.transformToByteArray();
+    const body = response.Body as AsyncIterable<Uint8Array> | undefined;
+    if (!body || typeof body[Symbol.asyncIterator] !== 'function')
+      throw new Error('object body is not streamable');
+    const chunks: Uint8Array[] = [];
+    let byteSize = 0;
+    for await (const chunk of body) {
+      if (byteSize + chunk.byteLength > maxBytes)
+        throw new ObjectStorageLimitError('object exceeds the in-memory byte ceiling');
+      chunks.push(chunk);
+      byteSize += chunk.byteLength;
+    }
+    const result = new Uint8Array(byteSize);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return result;
   }
 
   /** Read only a bounded object prefix for content-signature validation. */
