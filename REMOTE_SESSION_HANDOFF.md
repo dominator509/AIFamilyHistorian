@@ -11,8 +11,8 @@
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `9aad90b` (local commit; push verification pending).
-- Current code checkpoint: `9aad90b` (all capabilities listed below, plus byte-accurate storage metadata ceilings and the HARDENING-143 Deepgram input bound).
+- Current source checkpoint: `9aad90b` (implementation); documentation sync checkpoint: `9d1e8ab` (`origin/master` synchronized).
+- Current code checkpoint: `9aad90b` (all capabilities listed below, plus byte-accurate storage metadata ceilings and the HARDENING-143 Deepgram input bound). Current Git commit is `9d1e8ab`.
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
 - Latest continuation recheck: HARDENING-144 focused storage validation passed 5/5; full local verification passed unit 27 files/141 tests, integration 13 files/41 tests, E2E 3 files/11 tests, accessibility (`pdf_tagged=true epub_semantics=true`), all sixteen live-fire proofs, performance smoke (100 requests, p95=1.60ms), workspace build, typecheck, lint, format, security, secret, dependency-audit, reality, and smoke gates. Aggregate `verify.sh` remains correctly preflight-blocked on the documented 16 unresolved requirements; production readiness remains fail-closed.
