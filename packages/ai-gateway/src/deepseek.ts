@@ -176,6 +176,7 @@ export class DeepSeekProvider implements AiProvider {
       try {
         const response = await this.#fetchImpl(`${this.#baseUrl}/chat/completions`, {
           method: 'POST',
+          redirect: 'error',
           headers: {
             authorization: `Bearer ${this.config.apiKey}`,
             'content-type': 'application/json',

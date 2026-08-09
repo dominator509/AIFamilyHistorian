@@ -107,6 +107,27 @@ describe('provider adapters', () => {
     expect(turnstile.success).toBe(false);
   });
 
+  it('disables redirects before sending credential-bearing provider requests', async () => {
+    let requestInit: RequestInit | undefined;
+    const mailer = new ResendMailer({
+      baseUrl,
+      apiKey: 'resend-test-key',
+      maxAttempts: 1,
+      fetchImpl: (_input, init) => {
+        requestInit = init;
+        return new Response(JSON.stringify({ id: 'email-redirect' }), { status: 200 });
+      },
+    });
+    await mailer.send({
+      from: 'Family <noreply@example.invalid>',
+      to: ['reader@example.invalid'],
+      subject: 'Subject',
+      text: 'Body',
+      idempotencyKey: 'redirect-proof',
+    });
+    expect(requestInit?.redirect).toBe('error');
+  });
+
   it('constructs Stripe checkout requests and verifies signed webhooks fail closed', async () => {
     const stripe = new StripeBillingAdapter({ baseUrl, apiKey: 'sk_test_provider' });
     const session = await stripe.createCheckoutSession({

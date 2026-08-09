@@ -283,6 +283,7 @@ async function request(options: ProviderAdapterOptions, input: RequestOptions): 
         const timeout = AbortSignal.timeout(options.timeoutMs ?? 20_000);
         const response = await fetchImpl(input.url, {
           method: input.method,
+          redirect: 'error',
           headers: input.headers,
           ...(input.body === undefined ? {} : { body: input.body }),
           signal: timeout,

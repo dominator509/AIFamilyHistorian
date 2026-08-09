@@ -107,6 +107,11 @@ try {
   );
   if (workerDataPrivilege.rows[0]?.has_privilege)
     throw new Error('worker database role directly accesses tenant tables');
+  const workerSessionPrivilege = await pool.query<{ has_privilege: boolean }>(
+    "select has_table_privilege('family_historian_worker', 'auth_sessions', 'SELECT,INSERT,UPDATE,DELETE') as has_privilege",
+  );
+  if (workerSessionPrivilege.rows[0]?.has_privilege)
+    throw new Error('worker database role can access server-side sessions');
   console.log('database verify: ok');
 } finally {
   await pool.end();

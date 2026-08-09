@@ -9,6 +9,7 @@ const [
   flyWorker,
   workerSource,
   workerRoleMigration,
+  workerSessionRevokeMigration,
   verifyWorkflow,
   releaseWorkflow,
 ] = await Promise.all([
@@ -18,6 +19,7 @@ const [
   readFile('fly.worker.toml', 'utf8'),
   readFile('apps/worker/src/index.ts', 'utf8'),
   readFile('drizzle/0013_worker_database_role.sql', 'utf8'),
+  readFile('drizzle/0015_revoke_worker_session_access.sql', 'utf8'),
   readFile('.github/workflows/verify.yml', 'utf8'),
   readFile('.github/workflows/release.yml', 'utf8'),
 ]);
@@ -64,6 +66,13 @@ for (const control of [
 ]) {
   if (!workerRoleMigration.toLowerCase().includes(control))
     throw new Error(`worker database role migration control missing: ${control}`);
+}
+for (const control of [
+  'revoke all privileges on table auth_sessions from family_historian_runtime',
+  'revoke all privileges on table auth_sessions from family_historian_worker',
+]) {
+  if (!workerSessionRevokeMigration.toLowerCase().includes(control))
+    throw new Error(`worker session privilege control missing: ${control}`);
 }
 for (const match of dockerfile.matchAll(/^FROM\s+node:[^\n]+$/gim)) {
   if (!/@sha256:[0-9a-f]{64}/u.test(match[0]))

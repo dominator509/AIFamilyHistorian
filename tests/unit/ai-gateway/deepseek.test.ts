@@ -58,6 +58,27 @@ describe('DeepSeek provider response boundaries', () => {
     });
   });
 
+  it('disables redirects before sending the API key and prompt payload', async () => {
+    let requestInit: RequestInit | undefined;
+    const provider = new DeepSeekProvider({
+      apiKey: 'sk-test-key',
+      maxAttempts: 1,
+      fetchImpl: (_input, init) => {
+        requestInit = init;
+        return new Response(
+          JSON.stringify({
+            id: 'request-redirect',
+            choices: [{ message: { content: '{"claims":[]}' } }],
+            usage: { prompt_tokens: 1, completion_tokens: 1 },
+          }),
+          { status: 200 },
+        );
+      },
+    });
+    await provider.complete(request);
+    expect(requestInit?.redirect).toBe('error');
+  });
+
   it('normalizes malformed provider responses without retrying them', async () => {
     let calls = 0;
     const provider = new DeepSeekProvider({
