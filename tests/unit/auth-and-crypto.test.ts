@@ -59,6 +59,24 @@ describe('session principal and auth policy', () => {
     ).toThrow('session lifetime');
   });
 
+  it('bounds signed claim fan-out and rejects oversized bearer payloads', () => {
+    expect(() =>
+      issueSessionToken(secret, {
+        ...principal,
+        archiveIds: Array.from({ length: 257 }, () => principal.archiveIds[0]!),
+      }),
+    ).toThrow();
+    expect(() =>
+      issueSessionToken(secret, {
+        ...principal,
+        permissions: Array.from({ length: 257 }, () => 'records:read'),
+      }),
+    ).toThrow();
+    expect(() => verifySessionToken(secret, `v1.${'a'.repeat(70_000)}.invalid`)).toThrow(
+      'AUTH_REQUIRED',
+    );
+  });
+
   it('authorizes scoped archive access only with permission', () => {
     const value = verifySessionToken(secret, issueSessionToken(secret, principal));
     expect(() => authorizeArchivePermission(value, 'other-archive', 'records:write')).toThrow(

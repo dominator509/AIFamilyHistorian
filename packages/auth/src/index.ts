@@ -5,12 +5,20 @@ export * from './rate-limit.js';
 export * from './session-revocation.js';
 export * from './session-store.js';
 
+const MAX_SESSION_ARCHIVES = 256;
+const MAX_SESSION_PERMISSIONS = 256;
+const MAX_SESSION_PERMISSION_LENGTH = 128;
+const MAX_SESSION_TOKEN_LENGTH = 64 * 1024;
+const MAX_SESSION_PAYLOAD_LENGTH = 48 * 1024;
+
 export const sessionSchema = z.object({
   sessionId: z.uuid().optional(),
   userId: z.uuid(),
   organizationId: z.uuid(),
-  archiveIds: z.array(z.uuid()).min(1),
-  permissions: z.array(z.string().min(1)),
+  archiveIds: z.array(z.uuid()).min(1).max(MAX_SESSION_ARCHIVES),
+  permissions: z
+    .array(z.string().min(1).max(MAX_SESSION_PERMISSION_LENGTH))
+    .max(MAX_SESSION_PERMISSIONS),
   expiresAt: z.number().int().positive(),
 });
 export type SessionPrincipal = z.infer<typeof sessionSchema>;
@@ -38,8 +46,10 @@ export function issueSessionToken(
 
 export function verifySessionToken(secret: string, token: string): SessionPrincipal {
   if (secret.length < 32) throw new Error('session secret is too short');
+  if (token.length > MAX_SESSION_TOKEN_LENGTH) throw new Error('AUTH_REQUIRED');
   const [version, payload, supplied] = token.split('.');
   if (version !== 'v1' || !payload || !supplied) throw new Error('AUTH_REQUIRED');
+  if (payload.length > MAX_SESSION_PAYLOAD_LENGTH) throw new Error('AUTH_REQUIRED');
   const expected = signSession(secret, payload);
   const suppliedBuffer = Buffer.from(supplied, 'base64url');
   if (expected.length !== suppliedBuffer.length || !timingSafeEqual(expected, suppliedBuffer))

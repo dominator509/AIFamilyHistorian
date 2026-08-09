@@ -261,3 +261,7 @@ The handoff and production-readiness documents now distinguish historical checkp
 ### ADR-073: Fail closed with an explicit retryable authorization-provider error
 
 Request-time membership and permission checks now convert database/checker failures into a redacted `PROVIDER_UNAVAILABLE` 503 with `retryable: true`. A checker returning `false` still produces the appropriate 401/403 denial, while no route proceeds on an unavailable authorization source. This keeps outages fail-closed without misclassifying them as generic internal errors or leaking database details.
+
+### ADR-074: Bound signed session claim fan-out
+
+Signed session principals now cap archive memberships and permissions, cap individual permission lengths, and reject oversized bearer payloads before HMAC verification or JSON parsing. The limits preserve normal multi-archive use while preventing a trusted-but-pathological identity assertion from causing unbounded archive fan-out, claim comparisons, or parser work at the request boundary.
