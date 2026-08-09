@@ -493,3 +493,7 @@ Session verification now requires exactly three token segments, preventing ignor
 ### ADR-131: Canonicalize and bound Stripe webhook signatures
 
 Stripe signature verification now bounds payload and header sizes, rejects malformed or duplicate timestamp fields, validates every supplied signature digest, and accepts any valid `v1` digest for key rotation. Unknown well-formed signature fields remain compatible with Stripe delivery while ambiguous or oversized inputs fail closed before HMAC comparison.
+
+### ADR-132: Require bounded length for bodyless provider responses
+
+Provider and DeepSeek response readers now reject bodyless responses that omit `Content-Length` rather than calling `arrayBuffer()` without a preallocation bound. Responses with a declared length are still checked against the adapter ceiling before parsing, and streamed responses retain their incremental byte ceilings.

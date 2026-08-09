@@ -24,6 +24,7 @@ async function readBoundedJson(response: Response): Promise<unknown> {
       throw new Error('DeepSeek response exceeds the allowed size');
   }
   if (!response.body) {
+    if (declaredLength === null) throw new Error('DeepSeek response has no bounded body length');
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.byteLength > MAX_DEEPSEEK_RESPONSE_BYTES)
       throw new Error('DeepSeek response exceeds the allowed size');

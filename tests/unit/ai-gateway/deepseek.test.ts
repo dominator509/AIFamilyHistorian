@@ -24,6 +24,15 @@ describe('DeepSeek provider response boundaries', () => {
     await expect(provider.complete(request)).rejects.toThrow(
       'DeepSeek response exceeds the allowed size',
     );
+
+    const unbounded = new DeepSeekProvider({
+      apiKey: 'sk-test-key',
+      maxAttempts: 1,
+      fetchImpl: () => Promise.resolve(new Response(null, { status: 200 })),
+    });
+    await expect(unbounded.complete(request)).rejects.toThrow(
+      'DeepSeek response has no bounded body length',
+    );
   });
 
   it('parses a bounded valid response normally', async () => {

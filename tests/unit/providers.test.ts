@@ -282,6 +282,22 @@ describe('provider adapters', () => {
     await expect(
       oversizedAudio.synthesize({ voiceId: 'stock-voice', text: 'Approved narration.' }),
     ).rejects.toMatchObject({ provider: 'elevenlabs' });
+
+    const unboundedJson = new ResendMailer({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () => Promise.resolve(new Response(null, { status: 200 })),
+    });
+    await expect(
+      unboundedJson.send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'unbounded-json',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend' });
   });
 
   it('rejects oversized or unsafe provider request inputs before dispatch', async () => {

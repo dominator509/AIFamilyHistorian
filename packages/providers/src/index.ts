@@ -115,6 +115,8 @@ async function readBoundedBytes(
       throw new ProviderAdapterError(`${provider} response exceeds the allowed size`, provider);
   }
   if (!response.body) {
+    if (declaredLength === null)
+      throw new ProviderAdapterError(`${provider} response has no bounded body length`, provider);
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.byteLength > maxBytes)
       throw new ProviderAdapterError(`${provider} response exceeds the allowed size`, provider);
