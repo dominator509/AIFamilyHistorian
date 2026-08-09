@@ -2,13 +2,14 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157)
+### Current continuation (HARDENING-155/156/157/158)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
 - The local host port-forward remains unavailable (`127.0.0.1:35432`), so the package migration command and host-only integration suite are not claimed as executed in this checkpoint. The SQL was applied and verified inside the preserved local container; the next operator run should execute the package migration and verifier through the internal runner.
 - This continuation adds `EXT-024` for the production worker login. Production remains blocked by the worker credential, hosted sandbox attestation, provider credentials, and legal/business evidence.
 - Encryption compatibility hardening is now included: a scoped decrypt caller cannot open a legacy unscoped version-1 envelope; focused auth/crypto coverage passed 13/13.
+- Media quarantine cleanup is now explicitly tenant-scoped; the internal worker fixture covers checksum failure, quarantine `error`, and terminal outbox handling.
 
 ### Current security scan
 
@@ -17,18 +18,18 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `d4c611d` (`HARDENING-155/156/157`); provider header controls, dedicated worker database credentials, and scoped legacy-envelope rejection are now enforced. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: pending commit (`HARDENING-155/156/157/158`); provider header controls, dedicated worker database credentials, scoped legacy-envelope rejection, and tenant-scoped quarantine cleanup are now enforced. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `a3cd766` (implementation, documentation, and latest preflight evidence); `origin/master` is synchronized.
-- Current code checkpoint: `d4c611d` (provider header control rejection, dedicated worker role, scoped legacy-envelope rejection, and all prior capabilities).
+- Current source checkpoint: pending commit (`HARDENING-158`); `origin/master` will be synchronized after the checkpoint commit.
+- Current code checkpoint: pending commit (provider header control rejection, dedicated worker role, scoped legacy-envelope rejection, tenant-scoped quarantine cleanup, and all prior capabilities).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
-- Latest continuation recheck: auth/crypto coverage passed 13/13; full local unit verification passed 27 files/143 tests, integration 13 files/42 tests, E2E 3 files/11 tests, security, secret, dependency, and reality gates. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
+- Latest continuation recheck: internal media-worker coverage passed 2/2; integration passed 13 files/43 tests, with security, secret, reality, typecheck, lint, and format gates green. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
 - Standard Codex Security scan `2ac638eb-66d7-4f36-b4e9-ec3792ca0574` completed against the prior `4d0614b` snapshot with one high, source-backed finding: hosted worker syscall, egress, cgroup/PID, read-only-root, and bounded-scratch enforcement remain unproven outside local Compose. The report is at `C:\\tmp\\codex-security-scans-k9cTF9\\AIFamilyHistorian\\4d0614ba1feda0eb9d2a604c4d71c59ec8df746e_20260809T130503Z_mm7xex28\\report.md`; the requirement remains fail-closed as `EXT-023`.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`

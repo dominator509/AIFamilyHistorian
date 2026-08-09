@@ -496,8 +496,13 @@ async function handleMediaScan(
       .withTenant(async (client) => {
         await assertWorkerLease(client, context);
         await client.query(
-          "update original_objects set quarantine_status = 'error' where id = $1 and quarantine_status = 'scanning'",
-          [aggregateId],
+          `update original_objects
+              set quarantine_status = 'error'
+            where id = $1
+              and organization_id = $2
+              and family_archive_id = $3
+              and quarantine_status = 'scanning'`,
+          [aggregateId, context.job.organizationId, context.job.familyArchiveId],
         );
       })
       .catch(() => undefined);

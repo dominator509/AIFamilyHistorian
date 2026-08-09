@@ -597,3 +597,7 @@ The worker now requires `WORKER_DATABASE_URL`, provisions a dedicated `family_hi
 ### ADR-157: Reject scoped reads of legacy unscoped encrypted envelopes
 
 `decryptRestrictedText` now fails closed when a caller supplies an archive scope for a version-1 envelope that has no embedded scope. Version-1 data remains readable only through an explicitly unscoped migration path; scoped callers cannot accidentally treat legacy global ciphertext as archive-bound. Version-2 envelopes continue to require an exact archive-scope match.
+
+### ADR-158: Scope media quarantine failure transitions explicitly
+
+Media-scan failure cleanup now requires the authoritative organization and archive predicates in addition to the original-object identifier and `scanning` state. The worker transaction and RLS remain defense layers, but the explicit predicates make the error transition safe under direct-call reuse, future policy changes, and stale/racing handlers. A real internal media-worker regression verifies checksum failure becomes a tenant-scoped quarantine error and terminal outbox failure.

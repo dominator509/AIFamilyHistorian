@@ -140,4 +140,70 @@ describe('real media worker fixture', () => {
     );
     expect(outbox.rows[0]).toEqual({ status: 'completed' });
   }, 120_000);
+
+  it('scopes quarantine errors to the authoritative organization and archive', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Media error family', 'Media error archive');
+    const mediaAssetId = uuidV7();
+    const originalObjectId = uuidV7();
+    const outboxId = uuidV7();
+    const objectKey = originalObjectKey(context.organizationId, context.familyArchiveId);
+    const bytes = wavFixture();
+    await storage.putOriginal(
+      objectKey,
+      bytes,
+      'audio/wav',
+      Buffer.from(createHash('sha256').update(bytes).digest('hex'), 'hex').toString('base64'),
+    );
+    await pool.query(
+      "insert into media_assets(id, organization_id, family_archive_id, media_type, rights_status) values ($1,$2,$3,'audio','verified')",
+      [mediaAssetId, context.organizationId, context.familyArchiveId],
+    );
+    await pool.query(
+      "insert into original_objects(id, organization_id, family_archive_id, media_asset_id, object_key, content_type, byte_size, sha256, quarantine_status) values ($1,$2,$3,$4,$5,'audio/wav',$6,$7,'pending')",
+      [
+        originalObjectId,
+        context.organizationId,
+        context.familyArchiveId,
+        mediaAssetId,
+        objectKey,
+        bytes.byteLength,
+        '00'.repeat(32),
+      ],
+    );
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [
+        outboxId,
+        context.organizationId,
+        context.familyArchiveId,
+        'media.scan',
+        { aggregateId: originalObjectId, payload: { objectKey } },
+      ],
+    );
+
+    const dispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: createDefaultHandlers({ storage }),
+      jobTypes: ['media.scan'],
+      archiveIds: [context.familyArchiveId],
+      pollMilliseconds: 50,
+    });
+    expect(await dispatcher.processOne()).toBe(true);
+
+    const state = await pool.query<{ quarantine_status: string }>(
+      'select quarantine_status from original_objects where id = $1',
+      [originalObjectId],
+    );
+    expect(state.rows[0]).toEqual({ quarantine_status: 'error' });
+    const outbox = await pool.query<{ status: string; last_error_code: string }>(
+      'select status, last_error_code from job_outbox where id = $1',
+      [outboxId],
+    );
+    expect(outbox.rows[0]).toEqual({
+      status: 'terminal_failed',
+      last_error_code: 'CHECKSUM_MISMATCH',
+    });
+  }, 120_000);
 });
