@@ -18,6 +18,8 @@ const concurrentActorUserId = uuidV7();
 let providerCalls = 0;
 const storage = {
   beginMultipart: () => Promise.resolve(`provider-upload-${++providerCalls}`),
+  abortMultipart: () => Promise.resolve(),
+  listMultipartParts: () => Promise.resolve([]),
 } as never;
 const service = new ArchiveService(pool, 'a'.repeat(32), storage);
 
@@ -97,5 +99,35 @@ describe('active upload quotas', () => {
       [concurrentContext.organizationId, concurrentContext.familyArchiveId],
     );
     expect(active.rows[0]?.count).toBe(8);
+  });
+
+  it('rejects another member from reading or aborting an upload session', async () => {
+    const media = await withTenantTransaction(pool, context, async (client) =>
+      client.query<{ id: string }>('select id from media_assets limit 1'),
+    );
+    const owner = uuidV7();
+    const otherMember = uuidV7();
+    const started = await service.beginUpload(context, owner, `ownership-${uuidV7()}`, {
+      mediaAssetId: media.rows[0]!.id,
+      contentType: 'audio/wav',
+      byteSize: 1,
+      sha256Hex: 'c'.repeat(64),
+    });
+    const uploadId = started.response.id;
+
+    await expect(
+      service.uploadStatus(context, otherMember, uploadId),
+    ).rejects.toMatchObject<ApiProblem>({
+      code: 'PERMISSION_DENIED',
+    });
+    await expect(
+      service.abortUpload(context, otherMember, `ownership-abort-${uuidV7()}`, uploadId),
+    ).rejects.toMatchObject<ApiProblem>({ code: 'PERMISSION_DENIED' });
+    const status = await withTenantTransaction(pool, context, (client) =>
+      client.query<{ status: string }>('select status from upload_sessions where id = $1', [
+        uploadId,
+      ]),
+    );
+    expect(status.rows[0]).toEqual({ status: 'initiated' });
   });
 });

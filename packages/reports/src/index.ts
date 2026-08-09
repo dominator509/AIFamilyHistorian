@@ -10,9 +10,9 @@ const reportItemSchema = z.object({
 export const releaseReadinessReportSchema = z.object({
   editionId: z.uuid(),
   editionHash: z.string().regex(/^[a-f0-9]{64}$/u),
-  rights: z.array(reportItemSchema),
-  consents: z.array(reportItemSchema),
-  citations: z.array(reportItemSchema),
+  rights: z.array(reportItemSchema).min(1),
+  consents: z.array(reportItemSchema).min(1),
+  citations: z.array(reportItemSchema).min(1),
 });
 export type ReleaseReadinessReport = z.infer<typeof releaseReadinessReportSchema>;
 

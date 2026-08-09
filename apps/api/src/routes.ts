@@ -334,6 +334,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   app.post('/v1/archives/:archiveId/uploads', async (request, reply) => {
     const { archiveId } = archiveParamsSchema.parse(request.params);
     const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.beginUpload(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,
@@ -349,8 +350,10 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   app.get('/v1/archives/:archiveId/uploads/:uploadId', async (request) => {
     const { archiveId, uploadId } = uploadParamsSchema.parse(request.params);
     const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:read');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     return dependencies.service.uploadStatus(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
+      value.userId,
       uploadId,
     );
   });
@@ -358,8 +361,10 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   app.get('/v1/archives/:archiveId/uploads/:uploadId/parts/:partNumber', async (request) => {
     const { archiveId, uploadId, partNumber } = uploadPartParamsSchema.parse(request.params);
     const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     return dependencies.service.signUploadPart(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
+      value.userId,
       uploadId,
       partNumber,
     );
@@ -368,6 +373,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   app.post('/v1/archives/:archiveId/uploads/:uploadId/complete', async (request, reply) => {
     const { archiveId, uploadId } = uploadParamsSchema.parse(request.params);
     const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const input = completeUploadInputSchema.parse(request.body);
     const parts = input.parts.map(({ ETag, PartNumber, ChecksumSHA256 }) => ({
       ETag,
@@ -390,6 +396,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   app.post('/v1/archives/:archiveId/uploads/:uploadId/abort', async (request, reply) => {
     const { archiveId, uploadId } = uploadParamsSchema.parse(request.params);
     const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.abortUpload(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,

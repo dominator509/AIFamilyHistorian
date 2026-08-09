@@ -303,6 +303,7 @@ async function handleMediaScan(
             };
           }
       > => {
+        await assertWorkerLease(client, context);
         const current = await loadOriginal(
           client,
           context.job.organizationId,
@@ -422,6 +423,7 @@ async function handleMediaScan(
         }
       }
       await context.withTenant(async (client) => {
+        await assertWorkerLease(client, context);
         await ensureFixity(
           client,
           context.job.organizationId,
@@ -439,7 +441,9 @@ async function handleMediaScan(
             artifact.recipeVersion,
             artifact.bytes,
             artifact.contentType,
+            () => assertWorkerLease(client, context),
           );
+        await assertWorkerLease(client, context);
         await client.query(
           "update original_objects set quarantine_status = 'clean' where id = $1",
           [aggregateId],
@@ -449,6 +453,7 @@ async function handleMediaScan(
       await rm(workDir, { recursive: true, force: true });
     }
   } catch (error) {
+    if (error instanceof WorkerJobError && error.code === 'WORKER_LEASE_LOST') throw error;
     await context
       .withTenant(async (client) => {
         await client.query(
@@ -560,7 +565,9 @@ async function storeDerivative(
   recipeVersion: string,
   bytes: Uint8Array,
   contentType: string,
+  assertLease: () => Promise<void>,
 ): Promise<void> {
+  await assertLease();
   const existing = await client.query<{ id: string; sha256: string }>(
     'select id, sha256 from derivative_objects where organization_id = $1 and family_archive_id = $2 and original_object_id = $3 and recipe_version = $4 limit 1',
     [organizationId, familyArchiveId, originalObjectId, recipeVersion],
@@ -579,6 +586,7 @@ async function storeDerivative(
   const derivativeId = uuidV7();
   const expectedSha256 = Buffer.from(digest, 'hex').toString('base64');
   try {
+    await assertLease();
     await storage.putOriginal(objectKey, bytes, contentType, expectedSha256);
   } catch (error) {
     // A previous attempt may have uploaded the immutable derivative before its
@@ -592,6 +600,7 @@ async function storeDerivative(
       throw error;
     }
   }
+  await assertLease();
   const inserted = await client.query<{ id: string; sha256: string }>(
     `insert into derivative_objects(
        id, organization_id, family_archive_id, original_object_id, object_key, recipe_version, sha256
@@ -625,6 +634,30 @@ async function storeDerivative(
     "insert into fixity_records(id, organization_id, family_archive_id, object_kind, object_id, algorithm, digest, byte_size, verified_at) values ($1,$2,$3,'derivative',$4,'sha256',$5,$6,now())",
     [uuidV7(), organizationId, familyArchiveId, derivativeId, digest, bytes.byteLength],
   );
+}
+
+async function assertWorkerLease(
+  client: DatabaseClient,
+  context: Parameters<WorkerJobHandler>[0],
+): Promise<void> {
+  const result = await client.query(
+    `select 1
+       from job_outbox
+      where id = $1
+        and organization_id = $2
+        and family_archive_id is not distinct from $3::uuid
+        and status = 'running'
+        and lock_token = $4
+      for update`,
+    [
+      context.job.id,
+      context.job.organizationId,
+      context.job.familyArchiveId,
+      context.job.lockToken,
+    ],
+  );
+  if (result.rowCount !== 1)
+    throw new WorkerJobError('worker lease is no longer active', 'WORKER_LEASE_LOST', false);
 }
 
 function derivativeContentType(objectKey: string): string {

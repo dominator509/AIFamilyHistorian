@@ -410,8 +410,8 @@ async function sensitiveClaimGate(): Promise<void> {
   const input = {
     editionId: id(),
     editionHash: 'a'.repeat(64),
-    rights: [],
-    consents: [],
+    rights: [{ id: id(), label: 'portrait rights', status: 'ready' as const }],
+    consents: [{ id: id(), label: 'publication consent', status: 'ready' as const }],
     citations: [
       {
         id: id(),

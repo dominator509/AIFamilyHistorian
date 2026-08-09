@@ -545,11 +545,13 @@ export class ArchiveService {
 
   public async signUploadPart(
     context: DatabaseContext,
+    actorUserId: string,
     uploadId: string,
     partNumber: number,
   ): Promise<{ url: string; expiresIn: number }> {
     await this.assertArchiveContext(context);
     const upload = await this.upload(context, uploadId);
+    this.assertUploadOwner(upload, actorUserId);
     if (upload.status !== 'initiated')
       throw new ApiProblem('UPLOAD_INCOMPLETE', 'Upload is not accepting parts');
     const expiresIn = 900;
@@ -566,6 +568,7 @@ export class ArchiveService {
 
   public async uploadStatus(
     context: DatabaseContext,
+    actorUserId: string,
     uploadId: string,
   ): Promise<{
     id: string;
@@ -575,6 +578,7 @@ export class ArchiveService {
   }> {
     await this.assertArchiveContext(context);
     const upload = await this.upload(context, uploadId);
+    this.assertUploadOwner(upload, actorUserId);
     const parts =
       upload.status === 'initiated'
         ? await this.requireStorage().listMultipartParts(
@@ -615,6 +619,7 @@ export class ArchiveService {
       },
       async (client) => {
         const upload = await this.uploadWithClient(client, uploadId);
+        this.assertUploadOwner(upload, actorUserId);
         if (upload.status !== 'initiated')
           throw new ApiProblem('CONFLICT', 'Upload has already reached a terminal state');
         try {
@@ -717,6 +722,7 @@ export class ArchiveService {
       },
       async (client) => {
         const upload = await this.uploadWithClient(client, uploadId);
+        this.assertUploadOwner(upload, actorUserId);
         if (upload.status === 'completed')
           throw new ApiProblem('CONFLICT', 'Completed uploads cannot be aborted');
         if (upload.status === 'initiated') {
@@ -846,12 +852,17 @@ export class ArchiveService {
 
   private async uploadWithClient(client: DatabaseClient, uploadId: string): Promise<UploadRow> {
     const result = await client.query<UploadRow>(
-      'select id, media_asset_id, object_key, provider_upload_id, content_type, expected_byte_size, expected_sha256_hex, expected_sha256_base64, status from upload_sessions where id = $1',
+      'select id, initiated_by_user_id, media_asset_id, object_key, provider_upload_id, content_type, expected_byte_size, expected_sha256_hex, expected_sha256_base64, status from upload_sessions where id = $1',
       [uploadId],
     );
     const upload = result.rows[0];
     if (!upload) throw new ApiProblem('UPLOAD_INCOMPLETE', 'Upload session was not found');
     return upload;
+  }
+
+  private assertUploadOwner(upload: UploadRow, actorUserId: string): void {
+    if (upload.initiated_by_user_id !== actorUserId)
+      throw new ApiProblem('PERMISSION_DENIED', 'Upload session belongs to another user');
   }
 
   private async enqueue(
@@ -887,6 +898,7 @@ export class ArchiveService {
 
 interface UploadRow {
   id: string;
+  initiated_by_user_id: string | null;
   media_asset_id: string;
   object_key: string;
   provider_upload_id: string;

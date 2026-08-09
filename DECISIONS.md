@@ -201,3 +201,15 @@ The live-fire helper now discovers the active `family_historian_internal` networ
 ### ADR-058: Reclaim expired running outbox leases
 
 The dispatcher now treats a `running` outbox row with an expired `locked_at` lease as claimable, while retaining the existing `queued`/`retryable_failed` eligibility and `available_at` gate. Reclaiming assigns a fresh UUID lock token and increments the attempt count; completion and failure updates remain fenced by that token. This recovers jobs from an unexpectedly terminated worker without allowing an active lease to be stolen, and the bounded max-attempt policy still determines terminal failure after a reclaimed attempt.
+
+### ADR-059: Require evidence in every publication readiness category
+
+Publication readiness now requires at least one rights, consent, and citation check before any PDF, EPUB, JSONL, or CSV artifact is rendered. Blocked checks remain fail-closed. This prevents a syntactically valid but evidence-empty report from being treated as approval; edition identity/hash binding and legal review remain separate gates.
+
+### ADR-060: Bind upload-session operations to the initiating user
+
+Upload routes revalidate live archive membership and the service now requires the authenticated user to match `upload_sessions.initiated_by_user_id` for status, part signing, completion, and abort operations. RLS still provides organization/archive isolation, while uploader ownership closes same-archive session takeover by another member. Legacy rows without an owner fail closed rather than becoming implicitly transferable.
+
+### ADR-061: Fence media side effects to the active outbox lease
+
+Media handlers now lock and verify the current `job_outbox` row/token before quarantine transitions and before/after derivative object publication and authoritative inserts. A stale handler raises `WORKER_LEASE_LOST` and skips the catch-path quarantine error update, preventing an expired attempt from corrupting a newer scan. Existing immutable-key and SHA-256 idempotency controls remain in place; a lease heartbeat/hosted queue topology is still a deployment concern.
