@@ -469,3 +469,7 @@ Generated chapter revisions and disputed claims now validate every evidence link
 ### ADR-125: Enforce annotation provenance bounds and marker fidelity
 
 Annotated candidate extraction now caps fan-out at 1,000 records. Evidence assertion validates candidate UUIDs, kind membership, safe source offsets, and exact marker kind/value fidelity against the authoritative source text before a candidate can be treated as evidenced. This prevents tampered spans, unknown candidate kinds, and excessively wide annotation payloads from crossing the domain boundary.
+
+### ADR-126: Bound narration manifest materialization
+
+Narration manifest construction now requires a non-empty edition scope, non-empty paragraph text, no more than 10,000 chapters, and no more than 16 MiB of UTF-8 narration text. The validated string collection is copied before freezing the manifest, preventing malformed runtime values and unbounded provider-bound narration materialization from crossing the publication boundary.

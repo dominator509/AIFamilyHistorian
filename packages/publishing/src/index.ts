@@ -80,18 +80,41 @@ export interface NarrationManifest {
   readonly chapters: readonly { readonly ordinal: number; readonly text: string }[];
 }
 
+export const MAX_NARRATION_CHAPTERS = 10_000;
+export const MAX_NARRATION_TEXT_BYTES = 16 * 1024 * 1024;
+
 /** Keep narration input explicit and authorization-bound; synthesis remains a provider adapter concern. */
 export function buildNarrationManifest(input: {
   readonly editionId: string;
   readonly voiceAuthorizationId: string;
   readonly paragraphs: readonly string[];
 }): NarrationManifest {
-  if (!input.voiceAuthorizationId) throw new Error('voice authorization is required');
+  if (typeof input.editionId !== 'string' || input.editionId.trim().length === 0)
+    throw new Error('edition is required');
+  if (
+    typeof input.voiceAuthorizationId !== 'string' ||
+    input.voiceAuthorizationId.trim().length === 0
+  )
+    throw new Error('voice authorization is required');
+  const paragraphs = input.paragraphs as readonly unknown[];
+  if (!Array.isArray(paragraphs) || paragraphs.length === 0)
+    throw new Error('narration paragraphs are required');
+  if (paragraphs.length > MAX_NARRATION_CHAPTERS)
+    throw new Error('narration chapter count exceeds the limit');
+  let totalBytes = 0;
+  const validatedParagraphs: string[] = [];
+  for (const paragraph of paragraphs) {
+    if (typeof paragraph !== 'string' || paragraph.trim().length === 0)
+      throw new Error('narration paragraph is invalid');
+    totalBytes += Buffer.byteLength(paragraph, 'utf8');
+    if (totalBytes > MAX_NARRATION_TEXT_BYTES) throw new Error('narration text exceeds the limit');
+    validatedParagraphs.push(paragraph);
+  }
   return Object.freeze({
     editionId: input.editionId,
     voiceAuthorizationId: input.voiceAuthorizationId,
     chapters: Object.freeze(
-      input.paragraphs.map((text, index) => Object.freeze({ ordinal: index + 1, text })),
+      validatedParagraphs.map((text, index) => Object.freeze({ ordinal: index + 1, text })),
     ),
   });
 }

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   buildNarrationManifest,
   buildPublicationBundle,
+  MAX_NARRATION_CHAPTERS,
+  MAX_NARRATION_TEXT_BYTES,
 } from '../../packages/publishing/src/index.js';
 
 const base = {
@@ -65,5 +67,32 @@ describe('publication boundary', () => {
     expect(() => buildNarrationManifest({ ...base, voiceAuthorizationId: '' })).toThrow(
       'voice authorization',
     );
+  });
+
+  it('bounds narration scope and rejects malformed paragraph input', () => {
+    expect(() =>
+      buildNarrationManifest({ ...base, editionId: ' ', voiceAuthorizationId: 'voice-1' }),
+    ).toThrow('edition is required');
+    expect(() =>
+      buildNarrationManifest({
+        ...base,
+        paragraphs: ['   '],
+        voiceAuthorizationId: 'voice-1',
+      }),
+    ).toThrow('narration paragraph is invalid');
+    expect(() =>
+      buildNarrationManifest({
+        ...base,
+        paragraphs: Array.from({ length: MAX_NARRATION_CHAPTERS + 1 }, () => 'chapter'),
+        voiceAuthorizationId: 'voice-1',
+      }),
+    ).toThrow('chapter count');
+    expect(() =>
+      buildNarrationManifest({
+        ...base,
+        paragraphs: ['x'.repeat(MAX_NARRATION_TEXT_BYTES + 1)],
+        voiceAuthorizationId: 'voice-1',
+      }),
+    ).toThrow('text exceeds');
   });
 });
