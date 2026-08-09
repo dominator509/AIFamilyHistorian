@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -21,6 +21,7 @@
 - Provider probe hardening is now included: credential-bearing HTTP probes use a shared bounded Node fetch transport with environment-backed secrets, redirect rejection, local-HTTP restriction, and 1 MiB response ceilings; Redis URL probing no longer places the credential-bearing URL in `node` argv. Focused loopback coverage passed 1/1; authenticated external probe results remain unchanged.
 - Operational secret transport is also hardened: backup/restore, Redis, disposable integration/E2E, and live-fire runners no longer place credentials or secret-bearing service URLs in Docker command arguments. The real internal matrix passed integration 13/43, E2E 3/11, all 16 live-fire proofs, backup, and restore-check (`schema_migrations=15`).
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
+- HARDENING-173 adds a production-only worker startup gate that fails closed unless Linux exposes no-new-privileges, zero effective capabilities, seccomp filtering, a read-only root, noexec/nosuid `/tmp`, and bounded PID/memory/CPU cgroups. Unit coverage passed 30 files/158 tests; egress and deployment identity remain external attestation properties.
 - Post-checkpoint verification: `sh scripts/graph-next.sh` returned `RESUME EP-000`; `sh scripts/preflight.sh` remains fail-closed with 18 unresolved requirements. The current commit is available from `git rev-parse HEAD` and must match `git ls-remote origin refs/heads/master`.
 
 ### Current security scan
@@ -45,7 +46,7 @@
 - Current code checkpoint: run `git rev-parse HEAD` (provider redirect rejection, worker `auth_sessions` revocation, structured sandbox attestation, and bounded Deepgram probe responses are included).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
-- Latest continuation recheck: build passed; integration passed 13 files/43 tests; unit passed 29 files/153 tests; E2E passed 3 files/11 tests; focused AI gateway coverage passed 10/10; security, secret, typecheck, lint, and format gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 18 unresolved requirements; production readiness remains fail-closed.
+- Latest continuation recheck: build passed; unit passed 30 files/158 tests; security, secret, typecheck, lint, and format gates are green. Integration remains previously verified at 13 files/43 tests, E2E at 3 files/11 tests, and all 16 live-fire proofs remain previously verified. Aggregate `verify.sh` remains correctly preflight-blocked on 18 unresolved requirements; production readiness remains fail-closed.
 - Standard Codex Security scan `2ac638eb-66d7-4f36-b4e9-ec3792ca0574` completed against the prior `4d0614b` snapshot with one high, source-backed finding: hosted worker syscall, egress, cgroup/PID, read-only-root, and bounded-scratch enforcement remain unproven outside local Compose. The report is at `C:\\tmp\\codex-security-scans-k9cTF9\\AIFamilyHistorian\\4d0614ba1feda0eb9d2a604c4d71c59ec8df746e_20260809T130503Z_mm7xex28\\report.md`; the requirement remains fail-closed as `EXT-023`.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`

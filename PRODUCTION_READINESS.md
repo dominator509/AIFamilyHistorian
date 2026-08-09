@@ -5,11 +5,12 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 29 files / 153 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 30 files / 158 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
 - The worker now serves loopback-only `/health/live` and `/health/ready` endpoints; readiness follows Redis dependency state and is cleared during shutdown, so the image healthcheck reflects the actual worker process without creating a public listener.
+- HARDENING-173 adds a production-only worker startup gate that fails closed unless the running Linux process exposes no-new-privileges, zero effective capabilities, seccomp filtering, a read-only root, noexec/nosuid `/tmp`, and bounded PID/memory/CPU cgroups. Unit coverage proves both acceptance and failure for each observable control; this runtime check cannot prove provider-independent egress or deployment identity, so the signed hosted attestation remains required.
 - HARDENING-135 additionally guards the Fly worker against accidental public service routing; the manifest and security harness require no public worker service declarations, while hosted syscall, egress, cgroup/PID, read-only-root, and scratch attestation remain separate release gates.
 - HARDENING-137 bounds parsed Deepgram, Resend, Turnstile, and Stripe provider fields and collections in addition to aggregate response-byte limits.
 - HARDENING-138 normalizes malformed provider and DeepSeek response shapes to stable non-retryable adapter errors, preventing raw schema details from crossing adapter boundaries.

@@ -6,8 +6,10 @@ import { createPool } from '@family-historian/database';
 import { ObjectStorage, parseStorageConfig } from '@family-historian/storage';
 import { OutboxDispatcher } from './dispatcher.js';
 import { createDefaultHandlers } from './handlers.js';
+import { assertWorkerSandbox } from './sandbox.js';
 
 const environment = parseRuntimeEnvironment(process.env);
+if (environment.NODE_ENV === 'production') await assertWorkerSandbox();
 const logger = pino({
   level: process.env.LOG_LEVEL ?? 'info',
   redact: ['database_url', 'redis_url', 'req.headers.authorization', 'req.headers.cookie'],
