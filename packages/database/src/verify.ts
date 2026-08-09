@@ -107,6 +107,18 @@ try {
   );
   if (workerDataPrivilege.rows[0]?.has_privilege)
     throw new Error('worker database role directly accesses tenant tables');
+  const workerRuntimeMembership = await pool.query<{ member: boolean }>(
+    `select exists (
+       select 1
+         from pg_auth_members membership
+         join pg_roles member_role on member_role.oid = membership.member
+         join pg_roles granted_role on granted_role.oid = membership.roleid
+        where member_role.rolname = 'family_historian_worker'
+          and granted_role.rolname = 'family_historian_runtime'
+     ) as member`,
+  );
+  if (workerRuntimeMembership.rows[0]?.member)
+    throw new Error('worker database role can activate the broad runtime role');
   const workerSessionPrivilege = await pool.query<{ has_privilege: boolean }>(
     "select has_table_privilege('family_historian_worker', 'auth_sessions', 'SELECT,INSERT,UPDATE,DELETE') as has_privilege",
   );
