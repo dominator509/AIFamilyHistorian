@@ -59,7 +59,7 @@
 - Current code checkpoint: run `git rev-parse HEAD` (provider redirect rejection, worker `auth_sessions` revocation, structured sandbox attestation, and bounded Deepgram probe responses are included).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
-- Latest continuation recheck: build passed; unit passed 30 files/158 tests; integration passed 13 files/43 tests; E2E passed 3 files/11 tests; all 16 live-fire proofs passed; security, secret, typecheck, lint, and format gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 18 unresolved requirements; production readiness remains fail-closed.
+- Latest continuation recheck: unit passed 30 files/163 tests; integration passed 13 files/43 tests; E2E passed 3 files/11 tests; typecheck, format, security, and diff checks passed. Aggregate `verify.sh` remains correctly preflight-blocked on 18 unresolved requirements; production readiness remains fail-closed.
 - Standard Codex Security scan `2ac638eb-66d7-4f36-b4e9-ec3792ca0574` completed against the prior `4d0614b` snapshot with one high, source-backed finding: hosted worker syscall, egress, cgroup/PID, read-only-root, and bounded-scratch enforcement remain unproven outside local Compose. The report is at `C:\\tmp\\codex-security-scans-k9cTF9\\AIFamilyHistorian\\4d0614ba1feda0eb9d2a604c4d71c59ec8df746e_20260809T130503Z_mm7xex28\\report.md`; the requirement remains fail-closed as `EXT-023`.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
