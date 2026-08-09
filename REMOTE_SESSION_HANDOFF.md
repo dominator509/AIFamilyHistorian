@@ -4,15 +4,15 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: pending `HARDENING-127` commit; direct streamed object downloads now default to and cannot exceed the 25 GiB `MAX_STREAMED_OBJECT_BYTES` ceiling. HARDENING-126 session metadata bounds, HARDENING-125 callback payload bounds, HARDENING-124 edition manifests, HARDENING-123 provenance, HARDENING-122 portable export, HARDENING-121 provider response, HARDENING-120 Stripe signature, HARDENING-119 auth, and earlier gates remain active.
+- Latest implementation continuation: `a596e2a` (`HARDENING-127`); direct streamed object downloads now default to and cannot exceed the 25 GiB `MAX_STREAMED_OBJECT_BYTES` ceiling. HARDENING-126 session metadata bounds, HARDENING-125 callback payload bounds, HARDENING-124 edition manifests, HARDENING-123 provenance, HARDENING-122 portable export, HARDENING-121 provider response, HARDENING-120 Stripe signature, HARDENING-119 auth, and earlier gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
-- Superseding checkpoint: pending `HARDENING-127` commit is the current implementation checkpoint; older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: pending `HARDENING-127` commit; `origin/master` must be rechecked after push.
-- Current code checkpoint: pending `HARDENING-127` commit (all capabilities listed below, plus bounded persisted session metadata and bounded direct streamed object downloads).
+- Superseding checkpoint: `a596e2a` is the current implementation checkpoint; older implementation hashes below are retained only as historical provenance.
+- Current source checkpoint: `a596e2a`; `origin/master` matches this commit.
+- Current code checkpoint: `a596e2a` (all capabilities listed below, plus bounded persisted session metadata and bounded direct streamed object downloads).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
 - Latest continuation recheck: HARDENING-127 storage download-boundary coverage passed through the real MinIO integration; full local verification passed unit 27 files/130 tests, integration 13 files/41 tests, E2E 3 files/11 tests, accessibility (`pdf_tagged=true epub_semantics=true`), all sixteen live-fire proofs, performance smoke (100 requests, p95=0.56ms), workspace build, typecheck, lint, format, security, secret, dependency-audit, reality, and smoke gates. Production readiness remains fail-closed on the documented 16 unresolved requirements.
