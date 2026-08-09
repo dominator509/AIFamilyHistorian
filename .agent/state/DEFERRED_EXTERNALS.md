@@ -36,6 +36,7 @@ HARDENING-120 additionally bounds Stripe webhook payload/header materialization,
 
 Latest hardening evidence: provider redirects are now rejected before dispatch (HARDENING-160), and worker access to the global `auth_sessions` table is revoked and locally verified (HARDENING-161). The current security scan still reports the broader worker runtime-role/tenant-context boundary as an open high finding, in addition to hosted sandbox and scratch-capacity evidence. These are not marked satisfied by local tests.
 HARDENING-162 corrected deployment wiring locally: staging now deploys `fly.worker.toml` separately so native media tooling is present in the worker image. Hosted app/resource creation and sandbox enforcement remain external.
+HARDENING-163 added the hosted scratch-volume declaration and exact `fly volumes create` command. The volume must be created and inspected in the target Fly app; no external resource was created during this run.
 
 Latest continuation evidence: HARDENING-26 adds `POST /v1/session/logout`, which requires a signed session identifier and the configured Redis revocation store, revokes the current session through its expiry, returns `204`, and is proven by unit coverage; subsequent authenticated requests are rejected by the request hook. Administrative session inventory, rotation, membership revalidation, passkeys, and hosted identity verification remain deferred release requirements.
 

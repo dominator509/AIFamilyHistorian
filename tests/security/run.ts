@@ -52,6 +52,10 @@ if (
   throw new Error('worker image must use the dedicated non-root runtime');
 if (flyWorker.includes('[http_service]') || flyWorker.includes('[[services]]'))
   throw new Error('hosted worker must not declare public ingress');
+for (const control of ['[[mounts]]', 'destination = "/tmp"', 'processes = ["worker"]']) {
+  if (!flyWorker.includes(control))
+    throw new Error(`hosted worker scratch mount missing: ${control}`);
+}
 if (!workerSource.includes("healthServer.listen(healthPort, '127.0.0.1'"))
   throw new Error('worker health server must bind loopback only');
 if (!workerSource.includes('WORKER_DATABASE_URL'))

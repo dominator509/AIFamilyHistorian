@@ -617,3 +617,7 @@ Migration `0015_revoke_worker_session_access.sql` revokes `auth_sessions` DML fr
 ### ADR-162: Deploy the dedicated worker image in staging
 
 The release workflow now deploys `fly.worker.toml` separately after the API deployment. The API manifest targets the smaller `runtime` image, while the worker manifest targets `worker-runtime` with native media tooling. A security-harness assertion keeps the dedicated worker deployment from silently disappearing during future workflow edits.
+
+### ADR-163: Declare bounded hosted worker scratch
+
+The worker manifest now declares a named 30 GiB volume mounted at `/tmp` only for the worker process. This is sized above the 25 GiB accepted original plus the 512 MiB derivative reserve, while the exact volume creation, filesystem mode, and hosted sandbox evidence remain operator-controlled release gates.

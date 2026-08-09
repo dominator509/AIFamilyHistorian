@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -14,6 +14,7 @@
 - Provider requests now reject redirects in both generic adapters and DeepSeek; focused request-option tests passed 31/31.
 - Worker access to global `auth_sessions` is revoked from both runtime and worker roles by migration `0015_revoke_worker_session_access.sql`; verifier and security harness enforce the invariant, and the local PostgreSQL probe returned `f|f`.
 - Staging release wiring now deploys `fly.worker.toml` separately, preserving the native `worker-runtime` image for media processing; the security harness asserts that dedicated deployment command.
+- Hosted scratch wiring now declares a named 30 GiB `worker_scratch` volume at `/tmp` for the worker process. The exact `fly volumes create` command is documented, but the volume, filesystem mode, and hosted sandbox controls remain unverified because no Fly credential was available.
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
 
 ### Current security scan

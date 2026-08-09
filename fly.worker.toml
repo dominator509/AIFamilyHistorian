@@ -20,6 +20,15 @@ primary_region = "ord"
   cpus = 2
   memory = "2048mb"
 
+# The media pipeline materializes the authoritative object under /tmp. Create
+# this named volume before deployment with at least 30 GiB and attach it only
+# to the worker process; the capacity and filesystem-mode attestation remain a
+# release gate.
+[[mounts]]
+  source = "worker_scratch"
+  destination = "/tmp"
+  processes = ["worker"]
+
 [kill]
   signal = "SIGTERM"
   timeout = "30s"
