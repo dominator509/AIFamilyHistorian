@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -14,6 +14,7 @@
 - Provider requests now reject redirects in both generic adapters and DeepSeek; focused request-option tests passed 31/31.
 - Worker access to global `auth_sessions` is revoked from both runtime and worker roles by migration `0015_revoke_worker_session_access.sql`; verifier and security harness enforce the invariant, and the local PostgreSQL probe returned `f|f`.
 - Staging release wiring now deploys `fly.worker.toml` separately, preserving the native `worker-runtime` image for media processing; the security harness asserts that dedicated deployment command.
+- HARDENING-175 closes the remaining workflow image drift: release CI builds and pushes `ghcr.io/<owner>/<repo>-worker:<tag>` from the `worker-runtime` target and deploys that distinct image through `fly.worker.toml`; the API image is no longer reused for the worker.
 - Hosted scratch wiring now declares a named 30 GiB `worker_scratch` volume at `/tmp` for the worker process. The exact `fly volumes create` command is documented, but the volume, filesystem mode, and hosted sandbox controls remain unverified because no Fly credential was available.
 - The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. HARDENING-170 verifies its Ed25519 signature against `WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE`; current hosted enforcement and signed evidence remain external.
 - The Deepgram transcription live-fire probe now bounds streamed and non-streamed provider responses at 8 MiB before JSON parsing and emits only a validated request identifier or neutral presence marker; this changes no production-provider credential state.
@@ -35,7 +36,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-170`; provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `HARDENING-175`; provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.

@@ -21,6 +21,7 @@ permissions:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
+  WORKER_IMAGE: ghcr.io/${{ github.repository }}-worker
 
 jobs:
   verify-and-build:
@@ -149,6 +150,10 @@ jobs:
         run: docker build --target runtime --build-arg SERVICE=api --tag "$IMAGE:${{ inputs.release_tag || github.ref_name }}" .
       - name: Push immutable API image
         run: docker push "$IMAGE:${{ inputs.release_tag || github.ref_name }}"
+      - name: Build immutable worker image
+        run: docker build --target worker-runtime --tag "$WORKER_IMAGE:${{ inputs.release_tag || github.ref_name }}" .
+      - name: Push immutable worker image
+        run: docker push "$WORKER_IMAGE:${{ inputs.release_tag || github.ref_name }}"
 
   staging:
     if: ${{ inputs.deploy_staging == true }}
@@ -164,7 +169,7 @@ jobs:
           FLY_APP_STAGING: ${{ secrets.FLY_APP_STAGING }}
         run: flyctl deploy --config fly.toml --app "$FLY_APP_STAGING" --image "$IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
       - name: Deploy the dedicated worker image
-        run: flyctl deploy --config fly.worker.toml --image "$IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
+        run: flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
       - name: Run staging health smoke
         env:
           STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}

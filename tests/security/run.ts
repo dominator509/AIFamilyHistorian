@@ -104,6 +104,13 @@ for (const [name, workflow] of [
 }
 if (!releaseWorkflow.includes('flyctl deploy --config fly.worker.toml'))
   throw new Error('release workflow must deploy the dedicated worker manifest');
+if (
+  !releaseWorkflow.includes('WORKER_IMAGE: ghcr.io/${{ github.repository }}-worker') ||
+  !releaseWorkflow.includes('docker build --target worker-runtime --tag "$WORKER_IMAGE:') ||
+  !releaseWorkflow.includes('docker push "$WORKER_IMAGE:') ||
+  !releaseWorkflow.includes('flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE:')
+)
+  throw new Error('release workflow must publish and deploy a distinct worker-runtime image');
 for (const [name, content, controls] of [
   [
     'worker evidence probe',
