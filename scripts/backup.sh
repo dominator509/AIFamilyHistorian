@@ -13,8 +13,8 @@ plain_path="$backup_path.plain"
 cleanup() { rm -f "$plain_path"; }
 trap cleanup EXIT HUP INT TERM
 
-docker compose exec -T -e PGPASSWORD="$LOCAL_POSTGRES_PASSWORD" postgres \
-  pg_dump --format=custom --no-owner --no-acl -U family_historian family_historian >"$plain_path"
+docker compose exec -T postgres sh -c \
+  'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump --format=custom --no-owner --no-acl -U "$POSTGRES_USER" "$POSTGRES_DB"' >"$plain_path"
 
 corepack pnpm exec tsx scripts/backup-crypto.ts encrypt "$plain_path" "$backup_path"
 

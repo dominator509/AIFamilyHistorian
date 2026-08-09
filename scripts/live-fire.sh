@@ -8,16 +8,11 @@ internal_runner=0
 worker_image="${WORKER_IMAGE:-family-historian-worker:local}"
 repo_root=$(pwd -W 2>/dev/null || pwd)
 internal_network=''
-internal_db=''
 if [ -f .env ] && docker image inspect "$worker_image" >/dev/null 2>&1 && docker compose exec -T postgres true </dev/null >/dev/null 2>&1; then
   internal_network=$(docker network ls --filter label=com.docker.compose.network=family_historian_internal --format '{{.Name}}' | awk 'NR == 1 { print; exit }')
 fi
 if [ -n "$internal_network" ]; then
   internal_runner=1
-  set -a
-  . ./.env
-  set +a
-  internal_db=$(DATABASE_URL="$DATABASE_URL" node --input-type=module -e "const u=new URL(process.env.DATABASE_URL); u.hostname='postgres'; u.port='5432'; process.stdout.write(u.toString())")
   echo "live-fire: internal runner enabled for archive-membership and multipart-media-ingestion"
 fi
 
@@ -32,10 +27,12 @@ run_proof() {
           -v "$repo_root/.env:/app/.env:ro" \
           -v "$repo_root/drizzle:/app/drizzle:ro" \
           -e NODE_ENV=test \
-          -e DATABASE_URL="$internal_db" \
           -e R2_ENDPOINT=http://object-storage:9000 \
           "$worker_image" \
-          /app/node_modules/.bin/tsx /app/tests/live-fire/run.ts --proof "$proof"
+          sh -ec '
+            export DATABASE_URL="$(node --input-type=module -e "const u=new URL(process.env.DATABASE_URL); u.hostname=\"postgres\"; u.port=\"5432\"; process.stdout.write(u.toString())")"
+            exec /app/node_modules/.bin/tsx /app/tests/live-fire/run.ts --proof "$1"
+          ' sh "$proof"
         return
       fi
       ;;

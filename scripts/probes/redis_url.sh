@@ -4,8 +4,7 @@ set -eu
 
 local_host=$(REDIS_URL="$REDIS_URL" node --input-type=module -e "const u=new URL(process.env.REDIS_URL); process.stdout.write(['127.0.0.1','localhost'].includes(u.hostname) ? 'yes' : 'no')")
 if [ "$local_host" = yes ] && docker compose exec -T redis true </dev/null >/dev/null 2>&1; then
-  redis_password=$(REDIS_URL="$REDIS_URL" node --input-type=module -e "const u=new URL(process.env.REDIS_URL); process.stdout.write(decodeURIComponent(u.password))")
-  docker compose exec -T -e REDISCLI_AUTH="$redis_password" redis redis-cli ping </dev/null | grep -qx PONG
+  docker compose exec -T redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli ping' </dev/null | grep -qx PONG
   exit 0
 fi
 
