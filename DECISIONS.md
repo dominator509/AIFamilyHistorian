@@ -613,3 +613,7 @@ The shared provider request helper and DeepSeek gateway now set `redirect: 'erro
 ### ADR-161: Remove worker access to global server sessions
 
 Migration `0015_revoke_worker_session_access.sql` revokes `auth_sessions` DML from both `family_historian_runtime` and `family_historian_worker`; database verification fails if either role regains it. A real local PostgreSQL probe returned `false` for both roles. This is a targeted least-privilege reduction; the broader worker `SET LOCAL ROLE family_historian_runtime` design remains an open high-severity production blocker because RLS trusts mutable session settings after worker compromise.
+
+### ADR-162: Deploy the dedicated worker image in staging
+
+The release workflow now deploys `fly.worker.toml` separately after the API deployment. The API manifest targets the smaller `runtime` image, while the worker manifest targets `worker-runtime` with native media tooling. A security-harness assertion keeps the dedicated worker deployment from silently disappearing during future workflow edits.

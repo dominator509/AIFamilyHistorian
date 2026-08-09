@@ -160,6 +160,8 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_APP_STAGING: ${{ secrets.FLY_APP_STAGING }}
         run: flyctl deploy --config fly.toml --app "$FLY_APP_STAGING" --image "$IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
+      - name: Deploy the dedicated worker image
+        run: flyctl deploy --config fly.worker.toml --image "$IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
       - name: Run staging health smoke
         env:
           STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
