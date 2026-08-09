@@ -292,4 +292,42 @@ describe('API principal and archive rate scopes', () => {
       await app.close();
     }
   });
+
+  it('rejects a stale archive permission claim before route execution', async () => {
+    const archiveId = '01900000-0000-7000-8000-000000000092';
+    const token = issueSessionToken('q'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000093',
+      organizationId: '01900000-0000-7000-8000-000000000094',
+      archiveIds: [archiveId],
+      permissions: ['people:read'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    let listed = false;
+    const app = await createApp({
+      service: {
+        ready: () => Promise.resolve(true),
+        list: () => {
+          listed = true;
+          return Promise.resolve([]);
+        },
+      } as never,
+      sessionSecret: 'q'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionPermissionChecker: () => Promise.resolve(false),
+    });
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/archives/${archiveId}/people`,
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toMatchObject({ code: 'PERMISSION_DENIED' });
+      expect(listed).toBe(false);
+    } finally {
+      await app.close();
+    }
+  });
 });

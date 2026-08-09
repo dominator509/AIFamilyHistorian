@@ -47,6 +47,11 @@ interface RouteDependencies {
     context: { organizationId: string; familyArchiveId: string },
     userId: string,
   ) => Promise<boolean>;
+  sessionPermissionChecker?: (
+    context: { organizationId: string; familyArchiveId: string },
+    userId: string,
+    permission: string,
+  ) => Promise<boolean>;
   stripeWebhookSecret?: string;
 }
 
@@ -86,12 +91,13 @@ function principal(request: FastifyRequest, secret: string): SessionPrincipal {
   }
 }
 
-function authorizeArchive(
+async function authorizeArchive(
   request: FastifyRequest,
   secret: string,
   archiveId: string,
   permission: string,
-): SessionPrincipal {
+  dependencies: RouteDependencies,
+): Promise<SessionPrincipal> {
   const value = principal(request, secret);
   try {
     authorizeArchivePermission(value, archiveId, permission);
@@ -102,6 +108,15 @@ function authorizeArchive(
         : 'AUTH_REQUIRED';
     throw new ApiProblem(code, 'Archive access is not authorized');
   }
+  if (
+    dependencies.sessionPermissionChecker &&
+    !(await dependencies.sessionPermissionChecker(
+      { organizationId: value.organizationId, familyArchiveId: archiveId },
+      value.userId,
+      permission,
+    ))
+  )
+    throw new ApiProblem('PERMISSION_DENIED', 'Archive permission is no longer valid');
   return value;
 }
 
@@ -333,7 +348,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.post('/v1/archives/:archiveId/uploads', async (request, reply) => {
     const { archiveId } = archiveParamsSchema.parse(request.params);
-    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    const value = await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'uploads:write',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.beginUpload(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
@@ -349,7 +370,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.get('/v1/archives/:archiveId/uploads/:uploadId', async (request) => {
     const { archiveId, uploadId } = uploadParamsSchema.parse(request.params);
-    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:read');
+    const value = await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'uploads:read',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     return dependencies.service.uploadStatus(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
@@ -360,7 +387,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.get('/v1/archives/:archiveId/uploads/:uploadId/parts/:partNumber', async (request) => {
     const { archiveId, uploadId, partNumber } = uploadPartParamsSchema.parse(request.params);
-    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    const value = await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'uploads:write',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     return dependencies.service.signUploadPart(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
@@ -372,7 +405,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.post('/v1/archives/:archiveId/uploads/:uploadId/complete', async (request, reply) => {
     const { archiveId, uploadId } = uploadParamsSchema.parse(request.params);
-    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    const value = await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'uploads:write',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const input = completeUploadInputSchema.parse(request.body);
     const parts = input.parts.map(({ ETag, PartNumber, ChecksumSHA256 }) => ({
@@ -395,7 +434,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.post('/v1/archives/:archiveId/uploads/:uploadId/abort', async (request, reply) => {
     const { archiveId, uploadId } = uploadParamsSchema.parse(request.params);
-    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'uploads:write');
+    const value = await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'uploads:write',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.abortUpload(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
@@ -413,11 +458,12 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
     const route = `/v1/archives/:archiveId/${resource.kind}`;
     app.get(route, async (request) => {
       const { archiveId } = archiveParamsSchema.parse(request.params);
-      const value = authorizeArchive(
+      const value = await authorizeArchive(
         request,
         dependencies.sessionSecret,
         archiveId,
         `${resource.kind}:read`,
+        dependencies,
       );
       return {
         items: await dependencies.service.list(resource.kind, {
@@ -428,11 +474,12 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
     });
     app.post(route, async (request, reply) => {
       const { archiveId } = archiveParamsSchema.parse(request.params);
-      const value = authorizeArchive(
+      const value = await authorizeArchive(
         request,
         dependencies.sessionSecret,
         archiveId,
         `${resource.kind}:write`,
+        dependencies,
       );
       const result = await dependencies.service.create(
         { organizationId: value.organizationId, familyArchiveId: archiveId },
@@ -455,7 +502,13 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
     const archiveId =
       input.archiveId ?? principal(request, dependencies.sessionSecret).archiveIds[0];
     if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
-    const value = authorizeArchive(request, dependencies.sessionSecret, archiveId, 'privacy:write');
+    const value = await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'privacy:write',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
@@ -476,6 +529,15 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
       throw new ApiProblem('PERMISSION_DENIED', 'Billing permission is required');
     const archiveId = value.archiveIds[0];
     if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
+    if (
+      dependencies.sessionPermissionChecker &&
+      !(await dependencies.sessionPermissionChecker(
+        { organizationId: value.organizationId, familyArchiveId: archiveId },
+        value.userId,
+        'billing:write',
+      ))
+    )
+      throw new ApiProblem('PERMISSION_DENIED', 'Billing permission is no longer valid');
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },

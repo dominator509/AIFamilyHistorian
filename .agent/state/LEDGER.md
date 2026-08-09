@@ -296,3 +296,8 @@
 2026-08-09T01:16:00Z | codex | HARDENING-53 | SECURITY_FINDING | AI_gateway_reused_cached_envelopes_after_validating_only_output_value; provenance_and_usage_telemetry_could_be_malformed
 2026-08-09T01:17:00Z | codex | HARDENING-53 | FIX_APPLIED | cache_hit_requires_valid_provenance_usage_nonnegative_integer_counters_and_cache_ratio_0_to_1; malformed_envelope_deleted_and_recomputed
 2026-08-09T01:18:00Z | codex | HARDENING-53 | LOCAL_VERIFICATION | ai_gateway_focus5_tests_passed; full_unit24_files_84_tests_passed; build_security_typecheck_lint_format_passed
+2026-08-09T01:24:00Z | codex | HARDENING-54 | SECURITY_FINDING | signed_archive_permission_claims_were_not_revalidated_against_current_membership_role_or_permission_grants; bearer tokens could retain demoted archive permissions until expiry
+2026-08-09T01:25:00Z | codex | HARDENING-54 | FIX_APPLIED | production_route_authorization_now_calls_authoritative_sessionPermissionChecker; ArchiveService_hasArchivePermission_allows_owner_roles_and_requires_current_permission_grants_for_other_roles; billing_route_is_checked; stale_permission_unit_regression_added
+2026-08-09T01:26:00Z | codex | HARDENING-54 | SECURITY_FINDING | media_scan_catch_path_could_mark_scanning_original_error_without_confirming_the_active_outbox_lock_token_after_lease_reclaim
+2026-08-09T01:27:00Z | codex | HARDENING-54 | FIX_APPLIED | stale_media_error_transition_now_asserts_and_locks_worker_lease_before_quarantine_error_update
+2026-08-09T01:28:00Z | codex | HARDENING-54 | LOCAL_VERIFICATION | api_permission_focus7_tests_passed; typecheck_lint_format_passed; e2e_database_suite_not_run_ECONNREFUSED_127.0.0.1:35432; no_external_success_inferred

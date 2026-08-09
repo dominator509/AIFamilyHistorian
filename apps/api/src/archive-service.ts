@@ -96,6 +96,40 @@ export class ArchiveService {
     });
   }
 
+  public async hasArchivePermission(
+    context: DatabaseContext,
+    userId: string,
+    permission: string,
+  ): Promise<boolean> {
+    return withTenantTransaction(this.pool, context, async (client) => {
+      const result = await client.query<{ role: string; granted: boolean }>(
+        `select m.role,
+                exists (
+                  select 1
+                    from roles r
+                    join permission_grants pg on pg.role_id = r.id
+                   where r.organization_id = m.organization_id
+                     and r.family_archive_id = m.family_archive_id
+                     and r.code = m.role
+                     and pg.permission in ($4, 'archive:*')
+                ) as granted
+           from memberships m
+          where m.organization_id = $1
+            and m.family_archive_id = $2
+            and m.user_id = $3
+          limit 1`,
+        [context.organizationId, context.familyArchiveId, userId, permission],
+      );
+      const row = result.rows[0];
+      if (!row) return false;
+      const role = roleSchema.safeParse(row.role);
+      if (!role.success) return false;
+      if (['organization_owner', 'archive_owner', 'platform_admin'].includes(role.data))
+        return true;
+      return row.granted;
+    });
+  }
+
   public async recordStripeWebhook(
     context: DatabaseContext,
     input: {

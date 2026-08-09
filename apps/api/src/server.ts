@@ -30,6 +30,8 @@ const app = await createApp({
   sessionRevocationStore: new RedisSessionRevocationStore(redis),
   sessionStore: new PostgresSessionStore(pool),
   sessionMembershipChecker: (context, userId) => service.isArchiveMember(context, userId),
+  sessionPermissionChecker: (context, userId, permission) =>
+    service.hasArchivePermission(context, userId, permission),
 });
 
 const shutdown = async (signal: string): Promise<void> => {

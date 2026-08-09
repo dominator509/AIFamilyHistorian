@@ -24,6 +24,11 @@ export interface AppDependencies {
     context: { organizationId: string; familyArchiveId: string },
     userId: string,
   ) => Promise<boolean>;
+  sessionPermissionChecker?: (
+    context: { organizationId: string; familyArchiveId: string },
+    userId: string,
+    permission: string,
+  ) => Promise<boolean>;
   corsAllowedOrigins?: readonly string[];
   stripeWebhookSecret?: string;
 }

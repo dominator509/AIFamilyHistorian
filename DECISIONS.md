@@ -237,3 +237,11 @@ Media pipeline steps now declare whether an output is publishable. `ffprobe` and
 ### ADR-067: Validate cached AI envelopes before reuse
 
 AI result cache hits now require valid provenance fields, non-negative integer token counters, and a finite cache ratio between zero and one before schema validation and reuse. Malformed or legacy envelopes are deleted and recomputed through the provider, preserving trustworthy provenance and cost telemetry.
+
+### ADR-068: Revalidate archive permissions against current membership state
+
+Archive route authorization now performs an optional authoritative database permission check after validating the signed session claim. Owner roles retain their explicit archive-wide authority; other roles must have a matching current `permission_grants` row (or `archive:*`). The production server wires this checker alongside membership freshness validation, so role demotion or grant removal takes effect without waiting for token expiry while lightweight route tests may continue using dependency stubs.
+
+### ADR-069: Fence stale media quarantine failures
+
+The media scan error path now verifies and locks the active outbox lease before transitioning an object from `scanning` to `error`. If the lease was reclaimed, the stale handler cannot overwrite a newer attempt's quarantine state. This complements the existing lease checks around fixity and derivative publication; no lease-loss condition is treated as a successful scan.
