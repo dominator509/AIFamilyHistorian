@@ -7,6 +7,10 @@ import {
   factInputSchema,
   healthStatusSchema,
 } from '../../packages/contracts/src/index.js';
+import {
+  MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES,
+  serializeProviderCallbackPayload,
+} from '../../apps/api/src/archive-service.js';
 
 describe('foundation contracts', () => {
   it('rejects an unknown health state', () => {
@@ -66,5 +70,15 @@ describe('foundation contracts', () => {
     expect(() =>
       editionInputSchema.parse({ editionHash: 'a'.repeat(64), manifest: cyclic }),
     ).toThrow(/serializable/u);
+  });
+
+  it('bounds provider callback payloads before JSONB persistence', () => {
+    expect(() =>
+      serializeProviderCallbackPayload({ body: 'x'.repeat(MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES) }),
+    ).toThrow(/size limit/u);
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() => serializeProviderCallbackPayload(cyclic)).toThrow(/serializable/u);
+    expect(serializeProviderCallbackPayload({ ok: true })).toBe('{"ok":true}');
   });
 });

@@ -509,3 +509,7 @@ Provenance chain verification and manifest construction now cap event count at 1
 ### ADR-135: Bound edition manifest contracts
 
 Edition manifests now cap keys at 256, key length at 200 characters, and serialized JSON at 512 KiB. The shared Zod contract performs cycle-safe serialization checks before JSONB persistence, so direct service callers cannot bypass the API body limit with malformed or oversized manifest objects.
+
+### ADR-136: Bound Stripe callback persistence payloads
+
+`ArchiveService.recordStripeWebhook` now serializes provider callback payloads through a cycle-safe 1 MiB guard before opening the tenant transaction or issuing a JSONB insert. This preserves replay hashing while preventing direct service callers from bypassing the HTTP body limit or reaching the database with malformed payload objects.

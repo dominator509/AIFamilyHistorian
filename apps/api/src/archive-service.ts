@@ -53,6 +53,19 @@ const MAX_ACTIVE_UPLOADS_PER_USER = 8;
 const MAX_ACTIVE_UPLOAD_BYTES_PER_USER = 25 * 1024 * 1024 * 1024;
 const MAX_ACTIVE_UPLOAD_BYTES_PER_ARCHIVE = 50 * 1024 * 1024 * 1024;
 const MAX_PENDING_JOBS_PER_ARCHIVE = 1_000;
+export const MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES = 1 * 1024 * 1024;
+
+export function serializeProviderCallbackPayload(payload: Record<string, unknown>): string {
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(payload);
+  } catch {
+    throw new ApiProblem('VALIDATION_FAILED', 'Provider callback payload is not JSON serializable');
+  }
+  if (Buffer.byteLength(serialized, 'utf8') > MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES)
+    throw new ApiProblem('VALIDATION_FAILED', 'Provider callback payload exceeds the size limit');
+  return serialized;
+}
 
 const tableByKind: Record<ListResourceKind, string> = {
   members: 'memberships',
@@ -139,6 +152,7 @@ export class ArchiveService {
       payloadSha256: string;
     },
   ): Promise<{ replayed: boolean }> {
+    const serializedPayload = serializeProviderCallbackPayload(input.payload);
     return withTenantTransaction(this.pool, context, async (client) => {
       const archive = await client.query(
         'select 1 from family_archives where id = $1 and organization_id = $2 limit 1',
@@ -158,7 +172,7 @@ export class ArchiveService {
           context.familyArchiveId,
           input.eventId,
           input.eventType,
-          JSON.stringify(input.payload),
+          serializedPayload,
           input.payloadSha256,
         ],
       );
