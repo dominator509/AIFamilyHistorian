@@ -53,6 +53,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-192 adds a security-harness regression assertion that the effective-role verifier guard remains present alongside the dedicated-worker migration controls.
 - HARDENING-193 bounds signed Stripe event IDs to 256 characters and rejects C0/DEL controls in event types before callback persistence. Integration passed 13 files/44 tests; unit passed 30 files/163 tests; E2E passed 3 files/11 tests; typecheck, format, and security checks passed.
 - HARDENING-194 bounds audit actions and provenance entity/event types to 256 characters without C0/DEL controls both in package validation and PostgreSQL constraints. Integration passed 13 files/45 tests, including the real persistence rejection regression; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, format, and diff checks passed.
+- HARDENING-195 bounds audit actor pseudonyms to 256 characters and audit outcomes to 128 characters without C0/DEL controls at the PostgreSQL boundary. Integration passed 13 files/45 tests, including direct persistence rejection regressions; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, and diff checks passed.
 
 ## Engineering work still pending
 

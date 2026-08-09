@@ -175,6 +175,27 @@ describe('PostgreSQL persistence invariants', () => {
     await expect(
       withTenantTransaction(pool, context, (client) =>
         client.query(
+          "insert into audit_events(id, organization_id, family_archive_id, actor_pseudonym, action, outcome, occurred_at) values ($1,$2,$3,$4,'audit.safe', 'allowed', now())",
+          [
+            uuidV7(),
+            context.organizationId,
+            context.familyArchiveId,
+            `worker${String.fromCharCode(10)}label`,
+          ],
+        ),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      withTenantTransaction(pool, context, (client) =>
+        client.query(
+          "insert into audit_events(id, organization_id, family_archive_id, actor_pseudonym, action, outcome, occurred_at) values ($1,$2,$3,'worker:job-intake','audit.safe',$4,now())",
+          [uuidV7(), context.organizationId, context.familyArchiveId, 'x'.repeat(129)],
+        ),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      withTenantTransaction(pool, context, (client) =>
+        client.query(
           'insert into provenance_events(id, organization_id, family_archive_id, entity_type, entity_id, event_type, lineage, occurred_at) values ($1,$2,$3,$4,$5,$6,$7,now())',
           [
             uuidV7(),
