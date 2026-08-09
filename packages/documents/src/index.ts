@@ -104,18 +104,28 @@ export function renderAccessiblePdf(document: BookDocument): Uint8Array {
   const commands = ['BT', '/F1 18 Tf', '72 760 Td'];
   for (const [index, line] of lines.entries()) {
     if (index > 0) commands.push('0 -24 Td');
-    commands.push(`(${pdfText(line)}) Tj`);
+    commands.push(`/P <</MCID ${index}>> BDC`, `(${pdfText(line)}) Tj`, 'EMC');
   }
   commands.push('ET');
   const stream = commands.join('\n');
+  const structElementStart = 8;
+  const parentTreeObject = structElementStart + lines.length;
+  const infoObject = parentTreeObject + 1;
+  const structElementRefs = lines.map((_, index) => `${structElementStart + index} 0 R`);
   const objects = [
-    '<< /Type /Catalog /Pages 2 0 R /Lang (en-US) /MarkInfo << /Marked true >> >>',
+    '<< /Type /Catalog /Pages 2 0 R /StructTreeRoot 6 0 R /Lang (en-US) /MarkInfo << /Marked true >> /ViewerPreferences << /DisplayDocTitle true >> >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Page /Parent 2 0 R /StructParents 0 /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
     `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
-    `<< /Title (${title}) /Producer (AI Family Historian) >>`,
+    `<< /Type /StructTreeRoot /K [${structElementRefs.join(' ')}] /ParentTree ${parentTreeObject} 0 R >>`,
   ];
+  for (const [index] of lines.entries())
+    objects.push(
+      `<< /Type /StructElem /S /${index === 0 ? 'H1' : 'P'} /P 6 0 R /K ${index} /Pg 3 0 R >>`,
+    );
+  objects.push(`<< /Nums [0 [${structElementRefs.join(' ')}]] >>`);
+  objects.push(`<< /Title (${title}) /Producer (AI Family Historian) >>`);
   let output = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
   const offsets: number[] = [0];
   for (const [index, object] of objects.entries()) {
@@ -125,7 +135,7 @@ export function renderAccessiblePdf(document: BookDocument): Uint8Array {
   const xrefOffset = output.length;
   output += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
   for (const offset of offsets.slice(1)) output += `${String(offset).padStart(10, '0')} 00000 n \n`;
-  output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info 6 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R /Info ${infoObject} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
   return new TextEncoder().encode(output);
 }
 

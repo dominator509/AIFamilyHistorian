@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 27 files / 105 tests. Integration: 13 files / 41 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 27 files / 110 tests. Integration: 13 files / 41 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -17,7 +17,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 
 - Implement and verify privacy fulfillment, export generation, transcription, narration synthesis, and deletion execution workers. Current intake handlers intentionally stop at review-required states and unsupported job types fail closed.
 - Complete native Better Auth/passkey/WebAuthn and Argon2id identity issuance, migration, device lifecycle, and live-fire coverage.
-- Complete formal accessibility/PDF/EPUB audits, large-transfer/recovery rehearsal, hosted queue topology/fairness, production KMS wrapping/restore drills, and hosted media/provider fixtures.
+- Tagged PDF structure semantics and EPUB language/navigation metadata are implemented and regression-tested; complete formal accessibility/PDF/EPUB audits, large-transfer/recovery rehearsal, hosted queue topology/fairness, production KMS wrapping/restore drills, and hosted media/provider fixtures remain pending.
 
 ## External and release gates
 

@@ -16,7 +16,16 @@ describe('accessible book renderers', () => {
     const second = renderAccessiblePdf(document);
     expect(Buffer.from(first).equals(Buffer.from(second))).toBe(true);
     expect(new TextDecoder().decode(first.slice(0, 8))).toBe('%PDF-1.4');
-    expect(new TextDecoder().decode(first)).toContain('/Marked true');
+    const pdf = new TextDecoder().decode(first);
+    expect(pdf).toContain('/Marked true');
+    expect(pdf).toContain('/StructTreeRoot 6 0 R');
+    expect(pdf).toContain('/StructParents 0');
+    expect(pdf).toContain('/S /H1');
+    expect(pdf).toContain('/S /P');
+    expect(pdf).toContain('/MCID 0');
+    expect(pdf).toContain('BDC');
+    expect(pdf).toContain('EMC');
+    expect(pdf).toContain('/ParentTree');
   });
 
   it('emits an EPUB container with navigation and package metadata', () => {

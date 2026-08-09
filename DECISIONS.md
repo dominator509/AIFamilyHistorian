@@ -409,3 +409,7 @@ The API now resolves archive scope explicitly for privacy requests and billing m
 ### ADR-110: Cancel failed provider response bodies
 
 HTTP provider adapters and the DeepSeek adapter now cancel non-success response bodies before retrying or surfacing an upstream error. Failed response payloads are not needed for the public error contract, and leaving their streams open can retain connections or buffers during repeated provider failures. Cancellation is best effort and never masks the original retryable/non-retryable provider error; successful responses continue through the existing bounded JSON/audio readers.
+
+### ADR-111: Emit tagged PDF structure semantics
+
+The deterministic PDF renderer now emits a minimal tagged-document structure: the catalog references a `StructTreeRoot`, the page declares `StructParents`, each rendered line is marked with an MCID, and corresponding `/H1`/`/P` structure elements are indexed through a parent tree. The existing `/Marked true` claim is therefore backed by actual structure semantics rather than metadata alone. EPUB language, heading, navigation, and package metadata remain unchanged; external screen-reader and PDF/UA audits are still release evidence gates.
