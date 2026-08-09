@@ -212,4 +212,37 @@ describe('Stripe webhook ingestion', () => {
     );
     expect(rows.rowCount).toBe(0);
   });
+
+  it('rejects unsafe callback metadata at the database boundary', async () => {
+    await expect(
+      pool.query(
+        `insert into provider_callback_events
+          (id, organization_id, family_archive_id, provider, provider_event_id, event_type, payload, payload_sha256, signature_verified)
+         values ($1,$2,$3,'stripe',$4,$5,'{}'::jsonb,$6,true)`,
+        [
+          uuidV7(),
+          organizationId,
+          familyArchiveId,
+          `evt${String.fromCharCode(10)}unsafe`,
+          'invoice.paid',
+          'a'.repeat(64),
+        ],
+      ),
+    ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `insert into provider_callback_events
+          (id, organization_id, family_archive_id, provider, provider_event_id, event_type, payload, payload_sha256, signature_verified)
+         values ($1,$2,$3,'stripe',$4,$5,'{}'::jsonb,$6,true)`,
+        [
+          uuidV7(),
+          organizationId,
+          familyArchiveId,
+          'evt_unsafe_type',
+          `invoice.${'x'.repeat(200)}`,
+          'a'.repeat(64),
+        ],
+      ),
+    ).rejects.toThrow();
+  });
 });

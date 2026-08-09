@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 30 files / 164 tests. Integration: 13 files / 46 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 30 files / 164 tests. Integration: 13 files / 47 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -57,6 +57,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-196 adds a database trigger making queued job `organization_id` and `family_archive_id` immutable after enqueue, extends the database verifier to require it, and proves direct tenant-scope mutation is rejected. The internal package verifier observed `database verify: ok`; integration passed 13 files/46 tests; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, and diff checks passed.
 - HARDENING-197 extends the outbox trigger to protect authoritative `job_type`, `payload`, and `created_at` fields after enqueue. The internal package verifier observed `database verify: ok`; integration passed 13 files/46 tests with payload-rewrite rejection; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, and diff checks passed.
 - HARDENING-198 adds a database-enforced outbox state machine: only queued/retryable jobs may enter running, running jobs may complete/retry/terminal-fail/cancel, and terminal states cannot be resurrected. The internal package verifier observed `database verify: ok`; integration passed 13 files/46 tests with completed-job resurrection rejection; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, and diff checks passed.
+- HARDENING-199 bounds provider callback provider labels to 64 characters, provider event IDs to 256 characters, and rejects control characters in provider/event metadata at PostgreSQL. The internal package verifier observed `database verify: ok`; integration passed 13 files/47 tests with direct callback-persistence rejection regressions; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, and diff checks passed.
 
 ## Engineering work still pending
 
