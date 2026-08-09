@@ -17,15 +17,15 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: pending commit (`HARDENING-155/156/157`); provider header controls, dedicated worker database credentials, and scoped legacy-envelope rejection are now enforced. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `d4c611d` (`HARDENING-155/156/157`); provider header controls, dedicated worker database credentials, and scoped legacy-envelope rejection are now enforced. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: pending commit (`HARDENING-157`); `origin/master` will be synchronized after the checkpoint commit.
-- Current code checkpoint: pending commit (provider header control rejection, dedicated worker role, scoped legacy-envelope rejection, and all prior capabilities).
+- Current source checkpoint: `d4c611d` (implementation and documentation); `origin/master` is synchronized.
+- Current code checkpoint: `d4c611d` (provider header control rejection, dedicated worker role, scoped legacy-envelope rejection, and all prior capabilities).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
 - Latest continuation recheck: auth/crypto coverage passed 13/13; full local unit verification passed 27 files/143 tests, integration 13 files/42 tests, E2E 3 files/11 tests, security, secret, dependency, and reality gates. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
