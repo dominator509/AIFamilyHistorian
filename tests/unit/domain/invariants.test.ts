@@ -14,6 +14,7 @@ import {
   createGeneratedChapterRevision,
   createQuotation,
   DomainError,
+  MAX_QUOTATION_TEXT_CHARS,
   withdrawConsent,
   type ConsentRecord,
   type DeletionEvidence,
@@ -139,6 +140,15 @@ describe('quotation lineage invariant', () => {
     );
     expectCode(
       () => createQuotation(ids.quote, span.text, { ...span, endOffset: span.endOffset + 1 }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () =>
+        createQuotation(ids.quote, 'x'.repeat(MAX_QUOTATION_TEXT_CHARS + 1), {
+          ...span,
+          text: 'x'.repeat(MAX_QUOTATION_TEXT_CHARS + 1),
+          endOffset: span.startOffset + MAX_QUOTATION_TEXT_CHARS + 1,
+        }),
       'VALIDATION_FAILED',
     );
   });

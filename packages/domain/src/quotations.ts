@@ -2,6 +2,8 @@ import type { EntityId } from '@family-historian/contracts';
 import { uuidSchema } from '@family-historian/contracts';
 import { DomainError } from './errors.js';
 
+export const MAX_QUOTATION_TEXT_CHARS = 1_000_000;
+
 export interface ApprovedSourceSpan {
   readonly id: EntityId;
   readonly revisionId: EntityId;
@@ -26,6 +28,11 @@ export function createQuotation(
   uuidSchema.parse(id);
   uuidSchema.parse(span.id);
   uuidSchema.parse(span.revisionId);
+  if (
+    requestedText.length > MAX_QUOTATION_TEXT_CHARS ||
+    span.text.length > MAX_QUOTATION_TEXT_CHARS
+  )
+    throw new DomainError('VALIDATION_FAILED', 'quotation text exceeds the maximum size');
   if (!span.approved)
     throw new DomainError('QUOTE_NOT_APPROVED', 'quotation source span is not approved');
   if (requestedText !== span.text)
