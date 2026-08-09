@@ -325,3 +325,7 @@ Archive membership and permission checkers are now mandatory at archive route ex
 ### ADR-089: Enforce prefix limits independently of provider range behavior
 
 `ObjectStorage.readPrefix` now consumes the response body through the same bounded collector as full in-memory reads. A provider that ignores or widens the requested HTTP range therefore cannot cause an unbounded prefix materialization; the method fails with `ObjectStorageLimitError` once the declared prefix ceiling is exceeded.
+
+### ADR-090: Enforce the multipart protocol cardinality at the provider boundary
+
+`ObjectStorage.listMultipartParts` now rejects missing, out-of-range, malformed, duplicate, or more-than-10,000 provider parts. The S3 part-number ceiling is enforced independently of page count, preventing a nonconforming provider from inflating the status response or causing unbounded part accumulation.

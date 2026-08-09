@@ -52,6 +52,14 @@ describe('S3-compatible object storage', () => {
     const uploadId = await storage.beginMultipart(key, 'application/octet-stream', checksum);
     const url = await storage.signUploadPart(key, uploadId, 1, 60);
     expect(new URL(url).searchParams.get('uploadId')).toBe(uploadId);
+    const partResponse = await fetch(url, {
+      method: 'PUT',
+      body: new TextEncoder().encode('multipart part'),
+    });
+    expect(partResponse.ok).toBe(true);
+    await expect(storage.listMultipartParts(key, uploadId)).resolves.toMatchObject([
+      { partNumber: 1, byteSize: 14 },
+    ]);
     await storage.abortMultipart(key, uploadId);
   });
 

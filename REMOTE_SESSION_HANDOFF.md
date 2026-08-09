@@ -100,6 +100,8 @@ HARDENING-73 verification note: `ObjectStorage.readBytes` now streams and caps i
 
 HARDENING-74 verification note: `ObjectStorage.readPrefix` now enforces the same limit while consuming the body, so an ignored or widened provider `Range` response cannot bypass the prefix memory ceiling. Typecheck, lint, format, unit (26/101), security, secret scan, live-fire (16/16), and real internal MinIO storage tests remain green.
 
+HARDENING-75 verification note: multipart provider listings now reject malformed, duplicate, out-of-range, or over-10,000-part responses. The real MinIO multipart fixture uploads and lists a signed part successfully; typecheck, lint, format, unit (26/101), build, security, secret scan, and live-fire (16/16) remain green.
+
 ## Graph status
 
 | Node | Status | Reason |

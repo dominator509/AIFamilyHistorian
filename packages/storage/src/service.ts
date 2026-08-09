@@ -25,6 +25,7 @@ export class ObjectStorageLimitError extends Error {
 
 /** Maximum object size that may be materialized into a single in-memory value. */
 export const MAX_IN_MEMORY_OBJECT_BYTES = 256 * 1024 * 1024;
+export const MAX_MULTIPART_PARTS = 10_000;
 
 export class ObjectStorage {
   readonly #client: S3Client;
@@ -126,6 +127,7 @@ export class ObjectStorage {
     uploadId: string,
   ): Promise<readonly { partNumber: number; etag: string; byteSize: number }[]> {
     const parts: { partNumber: number; etag: string; byteSize: number }[] = [];
+    const seenPartNumbers = new Set<number>();
     let marker: string | undefined;
     for (let page = 0; page < 100; page += 1) {
       const response = await this.#client.send(
@@ -137,12 +139,28 @@ export class ObjectStorage {
         }),
       );
       for (const part of response.Parts ?? []) {
-        if (part.PartNumber === undefined || !part.ETag) continue;
+        const partNumber = part.PartNumber;
+        const byteSize = part.Size ?? 0;
+        if (
+          partNumber === undefined ||
+          !Number.isInteger(partNumber) ||
+          partNumber < 1 ||
+          partNumber > MAX_MULTIPART_PARTS ||
+          !part.ETag ||
+          !Number.isSafeInteger(byteSize) ||
+          byteSize < 0
+        )
+          throw new Error('object storage returned an invalid multipart part');
+        if (seenPartNumbers.has(partNumber))
+          throw new Error('object storage returned a duplicate multipart part');
+        seenPartNumbers.add(partNumber);
         parts.push({
-          partNumber: part.PartNumber,
+          partNumber,
           etag: part.ETag,
-          byteSize: part.Size ?? 0,
+          byteSize,
         });
+        if (parts.length > MAX_MULTIPART_PARTS)
+          throw new ObjectStorageLimitError('object storage returned too many multipart parts');
       }
       if (!response.IsTruncated) return Object.freeze(parts);
       if (!response.NextPartNumberMarker)
