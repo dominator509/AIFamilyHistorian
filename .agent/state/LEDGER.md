@@ -396,3 +396,4 @@
 2026-08-09T06:40:00Z | codex | HARDENING-79 | CHECKPOINT | commit 9d21309 pushed after clean diff review; handoff now identifies this worker-fencing source checkpoint.
 2026-08-09T06:48:00Z | codex | HARDENING-79 | RELEASE_REASSESSMENT | production-readiness-check exit1 with the same genuine 15 external/legal requirements; no production mutation or external effect was attempted.
 2026-08-09T06:55:00Z | codex | HARDENING-80 | RELEASE_GATE_HARDENING | SECURITY.md required hosted worker syscall/network/cgroup evidence, but preflight did not enforce it; added WORKER_SANDBOX_EVIDENCE_FILE and a bounded non-empty-file probe without fabricating evidence.
+2026-08-09T07:02:00Z | codex | HARDENING-80 | RELEASE_REASSESSMENT | production-readiness-check exit1 with 16 unresolved requirements; the new hosted worker sandbox attestation is explicitly reported as missing alongside external/legal blockers.
