@@ -31,10 +31,10 @@
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `9aad90b` (`hardening: enforce storage metadata byte limits`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `b8fa84d` (implementation, documentation, and current local verification evidence); `origin/master` is synchronized.
+- Current source checkpoint: `git rev-parse HEAD` (implementation, documentation, and current local verification evidence); verify `origin/master` matches before resuming.
 - Current code checkpoint: `dac6738` (provider redirect rejection, worker `auth_sessions` revocation, and all prior capabilities).
 - Branch: `master`
-- Final repository commit: `b8fa84de4f6d1f98cf4a5cf84dacbea4a0571d8c`; `origin/master` matches this commit.
+- Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
 - Latest continuation recheck: internal media-worker coverage passed 2/2; integration passed 13 files/43 tests, unit 27 files/147 tests, E2E 3 files/11 tests, all 16 live-fire proofs, accessibility (`pdf_tagged=true epub_semantics=true`), and performance (`requests=100 p95=1.19ms`) passed. Build, typecheck, lint, format, security, secret, dependency, and reality gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
 - Standard Codex Security scan `2ac638eb-66d7-4f36-b4e9-ec3792ca0574` completed against the prior `4d0614b` snapshot with one high, source-backed finding: hosted worker syscall, egress, cgroup/PID, read-only-root, and bounded-scratch enforcement remain unproven outside local Compose. The report is at `C:\\tmp\\codex-security-scans-k9cTF9\\AIFamilyHistorian\\4d0614ba1feda0eb9d2a604c4d71c59ec8df746e_20260809T130503Z_mm7xex28\\report.md`; the requirement remains fail-closed as `EXT-023`.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
