@@ -12,6 +12,7 @@ const [
   workerSessionRevokeMigration,
   workerEvidenceProbe,
   workerEvidenceShell,
+  databaseVerify,
   deployment,
   envExample,
   verifyWorkflow,
@@ -26,6 +27,7 @@ const [
   readFile('drizzle/0015_revoke_worker_session_access.sql', 'utf8'),
   readFile('scripts/probes/worker-sandbox-evidence.mjs', 'utf8'),
   readFile('scripts/probes/worker_sandbox_evidence.sh', 'utf8'),
+  readFile('packages/database/src/verify.ts', 'utf8'),
   readFile('DEPLOYMENT.md', 'utf8'),
   readFile('.env.example', 'utf8'),
   readFile('.github/workflows/verify.yml', 'utf8'),
@@ -72,6 +74,13 @@ if (!workerSource.includes('WORKER_DATABASE_URL'))
   throw new Error('worker must use a dedicated database URL');
 if (!compose.includes('family_historian_worker:${LOCAL_WORKER_POSTGRES_PASSWORD'))
   throw new Error('Compose worker must use the dedicated database role');
+for (const control of [
+  'pg_auth_members',
+  'worker database role can activate the broad runtime role',
+]) {
+  if (!databaseVerify.includes(control))
+    throw new Error(`database verifier effective-role guard missing: ${control}`);
+}
 for (const control of [
   'nobypassrls',
   'family_historian_runtime',
