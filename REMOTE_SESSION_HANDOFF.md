@@ -51,6 +51,7 @@
 - HARDENING-202 rejects `public_approved` from generic person/media/event authoring inputs until an owner-controlled publication workflow supplies approval evidence, and selects active consent by latest `decidedAt` with deterministic ID tie-breaking. Unit passed 31 files/166 tests; integration passed 13 files/48 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, secret-scan, and diff checks passed. A serial rerun of media and worker-attestation suites passed 2 files/13 tests after a concurrent resource-contention failure.
 - HARDENING-203 updates release CI to capture registry SHA-256 digests for the API and worker images and deploy staging by digest, with static security assertions and manual deployment instructions updated accordingly. Typecheck, build, format, security, secret-scan, and diff checks passed; image signing/provenance remains explicitly deferred as a separate external release gate.
 - HARDENING-204 adds keyless Sigstore signing for both published image digests and staging-time certificate/issuer verification, with immutable action pinning and static security assertions. Typecheck, build, format, security, secret-scan, and diff checks passed; actual GitHub OIDC, registry, and staging proof remains external.
+- HARDENING-205 adds the same Cosign certificate/issuer verification to the documented manual production deployment path and fails the static security harness if either production image is not signature-verified. Format, security, secret-scan, and diff checks passed; production OIDC/registry evidence remains external.
 
 ### Current security scan
 
@@ -63,7 +64,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-204`; release CI signs and verifies captured API/worker digests with keyless Sigstore before staging deployment, while generic authoring inputs cannot mint `public_approved` without the owner-controlled publication workflow and consent authorization is ordered by decision time with deterministic tie-breaking. Earlier provider, queue, idempotency, audit, provenance, session, storage, AI, and fail-closed bounds remain active.
+- Latest implementation continuation: `HARDENING-205`; both staging CI and the documented manual production path verify captured API/worker digests with keyless Sigstore identity and issuer checks, while generic authoring inputs cannot mint `public_approved` without the owner-controlled publication workflow and consent authorization is ordered by decision time with deterministic tie-breaking. Earlier provider, queue, idempotency, audit, provenance, session, storage, AI, and fail-closed bounds remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.

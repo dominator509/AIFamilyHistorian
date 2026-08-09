@@ -142,9 +142,16 @@ if (
 if (
   !deployment.includes('FLY_APP_WORKER_PRODUCTION') ||
   !deployment.includes('fly deploy --config fly.worker.toml --app "$FLY_APP_WORKER_PRODUCTION"') ||
-  !deployment.includes('WORKER_IMAGE="ghcr.io/${GITHUB_REPOSITORY}-worker@${WORKER_IMAGE_DIGEST}"')
+  !deployment.includes(
+    'WORKER_IMAGE="ghcr.io/${GITHUB_REPOSITORY}-worker@${WORKER_IMAGE_DIGEST}"',
+  ) ||
+  !deployment.includes('cosign verify "$API_IMAGE"') ||
+  !deployment.includes('cosign verify "$WORKER_IMAGE"') ||
+  !deployment.includes('certificate-oidc-issuer https://token.actions.githubusercontent.com')
 )
-  throw new Error('manual production deployment must include a separately named worker app/image');
+  throw new Error(
+    'manual production deployment must verify separately named signed API/worker digests',
+  );
 for (const [name, content, controls] of [
   [
     'worker evidence probe',
