@@ -22,9 +22,14 @@ export type ReleaseReadinessReport = z.infer<typeof releaseReadinessReportSchema
 
 export function assertReleaseReady(report: ReleaseReadinessReport): void {
   const parsed = releaseReadinessReportSchema.parse(report);
-  const blocked = [...parsed.rights, ...parsed.consents, ...parsed.citations].filter(
-    (item) => item.status === 'blocked',
-  );
+  const items = [...parsed.rights, ...parsed.consents, ...parsed.citations];
+  const ids = new Set<string>();
+  for (const item of items) {
+    if (ids.has(item.id))
+      throw new Error(`release blocked: duplicate readiness evidence ${item.id}`);
+    ids.add(item.id);
+  }
+  const blocked = items.filter((item) => item.status === 'blocked');
   if (blocked.length > 0)
     throw new Error(
       `release blocked: ${blocked.map((item) => `${item.label}: ${item.reason ?? 'unresolved'}`).join('; ')}`,

@@ -148,6 +148,24 @@ describe('portable documents and release reports', () => {
     expect(() => assertReleaseReady(report)).toThrow(/too_small|array/u);
   });
 
+  it('fails closed when one evidence item is reused across readiness categories', () => {
+    const evidenceId = '01900000-0000-7000-8000-000000000006';
+    const report: ReleaseReadinessReport = {
+      editionId: '01900000-0000-7000-8000-000000000003',
+      editionHash: 'a'.repeat(64),
+      rights: [{ id: evidenceId, label: 'rights', status: 'ready' }],
+      consents: [{ id: evidenceId, label: 'consent', status: 'ready' }],
+      citations: [
+        {
+          id: '01900000-0000-7000-8000-000000000007',
+          label: 'citation coverage',
+          status: 'ready',
+        },
+      ],
+    };
+    expect(() => assertReleaseReady(report)).toThrow(/duplicate readiness evidence/u);
+  });
+
   it('bounds readiness item text and category cardinality', () => {
     const item = {
       id: '01900000-0000-7000-8000-000000000004',
