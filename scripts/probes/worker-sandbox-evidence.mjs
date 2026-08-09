@@ -1,3 +1,4 @@
+import { createPublicKey, verify } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +16,7 @@ const REQUIRED_CONTROLS = [
 
 const MAX_FIELD_CHARS = 512;
 const MAX_ATTESTATION_BYTES = 64 * 1024;
+const MAX_PUBLIC_KEY_BYTES = 16 * 1024;
 
 function assertBoundedString(value, field) {
   if (
@@ -27,6 +29,20 @@ function assertBoundedString(value, field) {
     })
   )
     throw new Error(`worker sandbox evidence: ${field} is invalid`);
+}
+
+export function signedAttestationPayload(input) {
+  return JSON.stringify({
+    schema_version: input.schema_version,
+    issuer: input.issuer,
+    subject: input.subject,
+    evidence_id: input.evidence_id,
+    issued_at: input.issued_at,
+    expires_at: input.expires_at,
+    controls: Object.fromEntries(
+      REQUIRED_CONTROLS.map((control) => [control, input.controls?.[control]]),
+    ),
+  });
 }
 
 export function validateWorkerSandboxAttestation(input, now = Date.now()) {
@@ -52,6 +68,10 @@ export function validateWorkerSandboxAttestation(input, now = Date.now()) {
     if (input.controls[control] !== true)
       throw new Error(`worker sandbox evidence: control ${control} is not affirmed`);
   }
+  if (input.signature_algorithm !== 'ed25519')
+    throw new Error('worker sandbox evidence: unsupported signature algorithm');
+  if (!/^[A-Za-z0-9_-]{86}$/u.test(input.signature))
+    throw new Error('worker sandbox evidence: signature encoding is invalid');
   return true;
 }
 
@@ -71,6 +91,25 @@ async function main() {
   const now = nowOverride ? Number(nowOverride) : Date.now();
   if (!Number.isFinite(now)) throw new Error('worker sandbox evidence: clock override is invalid');
   validateWorkerSandboxAttestation(parsed, now);
+  const publicKeyPath = process.env.WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE;
+  if (!publicKeyPath) throw new Error('worker sandbox evidence: public key file is required');
+  const publicKeyBytes = await readFile(publicKeyPath);
+  if (publicKeyBytes.byteLength > MAX_PUBLIC_KEY_BYTES)
+    throw new Error('worker sandbox evidence: public key exceeds 16 KiB');
+  let publicKey;
+  try {
+    publicKey = createPublicKey(publicKeyBytes);
+  } catch {
+    throw new Error('worker sandbox evidence: public key is invalid');
+  }
+  let signature;
+  try {
+    signature = Buffer.from(parsed.signature, 'base64url');
+  } catch {
+    throw new Error('worker sandbox evidence: signature encoding is invalid');
+  }
+  if (!verify(null, Buffer.from(signedAttestationPayload(parsed), 'utf8'), publicKey, signature))
+    throw new Error('worker sandbox evidence: signature verification failed');
   console.log('worker sandbox evidence: structured attestation valid');
 }
 

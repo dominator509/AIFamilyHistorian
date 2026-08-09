@@ -70,6 +70,7 @@ trap 'rm -f "$tmp"' EXIT
   echo 'DPIA_APPROVAL_FILE='
   echo 'RETENTION_APPROVAL_FILE='
   echo 'WORKER_SANDBOX_EVIDENCE_FILE='
+  echo 'WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE='
 } > "$tmp"
 mv -f "$tmp" .env
 trap - EXIT

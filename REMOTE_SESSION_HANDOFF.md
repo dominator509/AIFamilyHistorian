@@ -15,13 +15,13 @@
 - Worker access to global `auth_sessions` is revoked from both runtime and worker roles by migration `0015_revoke_worker_session_access.sql`; verifier and security harness enforce the invariant, and the local PostgreSQL probe returned `f|f`.
 - Staging release wiring now deploys `fly.worker.toml` separately, preserving the native `worker-runtime` image for media processing; the security harness asserts that dedicated deployment command.
 - Hosted scratch wiring now declares a named 30 GiB `worker_scratch` volume at `/tmp` for the worker process. The exact `fly volumes create` command is documented, but the volume, filesystem mode, and hosted sandbox controls remain unverified because no Fly credential was available.
-- The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. Signature authenticity and hosted enforcement remain external.
+- The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. HARDENING-170 verifies its Ed25519 signature against `WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE`; current hosted enforcement and signed evidence remain external.
 - The Deepgram transcription live-fire probe now bounds streamed and non-streamed provider responses at 8 MiB before JSON parsing and emits only a validated request identifier or neutral presence marker; this changes no production-provider credential state.
 - The shared AI gateway now validates model/prompt metadata, caps the stable policy prefix, and rejects serialized dynamic input above 8 MiB before cache-key construction or provider dispatch; focused coverage passed 10/10 and full unit coverage passed 28 files/151 tests.
 - Provider probe hardening is now included: credential-bearing HTTP probes use a shared bounded Node fetch transport with environment-backed secrets, redirect rejection, local-HTTP restriction, and 1 MiB response ceilings; Redis URL probing no longer places the credential-bearing URL in `node` argv. Focused loopback coverage passed 1/1; authenticated external probe results remain unchanged.
 - Operational secret transport is also hardened: backup/restore, Redis, disposable integration/E2E, and live-fire runners no longer place credentials or secret-bearing service URLs in Docker command arguments. The real internal matrix passed integration 13/43, E2E 3/11, all 16 live-fire proofs, backup, and restore-check (`schema_migrations=15`).
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
-- Post-checkpoint verification: `sh scripts/graph-next.sh` returned `RESUME EP-000`; `sh scripts/preflight.sh` remains fail-closed with 16 unresolved requirements. The current commit is available from `git rev-parse HEAD` and must match `git ls-remote origin refs/heads/master`.
+- Post-checkpoint verification: `sh scripts/graph-next.sh` returned `RESUME EP-000`; `sh scripts/preflight.sh` remains fail-closed with 18 unresolved requirements. The current commit is available from `git rev-parse HEAD` and must match `git ls-remote origin refs/heads/master`.
 
 ### Current security scan
 
@@ -34,7 +34,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-166` plus the current attestation hardening; provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, hosted scratch-volume declaration, structured sandbox evidence validation, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `HARDENING-170`; provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
@@ -45,13 +45,13 @@
 - Current code checkpoint: run `git rev-parse HEAD` (provider redirect rejection, worker `auth_sessions` revocation, structured sandbox attestation, and bounded Deepgram probe responses are included).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
-- Latest continuation recheck: build passed; integration passed 13 files/43 tests; unit passed 28 files/151 tests; E2E passed 3 files/11 tests; focused AI gateway coverage passed 10/10; security, secret, typecheck, lint, and format gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 16 unresolved requirements; production readiness remains fail-closed.
+- Latest continuation recheck: build passed; integration passed 13 files/43 tests; unit passed 29 files/153 tests; E2E passed 3 files/11 tests; focused AI gateway coverage passed 10/10; security, secret, typecheck, lint, and format gates are green. Aggregate `verify.sh` remains correctly preflight-blocked on 18 unresolved requirements; production readiness remains fail-closed.
 - Standard Codex Security scan `2ac638eb-66d7-4f36-b4e9-ec3792ca0574` completed against the prior `4d0614b` snapshot with one high, source-backed finding: hosted worker syscall, egress, cgroup/PID, read-only-root, and bounded-scratch enforcement remain unproven outside local Compose. The report is at `C:\\tmp\\codex-security-scans-k9cTF9\\AIFamilyHistorian\\4d0614ba1feda0eb9d2a604c4d71c59ec8df746e_20260809T130503Z_mm7xex28\\report.md`; the requirement remains fail-closed as `EXT-023`.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
 - Engineering completion estimate: 93% weighted implementation completion. This is a progress estimate, not a release approval.
 - Production release: blocked. The production gate is fail-closed on missing external credentials and documentary approvals; no production mutation was attempted.
-- Why `RUN_COMPLETE` was not reached: the current `sh scripts/preflight.sh` reports 16 unresolved requirements, including a failed Resend credential probe, missing hosted worker sandbox attestation, Turnstile, Sentry, GitHub, Fly.io, and legal/vendor/insurance/DPIA/retention evidence. Hosted abuse-prevention, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
+- Why `RUN_COMPLETE` was not reached: the current `sh scripts/preflight.sh` reports 18 unresolved requirements, including failed Stripe and Resend credential probes, missing signed hosted worker sandbox evidence/trusted public key, Turnstile, Sentry, GitHub, Fly.io, and legal/vendor/insurance/DPIA/retention evidence. Hosted abuse-prevention, CI, staging, DNS, legal, vendor, insurance, data-region, and production-secret evidence remains unavailable.
 
 ## Verified local evidence
 

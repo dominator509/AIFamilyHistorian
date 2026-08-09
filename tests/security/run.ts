@@ -10,6 +10,9 @@ const [
   workerSource,
   workerRoleMigration,
   workerSessionRevokeMigration,
+  workerEvidenceProbe,
+  workerEvidenceShell,
+  envExample,
   verifyWorkflow,
   releaseWorkflow,
 ] = await Promise.all([
@@ -20,6 +23,9 @@ const [
   readFile('apps/worker/src/index.ts', 'utf8'),
   readFile('drizzle/0013_worker_database_role.sql', 'utf8'),
   readFile('drizzle/0015_revoke_worker_session_access.sql', 'utf8'),
+  readFile('scripts/probes/worker-sandbox-evidence.mjs', 'utf8'),
+  readFile('scripts/probes/worker_sandbox_evidence.sh', 'utf8'),
+  readFile('.env.example', 'utf8'),
   readFile('.github/workflows/verify.yml', 'utf8'),
   readFile('.github/workflows/release.yml', 'utf8'),
 ]);
@@ -96,6 +102,24 @@ for (const [name, workflow] of [
 }
 if (!releaseWorkflow.includes('flyctl deploy --config fly.worker.toml'))
   throw new Error('release workflow must deploy the dedicated worker manifest');
+for (const [name, content, controls] of [
+  [
+    'worker evidence probe',
+    workerEvidenceProbe,
+    ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE', 'createPublicKey', 'verify('],
+  ],
+  ['worker evidence shell', workerEvidenceShell, ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE']],
+  ['environment example', envExample, ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE']],
+  [
+    'release workflow sandbox key wiring',
+    releaseWorkflow,
+    ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY', 'worker-sandbox-attestation-public-key.pem'],
+  ],
+] as const) {
+  for (const control of controls) {
+    if (!content.includes(control)) throw new Error(`${name} control missing: ${control}`);
+  }
+}
 
 const validWav = Uint8Array.from([0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x41, 0x56, 0x45]);
 const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);

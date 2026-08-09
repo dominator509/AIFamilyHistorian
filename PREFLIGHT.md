@@ -25,11 +25,13 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 | Vendor-risk evidence | DeepSeek, Deepgram, ElevenLabs, R2, Neon, Upstash, Sentry and print provider data-flow decisions | VENDOR_RISK_APPROVAL_FILE | Approved and current | Internal/professional | production-readiness gate |
 | Insurance evidence | Cyber, technology E&O, and media liability | INSURANCE_EVIDENCE_FILE | Active policy evidence | Paid | production-readiness gate |
 | DPIA and retention | Approved data map, DPIA, retention schedule, subprocessor list | DPIA_APPROVAL_FILE, RETENTION_APPROVAL_FILE | Approved artifacts | Internal/professional | production-readiness gate |
-| Hosted worker sandbox evidence | Production syscall, network-egress, cgroup/PID, read-only root, and bounded scratch controls | WORKER_SANDBOX_EVIDENCE_FILE | Current signed JSON attestation (`worker-sandbox-attestation/v1`) affirming every required control, with issuer, subject, timestamps, evidence ID, signature, and signature algorithm | Internal/operations | scripts/probes/worker_sandbox_evidence.sh |
+| Hosted worker sandbox evidence | Production syscall, network-egress, cgroup/PID, read-only root, and bounded scratch controls | WORKER_SANDBOX_EVIDENCE_FILE, WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE | Current Ed25519-signed JSON attestation (`worker-sandbox-attestation/v1`) affirming every required control, with issuer, subject, timestamps, evidence ID, signature, and signature algorithm, plus the trusted public key used to verify it | Internal/operations | scripts/probes/worker_sandbox_evidence.sh |
 
 Local tools required: git, awk, grep, sed, curl, jq, node 24, pnpm 10 through Corepack, Docker, PostgreSQL client 17, ffmpeg, ffprobe, exiftool, convert or magick, clamscan, OCRmyPDF, and Python 3.12 for local media utilities.
 
 Release CI keeps approval and sandbox evidence out of Git: it maps the `*_CONTENT` GitHub secrets and `WORKER_SANDBOX_EVIDENCE` into ephemeral runner files, then runs the same bounded probes and production-readiness gate. Empty or missing secrets remain failures.
+
+The sandbox signature is Ed25519 over canonical JSON containing `schema_version`, `issuer`, `subject`, `evidence_id`, `issued_at`, `expires_at`, and the required control booleans in the probe-defined order; `signature` and `signature_algorithm` are excluded from the signed payload. The public key is trusted operator configuration and is never taken from the evidence document.
 
 PREFLIGHT-TABLE-BEGIN
 DATABASE_URL|REQUIRED|scripts/probes/database_url.sh
@@ -69,4 +71,5 @@ INSURANCE_EVIDENCE_FILE|REQUIRED|-
 DPIA_APPROVAL_FILE|REQUIRED|-
 RETENTION_APPROVAL_FILE|REQUIRED|-
 WORKER_SANDBOX_EVIDENCE_FILE|REQUIRED|scripts/probes/worker_sandbox_evidence.sh
+WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE|REQUIRED|-
 PREFLIGHT-TABLE-END

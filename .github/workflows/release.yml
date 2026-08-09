@@ -68,6 +68,7 @@ jobs:
           FIELD_ENCRYPTION_MASTER_KEY: ${{ secrets.FIELD_ENCRYPTION_MASTER_KEY }}
           DOWNLOAD_SIGNING_SECRET: ${{ secrets.DOWNLOAD_SIGNING_SECRET }}
           WORKER_SANDBOX_EVIDENCE: ${{ secrets.WORKER_SANDBOX_EVIDENCE }}
+          WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY: ${{ secrets.WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY }}
           LEGAL_APPROVAL_CONTENT: ${{ secrets.LEGAL_APPROVAL_CONTENT }}
           VENDOR_RISK_APPROVAL_CONTENT: ${{ secrets.VENDOR_RISK_APPROVAL_CONTENT }}
           INSURANCE_EVIDENCE_CONTENT: ${{ secrets.INSURANCE_EVIDENCE_CONTENT }}
@@ -79,6 +80,8 @@ jobs:
           sh scripts/generate-local-env.sh --force
           export WORKER_SANDBOX_EVIDENCE_FILE="$RUNNER_TEMP/worker-sandbox-attestation"
           printf '%s' "$WORKER_SANDBOX_EVIDENCE" > "$WORKER_SANDBOX_EVIDENCE_FILE"
+          export WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE="$RUNNER_TEMP/worker-sandbox-attestation-public-key.pem"
+          printf '%s' "$WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY" > "$WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE"
           export LEGAL_APPROVAL_FILE="$RUNNER_TEMP/legal-approval"
           export VENDOR_RISK_APPROVAL_FILE="$RUNNER_TEMP/vendor-risk-approval"
           export INSURANCE_EVIDENCE_FILE="$RUNNER_TEMP/insurance-evidence"

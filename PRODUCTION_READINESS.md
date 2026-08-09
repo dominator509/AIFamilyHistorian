@@ -49,7 +49,7 @@ The current-head standard scan `47580dd9-5d31-4143-bfc2-68f6cfc185f9` completed 
 
 ## External and release gates
 
-`sh scripts/production-readiness-check.sh` currently fails closed with **16 unresolved requirements**. The unresolved set includes the Resend credential probe, Turnstile, Sentry, GitHub, Fly.io, legal/vendor/insurance/DPIA/retention artifacts, and the required `WORKER_SANDBOX_EVIDENCE_FILE` attestation for hosted syscall, network-egress, cgroup/PID, read-only-root, and bounded-scratch controls.
+`sh scripts/production-readiness-check.sh` currently fails closed with **18 unresolved requirements**. The unresolved set includes failed Stripe and Resend credential probes, Turnstile, Sentry, GitHub, Fly.io, legal/vendor/insurance/DPIA/retention artifacts, and the required signed `WORKER_SANDBOX_EVIDENCE_FILE` plus trusted `WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE` for hosted syscall, network-egress, cgroup/PID, read-only-root, and bounded-scratch controls. The probe now verifies the Ed25519 signature; it does not claim that hosted enforcement exists.
 
 Production secrets must be injected through the approved secret manager; credentials pasted into chat must be rotated before use. Hosted provider delivery, CI/staging, DNS/certificates, production migrations, rollback, legal approvals, insurance, vendor/DPA review, data-region/data-broker determinations, and explicit release authorization remain unverified.
 
