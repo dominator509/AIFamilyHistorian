@@ -9,6 +9,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
+- The worker now serves loopback-only `/health/live` and `/health/ready` endpoints; readiness follows Redis dependency state and is cleared during shutdown, so the image healthcheck reflects the actual worker process without creating a public listener.
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.
 
 ## Engineering work still pending
