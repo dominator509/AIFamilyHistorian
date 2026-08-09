@@ -525,3 +525,7 @@ Session device labels, user-agent strings, and IP-address metadata are now valid
 ### ADR-139: Bound multipart presigned URL lifetimes
 
 `ObjectStorage.signUploadPart` now accepts only integer lifetimes from 1 second through one hour, rejecting invalid values before presigning. The API remains at its existing 15-minute default, while direct worker and tooling callers cannot create unexpectedly long-lived upload capabilities.
+
+### ADR-140: Bound rate-limiter configuration and clock inputs
+
+Fixed-window and Redis-backed rate limiters now require safe integer limits and windows, cap request counts at 1,000,000, cap windows at seven days, cap in-memory buckets at 100,000, and reject negative or non-finite injected timestamps. This preserves deterministic test clocks while preventing malformed configuration from defeating memory bounds or generating invalid retry metadata.

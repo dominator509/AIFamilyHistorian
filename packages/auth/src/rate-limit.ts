@@ -15,6 +15,10 @@ export interface RedisScriptClient {
   eval(script: string, numberOfKeys: number, ...arguments_: string[]): Promise<unknown>;
 }
 
+export const MAX_RATE_LIMIT_KEYS = 100_000;
+export const MAX_RATE_LIMIT_COUNT = 1_000_000;
+export const MAX_RATE_LIMIT_WINDOW_MILLISECONDS = 7 * 24 * 60 * 60 * 1000;
+
 interface WindowBucket {
   startedAt: number;
   count: number;
@@ -30,16 +34,24 @@ export class FixedWindowRateLimiter implements RateLimiter {
     },
   ) {
     if (
-      !Number.isInteger(options.limit) ||
+      !Number.isSafeInteger(options.limit) ||
       options.limit < 1 ||
-      !Number.isInteger(options.windowMilliseconds) ||
-      options.windowMilliseconds < 1
+      options.limit > MAX_RATE_LIMIT_COUNT ||
+      !Number.isSafeInteger(options.windowMilliseconds) ||
+      options.windowMilliseconds < 1 ||
+      options.windowMilliseconds > MAX_RATE_LIMIT_WINDOW_MILLISECONDS ||
+      (options.maxKeys !== undefined &&
+        (!Number.isSafeInteger(options.maxKeys) ||
+          options.maxKeys < 1 ||
+          options.maxKeys > MAX_RATE_LIMIT_KEYS))
     )
       throw new Error('rate limiter configuration is invalid');
   }
 
   public consume(key: string, nowMilliseconds = Date.now()): RateLimitDecision {
     if (!key.trim()) throw new Error('rate limiter key is required');
+    if (!Number.isSafeInteger(nowMilliseconds) || nowMilliseconds < 0)
+      throw new Error('rate limiter timestamp is invalid');
     const existing = this.#buckets.get(key);
     const expired =
       existing === undefined ||
@@ -97,10 +109,12 @@ export class RedisFixedWindowRateLimiter implements RateLimiter {
     },
   ) {
     if (
-      !Number.isInteger(options.limit) ||
+      !Number.isSafeInteger(options.limit) ||
       options.limit < 1 ||
-      !Number.isInteger(options.windowMilliseconds) ||
-      options.windowMilliseconds < 1
+      options.limit > MAX_RATE_LIMIT_COUNT ||
+      !Number.isSafeInteger(options.windowMilliseconds) ||
+      options.windowMilliseconds < 1 ||
+      options.windowMilliseconds > MAX_RATE_LIMIT_WINDOW_MILLISECONDS
     )
       throw new Error('rate limiter configuration is invalid');
     if (options.prefix !== undefined && !/^[A-Za-z0-9:_-]{1,64}$/u.test(options.prefix))

@@ -4,18 +4,18 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `4e33574` (`HARDENING-128`); multipart presigned upload-part URLs now accept only 1 second through one hour of expiry (the API default remains 900 seconds). HARDENING-127 streamed-download bounds, HARDENING-126 session metadata bounds, HARDENING-125 callback payload bounds, HARDENING-124 edition manifests, HARDENING-123 provenance, HARDENING-122 portable export, HARDENING-121 provider response, HARDENING-120 Stripe signature, HARDENING-119 auth, and earlier gates remain active.
+- Latest implementation continuation: pending `HARDENING-129` commit; fixed-window and Redis rate limiters now enforce safe finite limits/windows, bounded in-memory keys, and valid injected timestamps. HARDENING-128 presigned URL bounds, HARDENING-127 streamed-download bounds, HARDENING-126 session metadata bounds, HARDENING-125 callback payload bounds, HARDENING-124 edition manifests, HARDENING-123 provenance, HARDENING-122 portable export, HARDENING-121 provider response, HARDENING-120 Stripe signature, HARDENING-119 auth, and earlier gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
-- Superseding checkpoint: `4e33574` is the current implementation checkpoint; older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `4e33574`; `origin/master` matches this commit.
-- Current code checkpoint: `4e33574` (all capabilities listed below, plus bounded persisted session metadata, bounded direct streamed object downloads, and bounded presigned URL lifetimes).
+- Superseding checkpoint: pending `HARDENING-129` commit is the current implementation checkpoint; older implementation hashes below are retained only as historical provenance.
+- Current source checkpoint: pending `HARDENING-129` commit; `origin/master` must be rechecked after push.
+- Current code checkpoint: pending `HARDENING-129` commit (all capabilities listed below, plus bounded persisted session metadata, bounded direct streamed object downloads, bounded presigned URL lifetimes, and bounded rate-limiter inputs).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
-- Latest continuation recheck: HARDENING-128 signed-URL expiry coverage passed through the real MinIO integration; full local verification passed unit 27 files/130 tests, integration 13 files/41 tests, E2E 3 files/11 tests, accessibility (`pdf_tagged=true epub_semantics=true`), all sixteen live-fire proofs, performance smoke (100 requests, p95=0.54ms), workspace build, typecheck, lint, format, security, secret, dependency-audit, reality, and smoke gates. Production readiness remains fail-closed on the documented 16 unresolved requirements.
+- Latest continuation recheck: HARDENING-129 rate-limiter boundary coverage passed 4/4; full local verification passed unit 27 files/130 tests, integration 13 files/41 tests, E2E 3 files/11 tests, accessibility (`pdf_tagged=true epub_semantics=true`), all sixteen live-fire proofs, performance smoke (100 requests, p95=0.62ms), workspace build, typecheck, lint, format, security, secret, dependency-audit, reality, and smoke gates. Production readiness remains fail-closed on the documented 16 unresolved requirements.
 - Latest genuine green tag: none; the scheduler lease remains on `EP-000`, so no green tag was created dishonestly.
 - Graph status: `RESUME EP-000`
 - Engineering completion estimate: 93% weighted implementation completion. This is a progress estimate, not a release approval.

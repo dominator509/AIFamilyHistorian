@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   FixedWindowRateLimiter,
+  MAX_RATE_LIMIT_COUNT,
+  MAX_RATE_LIMIT_KEYS,
+  MAX_RATE_LIMIT_WINDOW_MILLISECONDS,
   RedisFixedWindowRateLimiter,
 } from '../../packages/auth/src/rate-limit.js';
 
@@ -51,8 +54,33 @@ describe('FixedWindowRateLimiter', () => {
     expect(() => new FixedWindowRateLimiter({ limit: 0, windowMilliseconds: 1 })).toThrow(
       'rate limiter configuration is invalid',
     );
+    expect(
+      () => new FixedWindowRateLimiter({ limit: MAX_RATE_LIMIT_COUNT + 1, windowMilliseconds: 1 }),
+    ).toThrow('rate limiter configuration is invalid');
+    expect(
+      () =>
+        new FixedWindowRateLimiter({
+          limit: 1,
+          windowMilliseconds: MAX_RATE_LIMIT_WINDOW_MILLISECONDS + 1,
+        }),
+    ).toThrow('rate limiter configuration is invalid');
+    expect(
+      () => new FixedWindowRateLimiter({ limit: 1, windowMilliseconds: 1, maxKeys: 0 }),
+    ).toThrow('rate limiter configuration is invalid');
+    expect(
+      () =>
+        new FixedWindowRateLimiter({
+          limit: 1,
+          windowMilliseconds: 1,
+          maxKeys: MAX_RATE_LIMIT_KEYS + 1,
+        }),
+    ).toThrow('rate limiter configuration is invalid');
     const limiter = new FixedWindowRateLimiter({ limit: 1, windowMilliseconds: 1 });
     expect(() => limiter.consume('  ', 0)).toThrow('rate limiter key is required');
+    expect(() => limiter.consume('client-a', Number.NaN)).toThrow(
+      'rate limiter timestamp is invalid',
+    );
+    expect(() => limiter.consume('client-a', -1)).toThrow('rate limiter timestamp is invalid');
   });
 
   it('uses an atomic Redis result and never sends the raw key to Redis', async () => {
@@ -74,5 +102,12 @@ describe('FixedWindowRateLimiter', () => {
     });
     expect(calls[0]?.[0]).toMatch(/^test:limit:[a-f0-9]{64}$/u);
     expect(calls[0]?.[0]).not.toContain('203.0.113.10');
+    expect(
+      () =>
+        new RedisFixedWindowRateLimiter(
+          { eval: () => Promise.resolve([1, 1]) },
+          { limit: MAX_RATE_LIMIT_COUNT + 1, windowMilliseconds: 1 },
+        ),
+    ).toThrow('rate limiter configuration is invalid');
   });
 });
