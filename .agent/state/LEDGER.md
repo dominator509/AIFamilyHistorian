@@ -393,3 +393,4 @@
 2026-08-09T06:20:00Z | codex | HARDENING-79 | SECURITY_HARDENING | Privacy, export, and narration intake now assert and lock the active outbox lease before authoritative mutations; media originals are row-locked and enter scanning through a tenant-scoped compare-and-set.
 2026-08-09T06:21:00Z | codex | HARDENING-79 | LOCAL_VERIFICATION | typecheck and format-check passed; focused and full worker integration verification remains required before the checkpoint is pushed.
 2026-08-09T06:37:00Z | codex | HARDENING-79 | LOCAL_VERIFICATION | unit 27 files/104 tests, integration 13 files/41 tests, E2E 3 files/11 tests, build, security-check, secret-scan, and all 16 live-fire proofs passed; no external provider effect was invoked.
+2026-08-09T06:40:00Z | codex | HARDENING-79 | CHECKPOINT | commit 9d21309 pushed after clean diff review; handoff now identifies this worker-fencing source checkpoint.
