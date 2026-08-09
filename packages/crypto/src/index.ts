@@ -1,10 +1,23 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 import { z } from 'zod';
 
+export const MAX_RESTRICTED_TEXT_BYTES = 16 * 1024 * 1024;
+export const MAX_RESTRICTED_BLOB_BYTES = 32 * 1024 * 1024;
+const MAX_SEALED_COMPONENT_CHARS = 24 * 1024 * 1024;
+
 const sealedBlobSchema = z.object({
-  ciphertext: z.string().min(1),
-  iv: z.string().min(1),
-  tag: z.string().min(1),
+  ciphertext: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]+$/u)
+    .max(MAX_SEALED_COMPONENT_CHARS),
+  iv: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]+$/u)
+    .max(32),
+  tag: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]+$/u)
+    .max(64),
 });
 const blobSchema = z.discriminatedUnion('v', [
   z.object({
@@ -49,12 +62,17 @@ function seal(key: Buffer, plaintext: Buffer): { ciphertext: string; iv: string;
 
 function open(key: Buffer, bundle: { ciphertext: string; iv: string; tag: string }): Buffer {
   const iv = Buffer.from(bundle.iv, 'base64url');
+  const tag = Buffer.from(bundle.tag, 'base64url');
+  const ciphertext = Buffer.from(bundle.ciphertext, 'base64url');
+  if (iv.length !== 12 || tag.length !== 16)
+    throw new Error('field encryption envelope metadata is invalid');
+  if (ciphertext.length > MAX_RESTRICTED_TEXT_BYTES)
+    throw new Error('field encryption ciphertext exceeds the allowed size');
   const decipher = createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(Buffer.from(bundle.tag, 'base64url'));
-  const plaintext = Buffer.concat([
-    decipher.update(Buffer.from(bundle.ciphertext, 'base64url')),
-    decipher.final(),
-  ]);
+  decipher.setAuthTag(tag);
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  if (plaintext.length > MAX_RESTRICTED_TEXT_BYTES)
+    throw new Error('field encryption plaintext exceeds the allowed size');
   return plaintext;
 }
 
@@ -63,22 +81,30 @@ export function encryptRestrictedText(
   plaintext: string,
   scope?: string,
 ): string {
+  const plaintextBytes = Buffer.from(plaintext, 'utf8');
+  if (plaintextBytes.length > MAX_RESTRICTED_TEXT_BYTES)
+    throw new Error('field encryption plaintext exceeds the allowed size');
   const wrappingKey = scope
     ? scopedWrappingKey(masterSecret, scope)
     : normalizeMasterKey(masterSecret);
   const dataKey = randomBytes(32);
   const wrappedKey = seal(wrappingKey, dataKey);
-  const value = seal(dataKey, Buffer.from(plaintext, 'utf8'));
-  return JSON.stringify({
+  const value = seal(dataKey, plaintextBytes);
+  const blob = JSON.stringify({
     v: scope ? 2 : 1,
     alg: 'A256GCM',
     ...(scope ? { scope } : {}),
     wrappedKey,
     value,
   } as const);
+  if (Buffer.byteLength(blob, 'utf8') > MAX_RESTRICTED_BLOB_BYTES)
+    throw new Error('field encryption blob exceeds the allowed size');
+  return blob;
 }
 
 export function decryptRestrictedText(masterSecret: string, blob: string, scope?: string): string {
+  if (Buffer.byteLength(blob, 'utf8') > MAX_RESTRICTED_BLOB_BYTES)
+    throw new Error('field encryption blob exceeds the allowed size');
   const parsed = blobSchema.parse(JSON.parse(blob));
   if (parsed.v === 2 && parsed.scope !== scope)
     throw new Error('field encryption scope does not match');

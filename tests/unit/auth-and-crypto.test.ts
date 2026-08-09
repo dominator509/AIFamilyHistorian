@@ -12,7 +12,12 @@ import {
   verifySessionToken,
   verifyTotpCode,
 } from '../../packages/auth/src/index.js';
-import { decryptRestrictedText, encryptRestrictedText } from '../../packages/crypto/src/index.js';
+import {
+  decryptRestrictedText,
+  encryptRestrictedText,
+  MAX_RESTRICTED_BLOB_BYTES,
+  MAX_RESTRICTED_TEXT_BYTES,
+} from '../../packages/crypto/src/index.js';
 
 describe('session principal and auth policy', () => {
   const secret = '000000000000000000000000000000000000000000000000000000000000000000';
@@ -159,5 +164,20 @@ describe('restricted text envelope encryption', () => {
     expect(() => decryptRestrictedText(masterKey, encrypted)).toThrow(
       'field encryption scope does not match',
     );
+  });
+
+  it('bounds plaintext and envelope material before crypto decoding', () => {
+    const masterKey = 'c'.repeat(32);
+    expect(() =>
+      encryptRestrictedText(masterKey, 'x'.repeat(MAX_RESTRICTED_TEXT_BYTES + 1)),
+    ).toThrow('field encryption plaintext exceeds the allowed size');
+    expect(() =>
+      decryptRestrictedText(masterKey, 'x'.repeat(MAX_RESTRICTED_BLOB_BYTES + 1)),
+    ).toThrow('field encryption blob exceeds the allowed size');
+    const parsed = JSON.parse(encryptRestrictedText(masterKey, 'safe')) as {
+      value: { iv: string };
+    };
+    parsed.value.iv = 'not-base64url';
+    expect(() => decryptRestrictedText(masterKey, JSON.stringify(parsed))).toThrow();
   });
 });

@@ -437,3 +437,7 @@ Telemetry redaction now compares normalized key forms, so casing and separators 
 ### ADR-117: Bound MFA primitive inputs
 
 TOTP enrollment, verification, and recovery-code primitives now reject oversized labels, issuers, secrets, codes, and recovery-hash sets before URI construction, base32 decoding, or hashing. These bounds keep exported authentication helpers fail-fast even when called outside the API body limit and prevent unbounded attacker-controlled work in security-sensitive code.
+
+### ADR-118: Bound restricted-data encryption envelopes
+
+Restricted-text encryption now caps plaintext at 16 MiB and serialized envelopes at 32 MiB. Decryption validates URL-safe base64 component syntax, exact AES-GCM IV/tag sizes, and ciphertext/plaintext ceilings before decoding or opening the cipher. This keeps malformed database or API blobs from causing unbounded JSON/base64 allocation while preserving archive-scoped key separation.
