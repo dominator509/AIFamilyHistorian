@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -15,6 +15,7 @@
 - Worker access to global `auth_sessions` is revoked from both runtime and worker roles by migration `0015_revoke_worker_session_access.sql`; verifier and security harness enforce the invariant, and the local PostgreSQL probe returned `f|f`.
 - Staging release wiring now deploys `fly.worker.toml` separately, preserving the native `worker-runtime` image for media processing; the security harness asserts that dedicated deployment command.
 - Hosted scratch wiring now declares a named 30 GiB `worker_scratch` volume at `/tmp` for the worker process. The exact `fly volumes create` command is documented, but the volume, filesystem mode, and hosted sandbox controls remain unverified because no Fly credential was available.
+- The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. Signature authenticity and hosted enforcement remain external.
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
 
 ### Current security scan
@@ -26,7 +27,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `4f86346` (`HARDENING-163`); provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, and hosted scratch-volume declaration are now recorded. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `4f86346` plus the current attestation hardening; provider redirect rejection, worker `auth_sessions` privilege revocation, dedicated worker deployment wiring, hosted scratch-volume declaration, and structured sandbox evidence validation are now recorded. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.

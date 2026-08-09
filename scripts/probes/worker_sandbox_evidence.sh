@@ -10,4 +10,4 @@ set -eu
   echo "worker sandbox evidence: file is empty" >&2
   exit 1
 }
-echo "worker sandbox evidence: present"
+node scripts/probes/worker-sandbox-evidence.mjs "$WORKER_SANDBOX_EVIDENCE_FILE"

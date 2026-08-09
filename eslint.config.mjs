@@ -9,6 +9,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/coverage/**',
       '**/node_modules/**',
+      'scripts/probes/*.mjs',
     ],
   },
   eslint.configs.recommended,

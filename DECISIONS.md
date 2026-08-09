@@ -621,3 +621,7 @@ The release workflow now deploys `fly.worker.toml` separately after the API depl
 ### ADR-163: Declare bounded hosted worker scratch
 
 The worker manifest now declares a named 30 GiB volume mounted at `/tmp` only for the worker process. This is sized above the 25 GiB accepted original plus the 512 MiB derivative reserve, while the exact volume creation, filesystem mode, and hosted sandbox evidence remain operator-controlled release gates.
+
+### ADR-164: Require structured worker sandbox attestations
+
+The sandbox evidence probe now requires a bounded JSON document with schema version, issuer/subject, evidence ID, signature metadata, valid timestamps, and affirmative values for syscall, egress, filesystem, privilege, resource, and scratch controls. This prevents arbitrary non-empty text from satisfying the gate; cryptographic signature authenticity remains an external operations check.

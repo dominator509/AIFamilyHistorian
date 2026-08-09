@@ -25,7 +25,7 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 | Vendor-risk evidence | DeepSeek, Deepgram, ElevenLabs, R2, Neon, Upstash, Sentry and print provider data-flow decisions | VENDOR_RISK_APPROVAL_FILE | Approved and current | Internal/professional | production-readiness gate |
 | Insurance evidence | Cyber, technology E&O, and media liability | INSURANCE_EVIDENCE_FILE | Active policy evidence | Paid | production-readiness gate |
 | DPIA and retention | Approved data map, DPIA, retention schedule, subprocessor list | DPIA_APPROVAL_FILE, RETENTION_APPROVAL_FILE | Approved artifacts | Internal/professional | production-readiness gate |
-| Hosted worker sandbox evidence | Production syscall, network-egress, cgroup/PID, read-only root, and bounded scratch controls | WORKER_SANDBOX_EVIDENCE_FILE | Current signed staging/production-equivalent attestation | Internal/operations | scripts/probes/worker_sandbox_evidence.sh |
+| Hosted worker sandbox evidence | Production syscall, network-egress, cgroup/PID, read-only root, and bounded scratch controls | WORKER_SANDBOX_EVIDENCE_FILE | Current signed JSON attestation (`worker-sandbox-attestation/v1`) affirming every required control, with issuer, subject, timestamps, evidence ID, signature, and signature algorithm | Internal/operations | scripts/probes/worker_sandbox_evidence.sh |
 
 Local tools required: git, awk, grep, sed, curl, jq, node 24, pnpm 10 through Corepack, Docker, PostgreSQL client 17, ffmpeg, ffprobe, exiftool, convert or magick, clamscan, OCRmyPDF, and Python 3.12 for local media utilities.
 
