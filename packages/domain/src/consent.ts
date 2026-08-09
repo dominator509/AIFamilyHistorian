@@ -34,7 +34,14 @@ export function assertActiveConsent(
   const matching = records.filter(
     (record) => record.subjectId === subjectId && record.purpose === purpose,
   );
-  const current = matching.at(-1);
+  const current = matching.reduce<ConsentRecord | undefined>((latest, record) => {
+    if (!latest) return record;
+    const latestTime = Date.parse(latest.decidedAt);
+    const recordTime = Date.parse(record.decidedAt);
+    if (recordTime > latestTime) return record;
+    if (recordTime < latestTime) return latest;
+    return record.id > latest.id ? record : latest;
+  }, undefined);
   if (!current) throw new DomainError('CONSENT_REQUIRED', `consent required for ${purpose}`);
   if (current.status === 'withdrawn')
     throw new DomainError('CONSENT_WITHDRAWN', `consent withdrawn for ${purpose}`);

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { factStatusSchema, roleSchema, uuidSchema, visibilitySchema } from './domain.js';
 
 export const idempotencyKeySchema = z.string().min(16).max(200);
+/** Public approval is a separate owner-controlled publication workflow. */
+export const authoringVisibilitySchema = visibilitySchema.exclude(['public_approved']);
 export const archiveParamsSchema = z.object({ archiveId: uuidSchema });
 export const recordingSessionInputSchema = z.object({
   subjectId: uuidSchema.optional(),
@@ -11,11 +13,11 @@ export const memberInputSchema = z.object({ userId: uuidSchema, role: roleSchema
 export const personInputSchema = z.object({
   displayName: z.string().min(1).max(300),
   isLiving: z.boolean(),
-  visibility: visibilitySchema.default('owner_only'),
+  visibility: authoringVisibilitySchema.default('owner_only'),
 });
 export const mediaInputSchema = z.object({
   mediaType: z.enum(['audio', 'video', 'image', 'document']),
-  visibility: visibilitySchema.default('owner_only'),
+  visibility: authoringVisibilitySchema.default('owner_only'),
   rightsStatus: z.literal('pending').default('pending'),
 });
 export const uploadInputSchema = z.object({
@@ -79,7 +81,7 @@ export const eventInputSchema = z.object({
   occurredOn: z.iso.date().optional(),
   datePrecision: z.enum(['day', 'month', 'year', 'approximate', 'unknown']),
   description: z.string().max(10_000).optional(),
-  visibility: visibilitySchema.default('owner_only'),
+  visibility: authoringVisibilitySchema.default('owner_only'),
 });
 export const chapterInputSchema = z.object({ title: z.string().min(1).max(500) });
 export const MAX_EDITION_MANIFEST_KEYS = 256;

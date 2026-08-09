@@ -196,6 +196,21 @@ describe('purpose-specific consent invariant', () => {
     );
   });
 
+  it('selects consent by decision time rather than caller-provided array order', () => {
+    const withdrawn = withdrawConsent(granted, '2026-08-07T00:00:00.000Z');
+    expectCode(
+      () => assertActiveConsent([withdrawn, granted], ids.actor, 'transcription'),
+      'CONSENT_WITHDRAWN',
+    );
+    expect(
+      assertActiveConsent(
+        [withdrawn, { ...granted, decidedAt: '2026-08-08T00:00:00.000Z' }],
+        ids.actor,
+        'transcription',
+      ).status,
+    ).toBe('granted');
+  });
+
   it('rejects malformed policy versions and decision timestamps', () => {
     expectCode(
       () =>
