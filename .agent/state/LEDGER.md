@@ -368,3 +368,4 @@
 2026-08-09T04:53:00Z | codex | HARDENING-72 | LOCAL_VERIFICATION | full_unit26_files_101_tests_passed; typecheck_lint_build_security_secret_scan_format_passed; live_fire_all16_passed; direct_e2e_host_ports_remain_unavailable
 2026-08-09T04:55:00Z | codex | HARDENING-72 | SECURITY_SCAN_STATUS | standard_scan_a40a2aed_started_at_revision_92a3e83; preflight_passed_with_degraded_worker_slot_warning; discovery_worklist_created_but_no_report_or_findings_available; do_not_infer_current_head_scan_completion
 2026-08-09T04:56:00Z | codex | HARDENING-72 | CHECKPOINT | committed_6e382e7_and_fbe8f11; pushed_origin_master; git_HEAD_equals_origin_master_fbe8f11; graph_next_RESUME_EP-000; production_gate_remains_blocked_on_15_external_legal_requirements
+2026-08-09T04:58:00Z | codex | HARDENING-72 | PREFLIGHT | sh_scripts_preflight_exit_1; exact_unresolved_requirements_15_RESEND_TURNSTILE_SENTRY_GITHUB_FLY_and_legal_vendor_insurance_DPIA_retention_evidence; no_gate_weakened
