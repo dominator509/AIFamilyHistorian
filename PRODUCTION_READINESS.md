@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 30 files / 161 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 30 files / 162 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -42,6 +42,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-180 rejects future-dated deletion evidence at the state transition clock, preventing a forged or clock-skewed proof from satisfying deletion propagation before verification occurred. Unit, format, typecheck, and security gates passed; deletion fulfillment remains review-gated and externally approved.
 - HARDENING-181 bounds deletion evidence references to 2,048 control-free characters, preventing oversized or log-injection proof identifiers from entering the deletion record. Unit, format, typecheck, and security gates passed.
 - HARDENING-182 bounds voice license and provider-verification references to 512 control-free characters, preventing oversized or log-injection authorization metadata from entering voice policy and audit flows. Unit passed 30 files/161 tests; format, typecheck, and security checks passed.
+- HARDENING-183 validates consent record identifiers, purposes, statuses, policy versions, and decision timestamps before authorization or withdrawal; policy versions are bounded to 128 control-free characters. Unit passed 30 files/162 tests; format, typecheck, and security checks passed.
 
 ## Engineering work still pending
 

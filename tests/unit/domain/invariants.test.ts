@@ -165,6 +165,28 @@ describe('purpose-specific consent invariant', () => {
       'CONSENT_WITHDRAWN',
     );
   });
+
+  it('rejects malformed policy versions and decision timestamps', () => {
+    expectCode(
+      () =>
+        assertActiveConsent(
+          [{ ...granted, policyVersion: 'x'.repeat(129) }],
+          ids.actor,
+          'transcription',
+        ),
+      'VALIDATION_FAILED',
+    );
+    expectCode(() => withdrawConsent(granted, 'not-a-timestamp'), 'VALIDATION_FAILED');
+    expectCode(
+      () =>
+        assertActiveConsent(
+          [{ ...granted, policyVersion: 'policy\nforged' }],
+          ids.actor,
+          'transcription',
+        ),
+      'VALIDATION_FAILED',
+    );
+  });
 });
 
 describe('voice authorization invariant', () => {
