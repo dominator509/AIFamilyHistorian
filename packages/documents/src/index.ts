@@ -2,6 +2,11 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 
 export const MAX_EXPORT_CANONICAL_DEPTH = 32;
+export const MAX_EXPORT_ENTRIES = 10_000;
+export const MAX_EXPORT_EVIDENCE_IDS = 1_000;
+export const MAX_EXPORT_FIELD_CHARS = 500;
+export const MAX_EXPORT_ENTRY_BYTES = 1 * 1024 * 1024;
+export const MAX_EXPORT_JSONL_BYTES = 16 * 1024 * 1024;
 
 export class ExportCanonicalizationError extends Error {
   public constructor(message: string) {
@@ -11,12 +16,12 @@ export class ExportCanonicalizationError extends Error {
 }
 
 export const exportEntrySchema = z.object({
-  type: z.string().min(1),
+  type: z.string().min(1).max(MAX_EXPORT_FIELD_CHARS),
   id: z.uuid(),
-  version: z.number().int().positive(),
-  visibility: z.string().min(1),
+  version: z.number().int().positive().max(1_000_000),
+  visibility: z.string().min(1).max(MAX_EXPORT_FIELD_CHARS),
   payload: z.record(z.string(), z.unknown()),
-  evidenceIds: z.array(z.uuid()),
+  evidenceIds: z.array(z.uuid()).max(MAX_EXPORT_EVIDENCE_IDS),
 });
 export type ExportEntry = z.infer<typeof exportEntrySchema>;
 
@@ -31,8 +36,19 @@ export const portableArchiveManifestSchema = z.object({
 export type PortableArchiveManifest = z.infer<typeof portableArchiveManifestSchema>;
 
 export function renderJsonLines(entries: readonly ExportEntry[]): Uint8Array {
-  const lines = entries.map((entry) => canonicalJson(exportEntrySchema.parse(entry)));
-  return new TextEncoder().encode(lines.length === 0 ? '' : `${lines.join('\n')}\n`);
+  if (entries.length > MAX_EXPORT_ENTRIES) throw new Error('EXPORT_ENTRY_COUNT_EXCEEDED');
+  const encoder = new TextEncoder();
+  const lines: string[] = [];
+  let totalBytes = 0;
+  for (const entry of entries) {
+    const line = canonicalJson(exportEntrySchema.parse(entry));
+    const lineBytes = encoder.encode(line).byteLength;
+    if (lineBytes > MAX_EXPORT_ENTRY_BYTES) throw new Error('EXPORT_ENTRY_TOO_LARGE');
+    totalBytes += lineBytes + 1;
+    if (totalBytes > MAX_EXPORT_JSONL_BYTES) throw new Error('EXPORT_OUTPUT_TOO_LARGE');
+    lines.push(line);
+  }
+  return encoder.encode(lines.length === 0 ? '' : `${lines.join('\n')}\n`);
 }
 
 function csvCell(value: string): string {
@@ -40,6 +56,7 @@ function csvCell(value: string): string {
 }
 
 export function renderCsvIndex(entries: readonly ExportEntry[]): Uint8Array {
+  if (entries.length > MAX_EXPORT_ENTRIES) throw new Error('EXPORT_ENTRY_COUNT_EXCEEDED');
   const rows = ['type,id,version,visibility,evidence_ids'];
   for (const entry of entries) {
     const value = exportEntrySchema.parse(entry);
@@ -53,7 +70,9 @@ export function renderCsvIndex(entries: readonly ExportEntry[]): Uint8Array {
       ].join(','),
     );
   }
-  return new TextEncoder().encode(`${rows.join('\r\n')}\r\n`);
+  const encoded = new TextEncoder().encode(`${rows.join('\r\n')}\r\n`);
+  if (encoded.byteLength > MAX_EXPORT_JSONL_BYTES) throw new Error('EXPORT_OUTPUT_TOO_LARGE');
+  return encoded;
 }
 
 export function buildPortableManifest(
@@ -63,6 +82,8 @@ export function buildPortableManifest(
   entryCount: number,
 ): PortableArchiveManifest {
   if (!Number.isSafeInteger(entryCount) || entryCount < 0) throw new Error('EXPORT_COUNT_INVALID');
+  if (entryCount > MAX_EXPORT_ENTRIES) throw new Error('EXPORT_ENTRY_COUNT_EXCEEDED');
+  if (jsonLines.byteLength > MAX_EXPORT_JSONL_BYTES) throw new Error('EXPORT_OUTPUT_TOO_LARGE');
   const decoded = new TextDecoder().decode(jsonLines);
   const lines = decoded.length === 0 ? [] : decoded.split('\n').filter((line) => line.length > 0);
   for (const line of lines) exportEntrySchema.parse(JSON.parse(line));

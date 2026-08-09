@@ -7,6 +7,8 @@ import {
 import {
   ExportCanonicalizationError,
   MAX_EXPORT_CANONICAL_DEPTH,
+  MAX_EXPORT_ENTRIES,
+  MAX_EXPORT_JSONL_BYTES,
   MAX_BOOK_PARAGRAPHS,
   MAX_BOOK_TEXT_BYTES,
   buildPortableManifest,
@@ -71,6 +73,23 @@ describe('portable documents and release reports', () => {
         2,
       ),
     ).toThrow('EXPORT_COUNT_MISMATCH');
+  });
+
+  it('bounds export cardinality and serialized output before materialization', () => {
+    expect(() =>
+      renderJsonLines(Array.from({ length: MAX_EXPORT_ENTRIES + 1 }, () => entry)),
+    ).toThrow('EXPORT_ENTRY_COUNT_EXCEEDED');
+    expect(() =>
+      renderJsonLines([{ ...entry, payload: { text: 'x'.repeat(MAX_EXPORT_JSONL_BYTES) } }]),
+    ).toThrow(/EXPORT_ENTRY_TOO_LARGE|EXPORT_OUTPUT_TOO_LARGE/u);
+    expect(() =>
+      buildPortableManifest(
+        '01900000-0000-7000-8000-000000000003',
+        '2026-08-06T00:00:00.000Z',
+        new Uint8Array(MAX_EXPORT_JSONL_BYTES + 1),
+        0,
+      ),
+    ).toThrow('EXPORT_OUTPUT_TOO_LARGE');
   });
 
   it('fails closed when any rights, consent, or citation item is blocked', () => {

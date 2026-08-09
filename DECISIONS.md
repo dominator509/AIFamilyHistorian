@@ -497,3 +497,7 @@ Stripe signature verification now bounds payload and header sizes, rejects malfo
 ### ADR-132: Require bounded length for bodyless provider responses
 
 Provider and DeepSeek response readers now reject bodyless responses that omit `Content-Length` rather than calling `arrayBuffer()` without a preallocation bound. Responses with a declared length are still checked against the adapter ceiling before parsing, and streamed responses retain their incremental byte ceilings.
+
+### ADR-133: Bound portable export materialization
+
+Portable export libraries now cap entries at 10,000, evidence IDs per entry at 1,000, textual fields at 500 characters, individual canonical entries at 1 MiB, and JSONL/CSV output at 16 MiB. Limits are enforced before joining or manifest parsing so direct callers cannot bypass the API body limit and trigger unbounded export work.
