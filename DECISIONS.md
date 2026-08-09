@@ -553,3 +553,7 @@ Multipart completion contracts and storage-provider validation now cap ETag and 
 ### ADR-146: Prevent public hosted worker ingress
 
 The Fly worker manifest now documents and tests the private-worker invariant: no public service routing may be declared, and the worker health server must bind loopback only. This reduces accidental exposure while preserving the separate hosted sandbox attestation gate for syscall, egress, cgroup/PID, read-only-root, and scratch controls.
+
+### ADR-147: Keep production readiness evidence current
+
+`PRODUCTION_READINESS.md` now reflects the current verified test totals and HARDENING-135 private-worker ingress guard. Documentation is treated as a release control: stale counts or omitted gates must not make the engineering state appear more complete than the actual checkpoint.
