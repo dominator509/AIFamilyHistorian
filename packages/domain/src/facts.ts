@@ -2,6 +2,9 @@ import type { EntityId, EvidenceLink } from '@family-historian/contracts';
 import { evidenceLinkSchema, uuidSchema } from '@family-historian/contracts';
 import { DomainError } from './errors.js';
 
+export const MAX_DISPUTE_ACCOUNTS = 1_000;
+export const MAX_DISPUTE_ACCOUNT_EVIDENCE = 1_000;
+
 export interface ConfirmedFact {
   readonly id: EntityId;
   readonly text: string;
@@ -47,10 +50,16 @@ export function createDisputedClaim(
   uuidSchema.parse(id);
   if (accounts.length < 2)
     throw new DomainError('VALIDATION_FAILED', 'a dispute requires competing accounts');
+  if (accounts.length > MAX_DISPUTE_ACCOUNTS)
+    throw new DomainError('VALIDATION_FAILED', 'dispute account count is invalid');
   for (const account of accounts) {
     uuidSchema.parse(account.id);
     if (account.text.trim().length === 0)
       throw new DomainError('VALIDATION_FAILED', 'claim text is required');
+    if (account.evidence.length > MAX_DISPUTE_ACCOUNT_EVIDENCE)
+      throw new DomainError('VALIDATION_FAILED', 'dispute evidence count is invalid');
+    if (account.evidence.some((link) => !evidenceLinkSchema.safeParse(link).success))
+      throw new DomainError('VALIDATION_FAILED', 'dispute evidence is invalid');
   }
   return Object.freeze({
     id,

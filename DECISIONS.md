@@ -461,3 +461,7 @@ The evidence-link contract now rejects unsafe integer offsets, and `confirmFact`
 ### ADR-123: Enforce safe quotation source spans
 
 Quotation construction now requires non-negative, safe integer source offsets before accepting an approved span. Relational checks alone could accept fractional or unsafe numeric values that cannot identify a stable source range; invalid spans now fail with `VALIDATION_FAILED`.
+
+### ADR-124: Bound generated and disputed evidence collections
+
+Generated chapter revisions and disputed claims now validate every evidence link against the canonical contract and cap claims, dispute accounts, and per-item evidence at 1,000 entries. Factual generated claims still require at least one evidence link. This prevents malformed or excessively wide evidence graphs from reaching authoritative domain state.

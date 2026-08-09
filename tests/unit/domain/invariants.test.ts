@@ -258,6 +258,33 @@ describe('generated prose evidence invariant', () => {
       }).claims,
     ).toHaveLength(1);
   });
+
+  it('rejects malformed generated and disputed evidence before persistence', () => {
+    const base = {
+      id: ids.chapter,
+      model: 'deepseek-v4-flash',
+      promptVersion: 'memoir-v1',
+      archiveCapsuleVersion: 'capsule-v3',
+      approverId: ids.actor,
+    };
+    const malformed = { ...evidence, startOffset: Number.MAX_SAFE_INTEGER + 1 };
+    expectCode(
+      () =>
+        createGeneratedChapterRevision({
+          ...base,
+          claims: [{ text: 'A fact', classification: 'factual', evidence: [malformed] }],
+        }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () =>
+        createDisputedClaim(ids.claim, [
+          { id: ids.account1, text: 'One account', evidence: [malformed] },
+          { id: ids.account2, text: 'Another account', evidence: [] },
+        ]),
+      'VALIDATION_FAILED',
+    );
+  });
 });
 
 describe('deletion workflow invariant', () => {
