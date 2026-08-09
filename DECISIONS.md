@@ -357,3 +357,7 @@ The preflight table now requires `WORKER_SANDBOX_EVIDENCE_FILE` and verifies tha
 ### ADR-097: Keep production-readiness status synchronized with evidence
 
 `PRODUCTION_READINESS.md` now distinguishes engineering continuation from production approval and records the current 16-blocker preflight result, the locally verified test counts, the newly enforced hosted sandbox attestation, and the remaining fulfillment/native-auth work. Historical checkpoint claims are not reused as current release evidence.
+
+### ADR-098: Pass hosted sandbox evidence through release CI
+
+The release workflow now receives a dedicated `WORKER_SANDBOX_EVIDENCE` secret, writes it only to the ephemeral runner workspace, and injects the resulting path into `.env` for the bounded preflight probe. An unset or empty secret fails the probe; no evidence is committed or logged, and local development remains independent of the CI secret.

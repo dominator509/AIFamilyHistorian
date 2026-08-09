@@ -214,6 +214,7 @@ HARDENING-77 checkpoint: bounded object reads and multipart listings now reject 
 HARDENING-78 checkpoint: `ObjectStorage.completeMultipart` now independently validates and sorts provider-facing completion parts, rejecting empty, malformed, duplicate, out-of-range, and over-cardinality manifests before any S3 call. Typecheck passed and the full unit suite passed 27 files/104 tests; no external provider or production effect was invoked.
 HARDENING-79 checkpoint: privacy, export, and narration intake transactions now lock and verify their active outbox lease before authoritative status, audit, or deletion-hold writes. Media originals are row-locked and enter `scanning` through a tenant-scoped compare-and-set. Typecheck, format, unit (27/104), integration (13/41), E2E (3/11), build, security, secret-scan, and all sixteen live-fire proofs passed; production external/legal gates are unchanged.
 HARDENING-80 checkpoint: preflight now requires `WORKER_SANDBOX_EVIDENCE_FILE` and a bounded non-empty-file probe for hosted syscall, network-egress, cgroup/PID, read-only-root, and scratch controls. The current preflight fails closed with 16 unresolved requirements; no attestation or hosted isolation success is claimed.
+HARDENING-83 checkpoint: release CI now accepts `WORKER_SANDBOX_EVIDENCE` as an ephemeral secret, writes it only under the runner temporary directory, and injects its path into `.env` for the same bounded preflight probe. Missing or empty evidence remains a failure; no hosted attestation is claimed here.
 
 ## Final operator checklist
 

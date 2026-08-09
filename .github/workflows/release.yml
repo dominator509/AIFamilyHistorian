@@ -48,8 +48,11 @@ jobs:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           FIELD_ENCRYPTION_MASTER_KEY: ${{ secrets.FIELD_ENCRYPTION_MASTER_KEY }}
           DOWNLOAD_SIGNING_SECRET: ${{ secrets.DOWNLOAD_SIGNING_SECRET }}
+          WORKER_SANDBOX_EVIDENCE: ${{ secrets.WORKER_SANDBOX_EVIDENCE }}
         run: |
           cp .env.example .env
+          export WORKER_SANDBOX_EVIDENCE_FILE="$RUNNER_TEMP/worker-sandbox-attestation"
+          printf '%s' "$WORKER_SANDBOX_EVIDENCE" > "$WORKER_SANDBOX_EVIDENCE_FILE"
           python - <<'PY'
           from pathlib import Path
           import os
