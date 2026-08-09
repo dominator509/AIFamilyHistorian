@@ -182,6 +182,14 @@ describe('restricted text envelope encryption', () => {
     );
   });
 
+  it('does not allow a scoped caller to open a legacy unscoped envelope', () => {
+    const masterKey = 'legacy-master-key-with-sufficient-entropy';
+    const encrypted = encryptRestrictedText(masterKey, 'legacy private note');
+    expect(() => decryptRestrictedText(masterKey, encrypted, 'archive-a')).toThrow(
+      'field encryption scope is required for scoped decryption',
+    );
+  });
+
   it('bounds plaintext and envelope material before crypto decoding', () => {
     const masterKey = 'c'.repeat(32);
     expect(() =>

@@ -593,3 +593,7 @@ Provider API keys and header-bearing metadata now reject C0 controls and DEL bef
 ### ADR-156: Remove the owner database credential from the media worker
 
 The worker now requires `WORKER_DATABASE_URL`, provisions a dedicated `family_historian_worker` login, and uses it for queue dispatch and tenant transactions. The role is non-superuser, non-privileged for role/database creation, cannot bypass RLS, and receives queue-control privileges plus explicit membership in the existing RLS-enforcing runtime role. Compose, local-env generation, release workflow configuration, preflight, migration, verification, and security checks all enforce the dedicated credential. Hosted deployment must still prove the worker role secret, RLS policy behavior, and OS/network sandbox before release.
+
+### ADR-157: Reject scoped reads of legacy unscoped encrypted envelopes
+
+`decryptRestrictedText` now fails closed when a caller supplies an archive scope for a version-1 envelope that has no embedded scope. Version-1 data remains readable only through an explicitly unscoped migration path; scoped callers cannot accidentally treat legacy global ciphertext as archive-bound. Version-2 envelopes continue to require an exact archive-scope match.

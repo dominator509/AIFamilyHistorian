@@ -106,6 +106,8 @@ export function decryptRestrictedText(masterSecret: string, blob: string, scope?
   if (Buffer.byteLength(blob, 'utf8') > MAX_RESTRICTED_BLOB_BYTES)
     throw new Error('field encryption blob exceeds the allowed size');
   const parsed = blobSchema.parse(JSON.parse(blob));
+  if (scope !== undefined && parsed.v === 1)
+    throw new Error('field encryption scope is required for scoped decryption');
   if (parsed.v === 2 && parsed.scope !== scope)
     throw new Error('field encryption scope does not match');
   const wrappingKey =
