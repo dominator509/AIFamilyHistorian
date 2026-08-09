@@ -96,6 +96,8 @@ interface CircuitState {
 
 const MAX_PROVIDER_JSON_BYTES = 8 * 1024 * 1024;
 const MAX_PROVIDER_AUDIO_BYTES = 128 * 1024 * 1024;
+/** Deepgram receives a fully materialized Uint8Array, so bound input before copying it. */
+export const MAX_PROVIDER_AUDIO_INPUT_BYTES = 128 * 1024 * 1024;
 export const MAX_PROVIDER_TEXT_CHARS = 1_000_000;
 export const MAX_PROVIDER_EMAIL_BODY_BYTES = 1 * 1024 * 1024;
 export const MAX_PROVIDER_RECIPIENTS = 100;
@@ -358,6 +360,8 @@ export class DeepgramTranscriber {
   ): Promise<TranscriptResult> {
     if (bytes.byteLength === 0)
       throw new ProviderAdapterError('audio payload is empty', 'deepgram');
+    if (bytes.byteLength > MAX_PROVIDER_AUDIO_INPUT_BYTES)
+      throw new ProviderAdapterError('audio payload exceeds the allowed size', 'deepgram');
     assertProviderMetadata(contentType, 'content type', 'deepgram');
     const queryEntries = Object.entries(query);
     if (queryEntries.length > MAX_PROVIDER_QUERY_PARAMS)

@@ -4,6 +4,7 @@ import { describe, expect, it, beforeAll, afterAll } from 'vitest';
 import {
   DeepgramTranscriber,
   ElevenLabsNarrator,
+  MAX_PROVIDER_AUDIO_INPUT_BYTES,
   ProviderAdapterError,
   ResendMailer,
   StripeBillingAdapter,
@@ -397,6 +398,25 @@ describe('provider adapters', () => {
         },
       ),
     ).rejects.toMatchObject({ provider: 'deepgram' });
+    expect(calls).toBe(0);
+  });
+
+  it('rejects oversized Deepgram audio before copying or dispatching the request', async () => {
+    let calls = 0;
+    const fetchImpl = () => {
+      calls += 1;
+      return Promise.resolve(new Response('{}'));
+    };
+    await expect(
+      new DeepgramTranscriber({ baseUrl, apiKey: 'test-key', fetchImpl }).transcribe(
+        new Uint8Array(MAX_PROVIDER_AUDIO_INPUT_BYTES + 1),
+        'audio/wav',
+      ),
+    ).rejects.toMatchObject({
+      provider: 'deepgram',
+      retryable: false,
+      message: 'audio payload exceeds the allowed size',
+    });
     expect(calls).toBe(0);
   });
 });

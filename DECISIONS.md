@@ -577,3 +577,7 @@ Storage methods now validate provider upload IDs, MIME content types, and SHA-25
 ### ADR-152: Bound shared AI gateway payloads and telemetry
 
 The shared AI gateway now rejects source text over 4 MiB before policy redaction, generic provider content over 8 MiB before JSON parsing, oversized provider request IDs, and non-finite, negative, or overlarge usage counters. Provider-specific adapters retain their stricter schemas; the shared boundary prevents alternate providers or direct callers from bypassing those limits and polluting cache or cost telemetry.
+
+### ADR-153: Bound materialized Deepgram input
+
+`DeepgramTranscriber` now rejects audio payloads larger than 128 MiB before copying the `Uint8Array` into a fetch body. The adapter is intentionally materialized rather than streamed; larger source media must use a future bounded chunking workflow instead of silently creating an unbounded provider request.

@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 27 files / 140 tests. Integration: 13 files / 41 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 27 files / 141 tests. Integration: 13 files / 41 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -16,6 +16,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-139 validates storage object keys for bounded length and control characters before any provider command, signing, read, or delete operation.
 - HARDENING-140 validates provider upload IDs, MIME content types, and SHA-256 base64 metadata at direct storage boundaries before provider calls.
 - HARDENING-141 bounds shared AI gateway source text, generic provider response content, provider request IDs, and usage telemetry before policy/provider results are parsed or cached.
+- HARDENING-143 bounds fully materialized Deepgram transcription input at 128 MiB before copying or provider dispatch.
 - The read-only runtime image preinstalls pinned pnpm under an image-owned Corepack home; the rebuilt worker stayed `Up (healthy)` in the real internal Compose stack. The local rehearsal is explicitly development-mode for its internal HTTP MinIO endpoint; hosted Fly remains production/HTTPS-only.
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.
 
