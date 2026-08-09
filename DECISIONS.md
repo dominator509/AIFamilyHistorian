@@ -361,3 +361,7 @@ The preflight table now requires `WORKER_SANDBOX_EVIDENCE_FILE` and verifies tha
 ### ADR-098: Pass hosted sandbox evidence through release CI
 
 The release workflow now receives a dedicated `WORKER_SANDBOX_EVIDENCE` secret, writes it only to the ephemeral runner workspace, and injects the resulting path into `.env` for the bounded preflight probe. An unset or empty secret fails the probe; no evidence is committed or logged, and local development remains independent of the CI secret.
+
+### ADR-099: Separate external credential proof from disposable CI services
+
+Release CI first runs preflight against the configured nonproduction provider endpoints, then rewrites only database, Redis, S3-compatible storage, and OTLP endpoints to the generated disposable Compose stack before the full local verification suite. This prevents remote database credentials from being used against local containers while preserving an explicit authenticated-provider probe and real local integration/E2E coverage.

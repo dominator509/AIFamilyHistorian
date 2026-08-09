@@ -28,6 +28,8 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 
 Local tools required: git, awk, grep, sed, curl, jq, node 24, pnpm 10 through Corepack, Docker, PostgreSQL client 17, ffmpeg, ffprobe, exiftool, convert or magick, clamscan, OCRmyPDF, and Python 3.12 for local media utilities.
 
+Release CI keeps approval and sandbox evidence out of Git: it maps the `*_CONTENT` GitHub secrets and `WORKER_SANDBOX_EVIDENCE` into ephemeral runner files, then runs the same bounded probes and production-readiness gate. Empty or missing secrets remain failures.
+
 PREFLIGHT-TABLE-BEGIN
 DATABASE_URL|REQUIRED|scripts/probes/database_url.sh
 REDIS_URL|REQUIRED|scripts/probes/redis_url.sh

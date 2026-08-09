@@ -45,14 +45,51 @@ jobs:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          TURNSTILE_SITE_KEY: ${{ secrets.TURNSTILE_SITE_KEY }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.OTEL_EXPORTER_OTLP_ENDPOINT }}
+          OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP_STAGING: ${{ secrets.FLY_APP_STAGING }}
+          FLY_APP_PRODUCTION: ${{ secrets.FLY_APP_PRODUCTION }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           FIELD_ENCRYPTION_MASTER_KEY: ${{ secrets.FIELD_ENCRYPTION_MASTER_KEY }}
           DOWNLOAD_SIGNING_SECRET: ${{ secrets.DOWNLOAD_SIGNING_SECRET }}
           WORKER_SANDBOX_EVIDENCE: ${{ secrets.WORKER_SANDBOX_EVIDENCE }}
+          LEGAL_APPROVAL_CONTENT: ${{ secrets.LEGAL_APPROVAL_CONTENT }}
+          VENDOR_RISK_APPROVAL_CONTENT: ${{ secrets.VENDOR_RISK_APPROVAL_CONTENT }}
+          INSURANCE_EVIDENCE_CONTENT: ${{ secrets.INSURANCE_EVIDENCE_CONTENT }}
+          DPIA_APPROVAL_CONTENT: ${{ secrets.DPIA_APPROVAL_CONTENT }}
+          RETENTION_APPROVAL_CONTENT: ${{ secrets.RETENTION_APPROVAL_CONTENT }}
+          DATA_REGION_EVIDENCE_CONTENT: ${{ secrets.DATA_REGION_EVIDENCE_CONTENT }}
+          DATA_BROKER_EVIDENCE_CONTENT: ${{ secrets.DATA_BROKER_EVIDENCE_CONTENT }}
         run: |
-          cp .env.example .env
+          sh scripts/generate-local-env.sh --force
           export WORKER_SANDBOX_EVIDENCE_FILE="$RUNNER_TEMP/worker-sandbox-attestation"
           printf '%s' "$WORKER_SANDBOX_EVIDENCE" > "$WORKER_SANDBOX_EVIDENCE_FILE"
+          export LEGAL_APPROVAL_FILE="$RUNNER_TEMP/legal-approval"
+          export VENDOR_RISK_APPROVAL_FILE="$RUNNER_TEMP/vendor-risk-approval"
+          export INSURANCE_EVIDENCE_FILE="$RUNNER_TEMP/insurance-evidence"
+          export DPIA_APPROVAL_FILE="$RUNNER_TEMP/dpia-approval"
+          export RETENTION_APPROVAL_FILE="$RUNNER_TEMP/retention-approval"
+          printf '%s' "$LEGAL_APPROVAL_CONTENT" > "$LEGAL_APPROVAL_FILE"
+          printf '%s' "$VENDOR_RISK_APPROVAL_CONTENT" > "$VENDOR_RISK_APPROVAL_FILE"
+          printf '%s' "$INSURANCE_EVIDENCE_CONTENT" > "$INSURANCE_EVIDENCE_FILE"
+          printf '%s' "$DPIA_APPROVAL_CONTENT" > "$DPIA_APPROVAL_FILE"
+          printf '%s' "$RETENTION_APPROVAL_CONTENT" > "$RETENTION_APPROVAL_FILE"
+          mkdir -p compliance/evidence
+          printf '%s' "$DATA_REGION_EVIDENCE_CONTENT" > compliance/evidence/data-region-verification.md
+          printf '%s' "$DATA_BROKER_EVIDENCE_CONTENT" > compliance/evidence/data-broker-determination.md
           python - <<'PY'
           from pathlib import Path
           import os
@@ -64,7 +101,40 @@ jobs:
                   text = '\n'.join((line.split('=', 1)[0] + '=' + value) if line.startswith(name + '=') else line for line in lines) + '\n'
           path.write_text(text)
           PY
+          # Prove configured nonproduction provider credentials before switching
+          # the database/queue/storage endpoints to the disposable local stack.
+          sh scripts/preflight.sh
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.env')
+          values = {}
+          for line in path.read_text().splitlines():
+              if '=' in line and not line.lstrip().startswith('#'):
+                  name, value = line.split('=', 1)
+                  values[name] = value
+          replacements = {
+              'DATABASE_URL': f"postgresql://family_historian:{values['LOCAL_POSTGRES_PASSWORD']}@127.0.0.1:35432/family_historian",
+              'REDIS_URL': f"redis://:{values['LOCAL_REDIS_PASSWORD']}@127.0.0.1:36379",
+              'R2_ACCOUNT_ID': 'local',
+              'R2_ACCESS_KEY_ID': values['LOCAL_S3_ROOT_USER'],
+              'R2_SECRET_ACCESS_KEY': values['LOCAL_S3_ROOT_PASSWORD'],
+              'R2_ENDPOINT': 'http://127.0.0.1:39000',
+              'OTEL_EXPORTER_OTLP_ENDPOINT': 'http://127.0.0.1:14318',
+          }
+          lines = path.read_text().splitlines()
+          path.write_text('\n'.join(
+              (line.split('=', 1)[0] + '=' + replacements[line.split('=', 1)[0]])
+              if line.split('=', 1)[0] in replacements else line
+              for line in lines
+          ) + '\n')
+          PY
+          docker compose --profile worker up -d postgres redis object-storage object-storage-init smtp telemetry clamav
+          docker build --target worker-runtime --tag family-historian-worker:local .
+          sh scripts/local-services-check.sh
+          trap 'docker compose --profile worker down --volumes --remove-orphans' EXIT
           sh scripts/verify.sh
+          sh scripts/production-readiness-check.sh
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
