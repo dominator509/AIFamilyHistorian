@@ -259,4 +259,46 @@ describe('provider adapters', () => {
       oversizedAudio.synthesize({ voiceId: 'stock-voice', text: 'Approved narration.' }),
     ).rejects.toMatchObject({ provider: 'elevenlabs' });
   });
+
+  it('rejects oversized or unsafe provider request inputs before dispatch', async () => {
+    let calls = 0;
+    const fetchImpl = () => {
+      calls += 1;
+      return Promise.resolve(new Response(JSON.stringify({ id: 'email-1' })));
+    };
+    await expect(
+      new ResendMailer({ baseUrl, apiKey: 'test-key', fetchImpl }).send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'x'.repeat(1_048_577),
+        idempotencyKey: 'oversized-request',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend' });
+    await expect(
+      new ElevenLabsNarrator({ baseUrl, apiKey: 'test-key', fetchImpl }).synthesize({
+        voiceId: 'stock-voice',
+        text: 'x'.repeat(1_000_001),
+      }),
+    ).rejects.toMatchObject({ provider: 'elevenlabs' });
+    await expect(
+      new StripeBillingAdapter({ baseUrl, apiKey: 'test-key' }).createCheckoutSession({
+        priceId: 'price_test',
+        successUrl: 'http://unsafe.example/ok',
+        cancelUrl: 'https://example.invalid/cancel',
+        clientReferenceId: 'archive-1',
+        idempotencyKey: 'checkout-unsafe',
+      }),
+    ).rejects.toMatchObject({ provider: 'stripe' });
+    await expect(
+      new DeepgramTranscriber({ baseUrl, apiKey: 'test-key' }).transcribe(
+        new Uint8Array([1]),
+        'audio/wav',
+        {
+          ...Object.fromEntries(Array.from({ length: 33 }, (_, index) => [`q${index}`, 'value'])),
+        },
+      ),
+    ).rejects.toMatchObject({ provider: 'deepgram' });
+    expect(calls).toBe(0);
+  });
 });

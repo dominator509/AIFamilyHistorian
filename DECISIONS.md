@@ -481,3 +481,7 @@ Telemetry redaction now caps recursive depth at 8, rejects collections larger th
 ### ADR-128: Bound publication document rendering
 
 PDF and EPUB rendering now validate title, author, paragraph types, paragraph count, and total UTF-8 text before materializing document lines or ZIP entries. The limits are 500 characters per title/author, 10,000 paragraphs, and 16 MiB total text. This prevents malformed or oversized publication inputs from causing unbounded renderer work while preserving approved empty-paragraph layout semantics.
+
+### ADR-129: Bound provider request materialization
+
+Provider adapters now validate request-side metadata, query cardinality, narration text, email recipients and bodies, Turnstile metadata, and Stripe checkout URLs before dispatch. The bounds prevent oversized headers/forms/payloads and unsafe redirect URLs from reaching external providers while retaining the existing adapter contracts and response ceilings.

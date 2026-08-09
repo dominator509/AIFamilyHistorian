@@ -80,6 +80,12 @@ interface CircuitState {
 
 const MAX_PROVIDER_JSON_BYTES = 8 * 1024 * 1024;
 const MAX_PROVIDER_AUDIO_BYTES = 128 * 1024 * 1024;
+export const MAX_PROVIDER_TEXT_CHARS = 1_000_000;
+export const MAX_PROVIDER_EMAIL_BODY_BYTES = 1 * 1024 * 1024;
+export const MAX_PROVIDER_RECIPIENTS = 100;
+export const MAX_PROVIDER_QUERY_PARAMS = 32;
+const MAX_PROVIDER_URL_CHARS = 2_048;
+const MAX_PROVIDER_METADATA_CHARS = 512;
 
 async function readBoundedBytes(
   response: Response,
@@ -155,6 +161,8 @@ function circuitState(options: ProviderAdapterOptions): CircuitState {
 function validateProviderOptions(options: ProviderAdapterOptions, provider: string): void {
   if (!options.apiKey.trim())
     throw new ProviderAdapterError(`${provider} API key is required`, provider);
+  if (options.apiKey.length > MAX_PROVIDER_METADATA_CHARS)
+    throw new ProviderAdapterError(`${provider} API key is too long`, provider);
   const timeoutMs = options.timeoutMs ?? 20_000;
   if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 120_000)
     throw new ProviderAdapterError(`${provider} timeout is outside the allowed range`, provider);
@@ -190,6 +198,32 @@ function validateProviderOptions(options: ProviderAdapterOptions, provider: stri
       `${provider} endpoint contains unsupported URL components`,
       provider,
     );
+  if (options.baseUrl.length > MAX_PROVIDER_URL_CHARS)
+    throw new ProviderAdapterError(`${provider} endpoint is too long`, provider);
+}
+
+function assertProviderText(value: string, label: string, provider: string): void {
+  if (!value.trim() || value.length > MAX_PROVIDER_TEXT_CHARS)
+    throw new ProviderAdapterError(`${provider} ${label} is invalid`, provider);
+}
+
+function assertProviderMetadata(value: string, label: string, provider: string): void {
+  if (!value.trim() || value.length > MAX_PROVIDER_METADATA_CHARS)
+    throw new ProviderAdapterError(`${provider} ${label} is invalid`, provider);
+}
+
+function assertHttpsUrl(value: string, label: string, provider: string): void {
+  if (value.length > MAX_PROVIDER_URL_CHARS) {
+    throw new ProviderAdapterError(`${provider} ${label} is invalid`, provider);
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new ProviderAdapterError(`${provider} ${label} is invalid`, provider);
+  }
+  if (parsed.protocol !== 'https:' || parsed.username || parsed.password)
+    throw new ProviderAdapterError(`${provider} ${label} is invalid`, provider);
 }
 
 async function request(options: ProviderAdapterOptions, input: RequestOptions): Promise<Response> {
@@ -289,6 +323,14 @@ export class DeepgramTranscriber {
   ): Promise<TranscriptResult> {
     if (bytes.byteLength === 0)
       throw new ProviderAdapterError('audio payload is empty', 'deepgram');
+    assertProviderMetadata(contentType, 'content type', 'deepgram');
+    const queryEntries = Object.entries(query);
+    if (queryEntries.length > MAX_PROVIDER_QUERY_PARAMS)
+      throw new ProviderAdapterError('deepgram query is too large', 'deepgram');
+    for (const [key, value] of queryEntries) {
+      assertProviderMetadata(key, 'query key', 'deepgram');
+      assertProviderMetadata(value, 'query value', 'deepgram');
+    }
     const url = new URL(endpoint(this.#options.baseUrl, '/v1/listen'));
     for (const [key, value] of Object.entries({ model: 'nova-3', smart_format: 'true', ...query }))
       url.searchParams.set(key, value);
@@ -322,8 +364,10 @@ export class ElevenLabsNarrator {
     text: string;
     modelId?: string;
   }): Promise<{ audio: Uint8Array; providerRequestId?: string }> {
-    if (!input.voiceId.trim() || !input.text.trim())
-      throw new ProviderAdapterError('voice and text are required', 'elevenlabs');
+    assertProviderMetadata(input.voiceId, 'voice id', 'elevenlabs');
+    assertProviderText(input.text, 'narration text', 'elevenlabs');
+    if (input.modelId !== undefined)
+      assertProviderMetadata(input.modelId, 'model id', 'elevenlabs');
     const response = await request(this.#options, {
       provider: 'elevenlabs',
       method: 'POST',
@@ -369,15 +413,30 @@ export class ResendMailer {
     text?: string;
     idempotencyKey: string;
   }): Promise<{ id: string }> {
-    if (
-      !input.from.trim() ||
-      input.to.length === 0 ||
-      !input.subject.trim() ||
-      !input.idempotencyKey.trim()
-    )
+    assertProviderMetadata(input.from, 'sender', 'resend');
+    if (input.to.length === 0 || input.to.length > MAX_PROVIDER_RECIPIENTS)
       throw new ProviderAdapterError('email fields are incomplete', 'resend');
+    for (const recipient of input.to) assertProviderMetadata(recipient, 'recipient', 'resend');
+    assertProviderMetadata(input.subject, 'subject', 'resend');
+    assertProviderMetadata(input.idempotencyKey, 'idempotency key', 'resend');
     if (!input.html && !input.text)
       throw new ProviderAdapterError('email body is required', 'resend');
+    if (
+      (input.html !== undefined &&
+        Buffer.byteLength(input.html, 'utf8') > MAX_PROVIDER_EMAIL_BODY_BYTES) ||
+      (input.text !== undefined &&
+        Buffer.byteLength(input.text, 'utf8') > MAX_PROVIDER_EMAIL_BODY_BYTES)
+    )
+      throw new ProviderAdapterError('resend email body is too large', 'resend');
+    const body = JSON.stringify({
+      from: input.from,
+      to: input.to,
+      subject: input.subject,
+      ...(input.html ? { html: input.html } : {}),
+      ...(input.text ? { text: input.text } : {}),
+    });
+    if (Buffer.byteLength(body, 'utf8') > MAX_PROVIDER_EMAIL_BODY_BYTES)
+      throw new ProviderAdapterError('resend email payload is too large', 'resend');
     const response = await request(this.#options, {
       provider: 'resend',
       method: 'POST',
@@ -387,13 +446,7 @@ export class ResendMailer {
         'Content-Type': 'application/json',
         'Idempotency-Key': input.idempotencyKey,
       },
-      body: JSON.stringify({
-        from: input.from,
-        to: input.to,
-        subject: input.subject,
-        ...(input.html ? { html: input.html } : {}),
-        ...(input.text ? { text: input.text } : {}),
-      }),
+      body,
     });
     return resendResponseSchema.parse(await readBoundedJson(response, 'resend'));
   }
@@ -420,6 +473,10 @@ export class TurnstileVerifier {
   }): Promise<TurnstileResult> {
     if (!input.response || input.response.length > 2048)
       throw new ProviderAdapterError('Turnstile token is invalid', 'turnstile');
+    if (input.remoteIp !== undefined)
+      assertProviderMetadata(input.remoteIp, 'remote IP', 'turnstile');
+    if (input.idempotencyKey !== undefined)
+      assertProviderMetadata(input.idempotencyKey, 'idempotency key', 'turnstile');
     const body = new URLSearchParams({
       secret: this.#options.apiKey,
       response: input.response,
@@ -455,6 +512,11 @@ export class StripeBillingAdapter {
     clientReferenceId: string;
     idempotencyKey: string;
   }): Promise<{ id: string; url?: string | null }> {
+    assertProviderMetadata(input.priceId, 'price id', 'stripe');
+    assertHttpsUrl(input.successUrl, 'success URL', 'stripe');
+    assertHttpsUrl(input.cancelUrl, 'cancel URL', 'stripe');
+    assertProviderMetadata(input.clientReferenceId, 'client reference id', 'stripe');
+    assertProviderMetadata(input.idempotencyKey, 'idempotency key', 'stripe');
     const body = new URLSearchParams({
       mode: 'subscription',
       'line_items[0][price]': input.priceId,
