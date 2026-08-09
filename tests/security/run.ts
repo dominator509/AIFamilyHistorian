@@ -58,6 +58,8 @@ if (
   throw new Error('worker image must use the dedicated non-root runtime');
 if (flyWorker.includes('[http_service]') || flyWorker.includes('[[services]]'))
   throw new Error('hosted worker must not declare public ingress');
+if (!flyWorker.includes('HOST = "127.0.0.1"'))
+  throw new Error('hosted worker health host must be loopback-only');
 for (const control of ['[[mounts]]', 'destination = "/tmp"', 'processes = ["worker"]']) {
   if (!flyWorker.includes(control))
     throw new Error(`hosted worker scratch mount missing: ${control}`);

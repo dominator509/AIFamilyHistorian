@@ -143,7 +143,7 @@ HARDENING-75 verification note: multipart provider listings now reject malformed
 
 | Node | Status | Reason |
 |---|---|---|
-| EP-000 | In progress; externally unverified | Scheduler lease preserved; aggregated preflight currently reports 16 unresolved requirements, including the required hosted worker sandbox attestation. |
+| EP-000 | In progress; externally unverified | Scheduler lease preserved; aggregated preflight currently reports 18 unresolved requirements, including signed hosted worker sandbox evidence and its trusted public key. |
 | EP-001 | Engineering complete; externally unverified | Foundation and toolchain gates passed locally; graph dependency remains EP-000. |
 | EP-002 | Engineering complete; externally unverified | Domain invariants and tests passed locally; graph dependency remains EP-000. |
 | EP-003 | Engineering complete; externally unverified | Migrations, RLS, storage and persistence tests passed locally; hosted probes remain. |
