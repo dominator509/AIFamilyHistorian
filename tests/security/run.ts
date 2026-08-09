@@ -26,6 +26,11 @@ const sandboxControls = [
 for (const control of sandboxControls) {
   if (!compose.includes(control)) throw new Error(`worker sandbox control missing: ${control}`);
 }
+for (const match of compose.matchAll(/^\s*image:\s*([^\s]+)$/gim)) {
+  const image = match[1] ?? '';
+  if (!/@sha256:[0-9a-f]{64}/u.test(image))
+    throw new Error(`Compose image is not pinned to an immutable digest: ${image}`);
+}
 if (
   !dockerfile.includes('FROM runtime-base AS worker-runtime') ||
   !dockerfile.includes('USER node')

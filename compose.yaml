@@ -2,7 +2,7 @@ name: ai-family-historian
 
 services:
   postgres:
-    image: pgvector/pgvector:0.8.1-pg17
+    image: pgvector/pgvector:0.8.1-pg17@sha256:3e8b3adfd27b5707128f60956f62a793c3c9326ea8cfaf0eab7adccb5d700b21
     environment:
       POSTGRES_DB: family_historian
       POSTGRES_USER: family_historian
@@ -20,7 +20,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7.4.5-alpine
+    image: redis:7.4.5-alpine@sha256:bb186d083732f669da90be8b0f975a37812b15e913465bb14d845db72a4e3e08
     command:
       [
         'redis-server',
@@ -42,7 +42,7 @@ services:
     restart: unless-stopped
 
   object-storage:
-    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z@sha256:d249d1fb6966de4d8ad26c04754b545205ff15a62e4fd19ebd0f26fa5baacbc0
     command: ['server', '/data', '--console-address', ':9001']
     environment:
       MINIO_ROOT_USER: ${LOCAL_S3_ROOT_USER:?generate .env first}
@@ -61,7 +61,7 @@ services:
     restart: unless-stopped
 
   object-storage-init:
-    image: minio/mc:RELEASE.2025-07-21T05-28-08Z
+    image: minio/mc:RELEASE.2025-07-21T05-28-08Z@sha256:fb8f773eac8ef9d6da0486d5dec2f42f219358bcb8de579d1623d518c9ebd4cc
     depends_on:
       object-storage:
         condition: service_healthy
@@ -86,7 +86,7 @@ services:
     restart: unless-stopped
 
   smtp:
-    image: axllent/mailpit:v1.27.7
+    image: axllent/mailpit:v1.27.7@sha256:cae83a33cd9b9598e4acb210be673dda7e741d5271ed4045310ab456950a136a
     networks: [family_historian_internal]
     ports:
       - '127.0.0.1:11025:1025'
@@ -99,7 +99,7 @@ services:
     restart: unless-stopped
 
   telemetry:
-    image: otel/opentelemetry-collector-contrib:0.130.1
+    image: otel/opentelemetry-collector-contrib:0.130.1@sha256:9c247564e65ca19f97d891cca19a1a8d291ce631b890885b44e3503c5fdb3895
     networks: [family_historian_internal]
     command: ['--config=/etc/otelcol-contrib/config.yaml']
     volumes:
@@ -120,7 +120,7 @@ services:
   # customer objects never traverse this network. The worker mounts only the
   # resulting signature volume read-only and remains on the internal network.
   clamav:
-    image: clamav/clamav:1.4.5-debian13-slim
+    image: clamav/clamav:1.4.5-debian13-slim@sha256:c730bead5fe766dc0edbac5e389b71fc1403a5d3a35c6af9397ad79a52fdc27a
     profiles: ['worker']
     volumes:
       - clamav_signatures:/var/lib/clamav

@@ -377,3 +377,7 @@ Timed media tools now launch detached on POSIX workers and timeout handling sign
 ### ADR-102: Pin CI actions and container bases immutably
 
 All GitHub Actions in the verify and release workflows now reference reviewed 40-character commit SHAs, including the Fly setup action previously tracking mutable `master`. Both Node build stages in the Dockerfile now reference the reviewed multi-architecture OCI index digest for `node:24.4.1-bookworm-slim`. The security harness rejects future mutable action references and undigested Node base lines; workflow YAML parsing, security, typecheck, format, API-image, and worker-image builds passed after the change.
+
+### ADR-103: Make local service health checks network-aware
+
+`local-services-check.sh` now probes Mailpit and the OTEL health extension through the real Compose internal network when host port forwarding is unavailable, using the already-built worker image as the probe runtime. Host curls remain the first path; an internal fallback is accepted only when the Compose network, target services, and worker image are present. This removes a false negative without weakening the internal-only network boundary or fabricating health responses.
