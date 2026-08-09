@@ -36,7 +36,7 @@ Secure headers, body and upload limits, signed webhook requests, idempotency key
 Use expand-migrate-contract. No destructive production query outside reviewed migrations or documented deletion jobs. Developers do not download production media. Support content access is approved, time-limited, visible, and audited.
 
 ## Dependency policy
-Exact versions and lockfile required. Critical or high exploitable vulnerabilities block release unless a time-bounded ADR documents reachability, compensating control, owner, and expiry.
+Exact versions and lockfile required. CI actions and container base images must use immutable commit or OCI digest pins, with upstream release review recorded when pins change. Critical or high exploitable vulnerabilities block release unless a time-bounded ADR documents reachability, compensating control, owner, and expiry.
 
 ## Security checks
 `scripts/security-check.sh` verifies behavior-backed API controls, worker sandbox declarations, non-root worker images, media signature fail-closed behavior, revocable session identifiers, dependency policy, headers, authorization tests, upload constraints, log redaction, provider isolation, and rights enforcement. `scripts/secret-scan.sh` scans tracked files for credential-shaped tokens and private-key markers without printing matching content; ignored environment files remain outside the GitHub boundary. SECURITY STOP conditions are destructive irreversible action not specified, or a legal/security judgment not answered by approved specs.

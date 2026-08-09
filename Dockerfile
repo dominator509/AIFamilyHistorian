@@ -1,6 +1,7 @@
 # Build the complete workspace once, then run the selected process from the
 # immutable build tree. Provider credentials are injected only at runtime.
-FROM node:24.4.1-bookworm-slim AS build
+# Multi-architecture Node base pinned to the reviewed OCI index digest.
+FROM node:24.4.1-bookworm-slim@sha256:36ae19f59c91f3303c7a648f07493fe14c4bd91320ac8d898416327bacf1bbfa AS build
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig*.json .prettier* eslint.config.mjs ./
@@ -10,7 +11,7 @@ COPY tests ./tests
 COPY scripts ./scripts
 RUN corepack enable && corepack pnpm install --frozen-lockfile && corepack pnpm build
 
-FROM node:24.4.1-bookworm-slim AS runtime-base
+FROM node:24.4.1-bookworm-slim@sha256:36ae19f59c91f3303c7a648f07493fe14c4bd91320ac8d898416327bacf1bbfa AS runtime-base
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

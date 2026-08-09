@@ -373,3 +373,7 @@ The release verification step installs its Compose teardown trap before starting
 ### ADR-101: Terminate media parser process groups on timeout
 
 Timed media tools now launch detached on POSIX workers and timeout handling signals the entire process group, escalating from `SIGTERM` to `SIGKILL` after 250 ms. Windows retains the direct-child fallback because negative process-group signaling is unavailable there. This closes the descendant-process escape from the executor's timeout boundary without changing tool arguments or permitting shell interpolation. The media unit suite covers the POSIX process-group identity and all existing timeout/error behavior remains fail-closed.
+
+### ADR-102: Pin CI actions and container bases immutably
+
+All GitHub Actions in the verify and release workflows now reference reviewed 40-character commit SHAs, including the Fly setup action previously tracking mutable `master`. Both Node build stages in the Dockerfile now reference the reviewed multi-architecture OCI index digest for `node:24.4.1-bookworm-slim`. The security harness rejects future mutable action references and undigested Node base lines; workflow YAML parsing, security, typecheck, format, API-image, and worker-image builds passed after the change.

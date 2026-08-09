@@ -2,10 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { contentTypeMatchesSignature } from '../../packages/media/src/index.js';
 import { issueSessionToken, verifySessionToken } from '../../packages/auth/src/index.js';
 
-const [source, compose, dockerfile] = await Promise.all([
+const [source, compose, dockerfile, verifyWorkflow, releaseWorkflow] = await Promise.all([
   readFile('apps/api/src/app.ts', 'utf8'),
   readFile('compose.yaml', 'utf8'),
   readFile('Dockerfile', 'utf8'),
+  readFile('.github/workflows/verify.yml', 'utf8'),
+  readFile('.github/workflows/release.yml', 'utf8'),
 ]);
 const requiredControls = ['redact', 'bodyLimit', 'helmet', 'corsOrigins', 'credentials: false'];
 for (const control of requiredControls) {
@@ -29,6 +31,22 @@ if (
   !dockerfile.includes('USER node')
 )
   throw new Error('worker image must use the dedicated non-root runtime');
+for (const match of dockerfile.matchAll(/^FROM\s+node:[^\n]+$/gim)) {
+  if (!/@sha256:[0-9a-f]{64}/u.test(match[0]))
+    throw new Error(`Docker base image is not pinned to an immutable digest: ${match[0]}`);
+}
+
+for (const [name, workflow] of [
+  ['verify', verifyWorkflow],
+  ['release', releaseWorkflow],
+] as const) {
+  for (const match of workflow.matchAll(/^\s*- uses:\s*([^\s#]+)$/gim)) {
+    const reference = match[1] ?? '';
+    const at = reference.lastIndexOf('@');
+    if (at < 1 || !/^[0-9a-f]{40}$/u.test(reference.slice(at + 1)))
+      throw new Error(`${name} workflow action is not pinned to an immutable commit: ${reference}`);
+  }
+}
 
 const validWav = Uint8Array.from([0x52, 0x49, 0x46, 0x46, 0x24, 0, 0, 0, 0x57, 0x41, 0x56, 0x45]);
 const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
