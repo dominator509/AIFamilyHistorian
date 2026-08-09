@@ -58,7 +58,7 @@ export function advanceDeletion(
   if (workflow.state === 'grace_period') return Object.freeze({ ...workflow, state: 'deleting' });
   if (workflow.state === 'deleting') {
     if (!evidence) throw new DomainError('EVIDENCE_MISSING', 'deletion evidence is required');
-    validateEvidence(evidence);
+    validateEvidence(evidence, nowMs);
     const exists = workflow.evidence.some(
       (item) => item.target === evidence.target && item.reference === evidence.reference,
     );
@@ -88,13 +88,15 @@ export function advanceDeletion(
   return Object.freeze({ ...workflow, state: 'completed' });
 }
 
-function validateEvidence(evidence: DeletionEvidence): void {
+function validateEvidence(evidence: DeletionEvidence, nowMs: number): void {
+  const verifiedAtMs = Date.parse(evidence.verifiedAt);
   if (
     !['primary_storage', 'derivatives', 'processor', 'backup_tombstone'].includes(
       evidence.target,
     ) ||
     !evidence.reference.trim() ||
-    !Number.isFinite(Date.parse(evidence.verifiedAt))
+    !Number.isFinite(verifiedAtMs) ||
+    verifiedAtMs > nowMs
   )
     throw new DomainError('VALIDATION_FAILED', 'deletion evidence is invalid');
 }

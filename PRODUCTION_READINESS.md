@@ -39,6 +39,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.
 - HARDENING-178 makes publication readiness evidence IDs single-use across rights, consent, and citation categories, preventing one evidence record from satisfying multiple independent release gates. Unit coverage passed 30 files/159 tests; format, typecheck, and security checks passed.
 - HARDENING-179 replaces the media derivative `stat`/`readFile` race with a bounded streaming read that fails closed above the per-artifact ceiling. Real integration media processing passed 13 files/43 tests, E2E passed 3 files/11 tests, and the unit gate passed 30 files/160 tests. Vitest unit/integration/E2E commands now cap file workers at 50% to prevent timeout flakiness under host contention.
+- HARDENING-180 rejects future-dated deletion evidence at the state transition clock, preventing a forged or clock-skewed proof from satisfying deletion propagation before verification occurred. Unit, format, typecheck, and security gates passed; deletion fulfillment remains review-gated and externally approved.
 
 ## Engineering work still pending
 

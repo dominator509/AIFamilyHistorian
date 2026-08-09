@@ -349,5 +349,12 @@ describe('deletion workflow invariant', () => {
         verifiedAt: 'not-a-timestamp',
       }),
     ).toThrow('deletion evidence is invalid');
+    expect(() =>
+      advanceDeletion(deleting, '2026-08-07T01:00:00.000Z', {
+        target: 'primary_storage',
+        reference: 'future-proof',
+        verifiedAt: '2026-08-07T01:00:01.000Z',
+      }),
+    ).toThrow('deletion evidence is invalid');
   });
 });
