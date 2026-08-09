@@ -1,4 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 : "${DEEPGRAM_API_KEY:?}"
-curl -fsS --max-time 20 -H "Authorization: Token $DEEPGRAM_API_KEY" https://api.deepgram.com/v1/projects >/dev/null
+export PROBE_URL='https://api.deepgram.com/v1/projects'
+export PROBE_SECRET_ENV=DEEPGRAM_API_KEY
+export PROBE_HEADER_NAME=Authorization
+export PROBE_HEADER_PREFIX='Token '
+exec node scripts/probes/http_request.mjs

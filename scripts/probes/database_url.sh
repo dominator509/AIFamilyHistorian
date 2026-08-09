@@ -7,8 +7,7 @@ if [ -n "${DATABASE_URL:-}" ]; then
 fi
 
 if [ "$local_host" = yes ] && docker compose exec -T postgres true </dev/null >/dev/null 2>&1; then
-  internal_url=$(DATABASE_URL="$DATABASE_URL" node --input-type=module -e "const u=new URL(process.env.DATABASE_URL); u.hostname='postgres'; u.port='5432'; process.stdout.write(u.toString())")
-  docker compose exec -T postgres psql "$internal_url" -v ON_ERROR_STOP=1 -Atqc "select 1" </dev/null | grep -qx 1
+  docker compose exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -Atqc "select 1"' </dev/null | grep -qx 1
 else
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -Atqc "select 1" | grep -qx 1
+  exec node scripts/probes/database_url.mjs
 fi

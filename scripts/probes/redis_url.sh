@@ -9,11 +9,11 @@ if [ "$local_host" = yes ] && docker compose exec -T redis true </dev/null >/dev
   exit 0
 fi
 
-node - "$REDIS_URL" <<'NODE'
+REDIS_URL="$REDIS_URL" node - <<'NODE'
 import net from 'node:net';
 import tls from 'node:tls';
 
-const url = new URL(process.argv[2]);
+const url = new URL(process.env.REDIS_URL);
 if (!['redis:', 'rediss:'].includes(url.protocol)) throw new Error('REDIS_URL must use redis or rediss');
 const secure = url.protocol === 'rediss:';
 const port = Number(url.port || (secure ? 6380 : 6379));
