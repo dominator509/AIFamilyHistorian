@@ -119,13 +119,22 @@ if (
   !releaseWorkflow.includes('WORKER_IMAGE: ghcr.io/${{ github.repository }}-worker') ||
   !releaseWorkflow.includes('docker build --target worker-runtime --tag "$WORKER_IMAGE:') ||
   !releaseWorkflow.includes('docker push "$WORKER_IMAGE:') ||
-  !releaseWorkflow.includes('flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE:')
+  !releaseWorkflow.includes('id: publish-digests') ||
+  !releaseWorkflow.includes('docker buildx imagetools inspect') ||
+  !releaseWorkflow.includes(
+    'flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE@$WORKER_DIGEST"',
+  ) ||
+  !releaseWorkflow.includes(
+    'flyctl deploy --config fly.toml --app "$FLY_APP_STAGING" --image "$IMAGE@$API_DIGEST"',
+  )
 )
-  throw new Error('release workflow must publish and deploy a distinct worker-runtime image');
+  throw new Error(
+    'release workflow must publish distinct worker-runtime images and deploy by immutable digest',
+  );
 if (
   !deployment.includes('FLY_APP_WORKER_PRODUCTION') ||
   !deployment.includes('fly deploy --config fly.worker.toml --app "$FLY_APP_WORKER_PRODUCTION"') ||
-  !deployment.includes('WORKER_IMAGE="ghcr.io/${GITHUB_REPOSITORY}-worker:${RELEASE_TAG}"')
+  !deployment.includes('WORKER_IMAGE="ghcr.io/${GITHUB_REPOSITORY}-worker@${WORKER_IMAGE_DIGEST}"')
 )
   throw new Error('manual production deployment must include a separately named worker app/image');
 for (const [name, content, controls] of [

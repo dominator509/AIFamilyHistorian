@@ -22,9 +22,13 @@ permissions:
 env:
   IMAGE: ghcr.io/${{ github.repository }}
   WORKER_IMAGE: ghcr.io/${{ github.repository }}-worker
+  RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
 
 jobs:
   verify-and-build:
+    outputs:
+      api_digest: ${{ steps.publish-digests.outputs.api_digest }}
+      worker_digest: ${{ steps.publish-digests.outputs.worker_digest }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -148,13 +152,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build immutable API image
-        run: docker build --target runtime --build-arg SERVICE=api --tag "$IMAGE:${{ inputs.release_tag || github.ref_name }}" .
+        run: docker build --target runtime --build-arg SERVICE=api --tag "$IMAGE:$RELEASE_TAG" .
       - name: Push immutable API image
-        run: docker push "$IMAGE:${{ inputs.release_tag || github.ref_name }}"
+        run: docker push "$IMAGE:$RELEASE_TAG"
       - name: Build immutable worker image
-        run: docker build --target worker-runtime --tag "$WORKER_IMAGE:${{ inputs.release_tag || github.ref_name }}" .
+        run: docker build --target worker-runtime --tag "$WORKER_IMAGE:$RELEASE_TAG" .
       - name: Push immutable worker image
-        run: docker push "$WORKER_IMAGE:${{ inputs.release_tag || github.ref_name }}"
+        run: docker push "$WORKER_IMAGE:$RELEASE_TAG"
+      - name: Capture pushed image digests
+        id: publish-digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          api_digest="$(docker buildx imagetools inspect "$IMAGE:$RELEASE_TAG" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+          worker_digest="$(docker buildx imagetools inspect "$WORKER_IMAGE:$RELEASE_TAG" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+          [[ "$api_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$worker_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          printf 'api_digest=%s\n' "$api_digest" >> "$GITHUB_OUTPUT"
+          printf 'worker_digest=%s\n' "$worker_digest" >> "$GITHUB_OUTPUT"
 
   staging:
     if: ${{ inputs.deploy_staging == true }}
@@ -168,9 +183,12 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_APP_STAGING: ${{ secrets.FLY_APP_STAGING }}
-        run: flyctl deploy --config fly.toml --app "$FLY_APP_STAGING" --image "$IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
+          API_DIGEST: ${{ needs.verify-and-build.outputs.api_digest }}
+        run: test -n "$API_DIGEST" && flyctl deploy --config fly.toml --app "$FLY_APP_STAGING" --image "$IMAGE@$API_DIGEST" --strategy rolling --yes
       - name: Deploy the dedicated worker image
-        run: flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE:${{ inputs.release_tag || github.ref_name }}" --strategy rolling --yes
+        env:
+          WORKER_DIGEST: ${{ needs.verify-and-build.outputs.worker_digest }}
+        run: test -n "$WORKER_DIGEST" && flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE@$WORKER_DIGEST" --strategy rolling --yes
       - name: Run staging health smoke
         env:
           STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
