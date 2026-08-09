@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 28 files / 151 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 29 files / 153 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -39,7 +39,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 
 ### Current security scan
 
-The current-head standard scan `47580dd9-5d31-4143-bfc2-68f6cfc185f9` completed against `d243fc3` with complete 335-file coverage and two high findings: broad worker `SET ROLE family_historian_runtime` activation across tenant tables and hosted worker sandbox controls absent or unproven. The source-level scratch mount is declared; hosted enforcement and the broader worker-role redesign remain release blockers.
+The current-head standard scan `beb7e923-3b93-486c-8e8b-550ae410c1f1` completed against immutable commit `fd8fad689b4e8b948f4c64278e84f35c76567e03` with complete 338-file coverage and two open high findings: broad worker `SET ROLE family_historian_runtime` activation across tenant tables (CWE-269/CWE-863) and hosted worker sandbox controls absent or unproven (CWE-693/CWE-250/CWE-668). The source-level scratch mount and cryptographic attestation verifier are present; hosted enforcement and the broader worker-role redesign remain release blockers. Canonical report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\fd8fad689b4e8b948f4c64278e84f35c76567e03_20260809T183153Z_aepyz0hy\report.md`.
 
 - Implement and verify privacy fulfillment, export generation, transcription, narration synthesis, and deletion execution workers. Current intake handlers intentionally stop at review-required states and unsupported job types fail closed.
 - Complete native Better Auth/passkey/WebAuthn and Argon2id identity issuance, migration, device lifecycle, and live-fire coverage.
