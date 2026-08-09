@@ -300,6 +300,52 @@ describe('provider adapters', () => {
     ).rejects.toMatchObject({ provider: 'resend' });
   });
 
+  it('rejects provider responses with oversized parsed fields', async () => {
+    const deepgram = new DeepgramTranscriber({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              results: {
+                channels: [{ alternatives: [{ transcript: 'x'.repeat(1_000_001) }] }],
+              },
+            }),
+          ),
+        ),
+    });
+    await expect(deepgram.transcribe(new Uint8Array([1]), 'audio/wav')).rejects.toThrow();
+
+    const turnstile = new TurnstileVerifier({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response(JSON.stringify({ success: false, 'error-codes': ['x'.repeat(257)] })),
+        ),
+    });
+    await expect(turnstile.verify({ response: 'token' })).rejects.toThrow();
+
+    const resend = new ResendMailer({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () => Promise.resolve(new Response(JSON.stringify({ id: 'x'.repeat(513) }))),
+    });
+    await expect(
+      resend.send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'bounded-response',
+      }),
+    ).rejects.toThrow();
+  });
+
   it('rejects oversized or unsafe provider request inputs before dispatch', async () => {
     let calls = 0;
     const fetchImpl = () => {

@@ -557,3 +557,7 @@ The Fly worker manifest now documents and tests the private-worker invariant: no
 ### ADR-147: Keep production readiness evidence current
 
 `PRODUCTION_READINESS.md` now reflects the current verified test totals and HARDENING-135 private-worker ingress guard. Documentation is treated as a release control: stale counts or omitted gates must not make the engineering state appear more complete than the actual checkpoint.
+
+### ADR-148: Bound parsed provider response fields
+
+Deepgram transcript fields/channels/alternatives, provider request IDs, Resend IDs, Turnstile diagnostics, and Stripe checkout IDs/URLs now have explicit schema limits in addition to aggregate response-byte ceilings. Oversized parsed fields fail closed before adapter results reach callers.

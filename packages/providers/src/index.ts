@@ -313,13 +313,22 @@ const deepgramResponseSchema = z.object({
       .array(
         z.object({
           alternatives: z
-            .array(z.object({ transcript: z.string(), confidence: z.number().optional() }))
-            .min(1),
+            .array(
+              z.object({
+                transcript: z.string().max(MAX_PROVIDER_TEXT_CHARS),
+                confidence: z.number().finite().optional(),
+              }),
+            )
+            .min(1)
+            .max(32),
         }),
       )
-      .min(1),
+      .min(1)
+      .max(32),
   }),
-  metadata: z.object({ request_id: z.string().optional() }).optional(),
+  metadata: z
+    .object({ request_id: z.string().max(MAX_PROVIDER_METADATA_CHARS).optional() })
+    .optional(),
 });
 
 export interface TranscriptResult {
@@ -415,7 +424,7 @@ export class ElevenLabsNarrator {
   }
 }
 
-const resendResponseSchema = z.object({ id: z.string().min(1) });
+const resendResponseSchema = z.object({ id: z.string().min(1).max(MAX_PROVIDER_METADATA_CHARS) });
 
 export class ResendMailer {
   readonly #options: ProviderAdapterOptions;
@@ -472,9 +481,9 @@ export class ResendMailer {
 
 const turnstileResponseSchema = z.object({
   success: z.boolean(),
-  'error-codes': z.array(z.string()).optional(),
-  hostname: z.string().optional(),
-  action: z.string().optional(),
+  'error-codes': z.array(z.string().max(256)).max(64).optional(),
+  hostname: z.string().max(MAX_PROVIDER_METADATA_CHARS).optional(),
+  action: z.string().max(MAX_PROVIDER_METADATA_CHARS).optional(),
 });
 export type TurnstileResult = z.infer<typeof turnstileResponseSchema>;
 
@@ -513,8 +522,8 @@ export class TurnstileVerifier {
 }
 
 const stripeSessionSchema = z.object({
-  id: z.string().startsWith('cs_'),
-  url: z.string().url().nullable().optional(),
+  id: z.string().startsWith('cs_').max(MAX_PROVIDER_METADATA_CHARS),
+  url: z.string().url().max(MAX_PROVIDER_URL_CHARS).nullable().optional(),
 });
 
 export class StripeBillingAdapter {
