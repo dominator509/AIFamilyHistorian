@@ -9,6 +9,7 @@ primary_region = "ord"
   NODE_ENV = "production"
   HOST = "0.0.0.0"
   PORT = "8080"
+  CORS_ALLOWED_ORIGINS = "https://worker.invalid"
 
 [vm]
   cpu_kind = "shared"

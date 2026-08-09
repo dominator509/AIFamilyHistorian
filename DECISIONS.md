@@ -385,3 +385,15 @@ All GitHub Actions in the verify and release workflows now reference reviewed 40
 ### ADR-104: Give the worker a loopback-only health contract
 
 The worker image healthcheck already targeted `/health/live`, but the worker process did not expose an HTTP server, making a healthy worker appear unhealthy. The worker now serves loopback-only `/health/live` and `/health/ready` endpoints, reports readiness only after Redis is reachable, and marks readiness false during shutdown. The listener is bound to `127.0.0.1` so the worker remains non-public; hosted sandbox and network-egress enforcement still require external evidence.
+
+### ADR-105: Preinstall the runtime package manager for read-only images
+
+The immutable runtime image now sets `COREPACK_HOME` to `/usr/local/share/corepack`, preinstalls the pinned `pnpm@10.13.1` during the image build, and makes that cache readable by the non-root runtime user. This prevents Corepack from attempting a network download or a write under `/home/node` when the worker starts with a read-only root filesystem.
+
+### ADR-106: Give the worker an explicit inert CORS origin
+
+The shared production environment schema requires an explicit HTTPS CORS allowlist, even for the worker process that exposes only loopback health endpoints and no browser API. The local worker profile and hosted worker manifest now set the reserved non-routable origin `https://worker.invalid`; API/web deployments retain their real HTTPS allowlists. This satisfies the fail-closed configuration contract without granting cross-origin access to a worker route.
+
+### ADR-107: Keep the local worker rehearsal in development mode
+
+The opt-in Compose worker connects to the real internal MinIO service over Docker DNS and HTTP. Marking that local-only profile as `NODE_ENV=production` made the storage HTTPS guard reject the deliberately internal endpoint before the worker could start. The profile now uses `development`; the hosted Fly manifest remains `production` and retains the HTTPS object-storage requirement.

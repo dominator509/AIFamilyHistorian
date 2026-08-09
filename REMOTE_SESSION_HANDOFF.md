@@ -225,6 +225,10 @@ HARDENING-91 checkpoint: `local-services-check.sh` now uses the real worker imag
 
 HARDENING-92 checkpoint: the completed standard Codex Security scan (`f36d18e7-f4c4-457e-8a6c-e71d31395474`) reports one high-confidence hosted worker sandbox finding: `fly.worker.toml` and the worker image do not declare the deny-by-default egress, syscall, capability, cgroup, and bounded-scratch controls that are present only in local Compose. This remains an external release gate; no hosted isolation success is claimed. Independently, the worker now serves loopback-only `/health/live` and `/health/ready` endpoints so the existing image healthcheck reflects actual process and Redis readiness. Worker formatting, repository typecheck, lint, and format checks passed.
 
+HARDENING-93 checkpoint: a real rebuilt read-only worker image exposed a Corepack startup defect (`ENOENT` creating `/home/node/.cache/node/corepack/v1`). Runtime-base now preinstalls pinned `pnpm@10.13.1` under image-owned `COREPACK_HOME=/usr/local/share/corepack`, eliminating runtime package-manager downloads and writable-home requirements.
+
+HARDENING-94/95 checkpoint: the real worker rehearsal then exposed two configuration-boundary defects: the shared production schema requires an explicit HTTPS CORS origin, and the local internal MinIO endpoint is intentionally HTTP. Hosted Fly remains production with `https://worker.invalid` as an inert non-routable CORS origin; the opt-in local Compose worker is explicitly development mode. The rebuilt image started successfully in the real internal stack and Docker reported `Up (healthy)`; the worker was stopped after the probe to avoid consuming stale fixture jobs.
+
 ## Final operator checklist
 
 1. Implement and verify remaining worker fulfillment families (privacy, export, transcription, narration synthesis, and deletion), then run hosted-equivalent object-storage and provider fixtures through `worker-runtime`.

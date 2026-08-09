@@ -16,9 +16,12 @@ FROM node:24.4.1-bookworm-slim@sha256:36ae19f59c91f3303c7a648f07493fe14c4bd91320
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=8080
+ENV COREPACK_HOME=/usr/local/share/corepack
 WORKDIR /app
 COPY --from=build /app /app
-RUN chown -R node:node /app
+RUN corepack enable \
+  && corepack install --global pnpm@10.13.1 \
+  && chown -R node:node /app /usr/local/share/corepack
 
 FROM runtime-base AS runtime
 USER node
