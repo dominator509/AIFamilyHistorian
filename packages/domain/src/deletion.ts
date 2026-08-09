@@ -27,7 +27,11 @@ export function beginDeletion(
 ): DeletionWorkflow {
   uuidSchema.parse(id);
   uuidSchema.parse(archiveId);
-  if (Date.parse(graceEndsAt) <= Date.parse(requestedAt))
+  const requestedAtMs = Date.parse(requestedAt);
+  const graceEndsAtMs = Date.parse(graceEndsAt);
+  if (!Number.isFinite(requestedAtMs) || !Number.isFinite(graceEndsAtMs))
+    throw new DomainError('VALIDATION_FAILED', 'deletion timestamps are invalid');
+  if (graceEndsAtMs <= requestedAtMs)
     throw new DomainError('VALIDATION_FAILED', 'deletion grace period must end after request');
   return Object.freeze({
     id,
@@ -45,11 +49,16 @@ export function advanceDeletion(
   evidence?: DeletionEvidence,
 ): DeletionWorkflow {
   if (workflow.state === 'completed') return workflow;
-  if (workflow.state === 'grace_period' && Date.parse(now) < Date.parse(workflow.graceEndsAt))
+  const nowMs = Date.parse(now);
+  const graceEndsAtMs = Date.parse(workflow.graceEndsAt);
+  if (!Number.isFinite(nowMs) || !Number.isFinite(graceEndsAtMs))
+    throw new DomainError('VALIDATION_FAILED', 'deletion transition time is invalid');
+  if (workflow.state === 'grace_period' && nowMs < graceEndsAtMs)
     throw new DomainError('DELETION_PENDING', 'deletion grace period is active', true);
   if (workflow.state === 'grace_period') return Object.freeze({ ...workflow, state: 'deleting' });
   if (workflow.state === 'deleting') {
     if (!evidence) throw new DomainError('EVIDENCE_MISSING', 'deletion evidence is required');
+    validateEvidence(evidence);
     const exists = workflow.evidence.some(
       (item) => item.target === evidence.target && item.reference === evidence.reference,
     );
@@ -77,4 +86,15 @@ export function advanceDeletion(
       throw new DomainError('EVIDENCE_MISSING', `deletion evidence missing: ${required}`);
   }
   return Object.freeze({ ...workflow, state: 'completed' });
+}
+
+function validateEvidence(evidence: DeletionEvidence): void {
+  if (
+    !['primary_storage', 'derivatives', 'processor', 'backup_tombstone'].includes(
+      evidence.target,
+    ) ||
+    !evidence.reference.trim() ||
+    !Number.isFinite(Date.parse(evidence.verifiedAt))
+  )
+    throw new DomainError('VALIDATION_FAILED', 'deletion evidence is invalid');
 }

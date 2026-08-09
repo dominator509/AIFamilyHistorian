@@ -331,3 +331,6 @@
 2026-08-09T02:47:00Z | codex | HARDENING-63 | SECURITY_FINDING | planResumableExport_accepted_arbitrary_generatedAt_strings_before_manifest_use
 2026-08-09T02:48:00Z | codex | HARDENING-63 | FIX_APPLIED | planResumableExport_parses_generatedAt_with_z_iso_datetime_before_chunk_hash
 2026-08-09T02:49:00Z | codex | HARDENING-63 | LOCAL_VERIFICATION | resumable_export_focus3_tests_passed; full_unit24_files_91_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T02:56:00Z | codex | HARDENING-64 | SECURITY_FINDING | deletion_workflow_accepted_invalid_request_grace_transition_or_evidence_timestamps_and_empty_evidence_references
+2026-08-09T02:57:00Z | codex | HARDENING-64 | FIX_APPLIED | deletion_begin_and_advance_reject_nonfinite_timestamps; evidence_target_reference_and_verifiedAt_are_validated_before_recording
+2026-08-09T02:59:00Z | codex | HARDENING-64 | LOCAL_VERIFICATION | deletion_invariant_focus11_tests_passed; full_unit24_files_92_tests_passed; build_security_typecheck_lint_format_secret_scan_passed

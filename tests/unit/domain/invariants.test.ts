@@ -270,4 +270,24 @@ describe('deletion workflow invariant', () => {
     expect(completed.state).toBe('completed');
     expect(advanceDeletion(completed, '2026-08-08T00:00:00.000Z')).toBe(completed);
   });
+
+  it('rejects invalid deletion timestamps and evidence proofs', () => {
+    expect(() =>
+      beginDeletion(ids.deletion, ids.archive, 'not-a-timestamp', '2026-08-07T00:00:00.000Z'),
+    ).toThrow('deletion timestamps are invalid');
+    const workflow = beginDeletion(
+      ids.deletion,
+      ids.archive,
+      '2026-08-06T00:00:00.000Z',
+      '2026-08-07T00:00:00.000Z',
+    );
+    const deleting = advanceDeletion(workflow, '2026-08-07T00:00:00.000Z');
+    expect(() =>
+      advanceDeletion(deleting, '2026-08-07T01:00:00.000Z', {
+        target: 'primary_storage',
+        reference: '',
+        verifiedAt: 'not-a-timestamp',
+      }),
+    ).toThrow('deletion evidence is invalid');
+  });
 });

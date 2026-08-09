@@ -281,3 +281,7 @@ Resumable export completion now rejects duplicate part numbers and any part not 
 ### ADR-078: Validate resumable-export timestamps at planning time
 
 Resumable export planning now requires an RFC 3339 timestamp before hashing or returning a manifest. Invalid generation metadata therefore fails at the first trust boundary instead of surviving into later publication or restore workflows.
+
+### ADR-079: Fail closed on deletion timestamps and evidence
+
+Deletion workflow transitions now reject non-finite request, grace-period, and transition timestamps, and deletion evidence must identify an allowed target, include a non-empty reference, and carry a parseable verification timestamp. This prevents malformed temporal or proof metadata from advancing a deletion workflow or being recorded as completion evidence.
