@@ -18,7 +18,9 @@ export function confirmFact(input: Omit<ConfirmedFact, 'disputeState'>): Confirm
     throw new DomainError('VALIDATION_FAILED', 'fact text is required');
   if (input.evidence.length === 0)
     throw new DomainError('EVIDENCE_MISSING', 'confirmed facts require evidence');
-  input.evidence.forEach((link) => evidenceLinkSchema.parse(link));
+  for (const link of input.evidence)
+    if (!evidenceLinkSchema.safeParse(link).success)
+      throw new DomainError('VALIDATION_FAILED', 'evidence link is invalid');
   return Object.freeze({
     ...input,
     evidence: Object.freeze([...input.evidence]),

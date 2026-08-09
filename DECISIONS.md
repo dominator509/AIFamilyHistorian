@@ -453,3 +453,7 @@ Provenance lineage validation now runs before schema cloning and rejects cycles,
 ### ADR-121: Bound provenance evidence fan-out and offsets
 
 Evidence spans now require safe integer offsets and claim evidence is capped at 1,000 spans, matching the existing evidence-link fan-out contract. This prevents unsafe numeric coercion and unbounded validation work while preserving exact source-span and quotation checks.
+
+### ADR-122: Preserve domain errors for invalid evidence links
+
+The evidence-link contract now rejects unsafe integer offsets, and `confirmFact` maps contract failures to the domain's `VALIDATION_FAILED` error instead of leaking a raw Zod exception. This keeps API/domain boundaries consistent while retaining fail-closed validation.

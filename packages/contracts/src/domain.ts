@@ -80,8 +80,12 @@ export const evidenceLinkSchema = z
     id: uuidSchema,
     sourceId: uuidSchema,
     revisionId: uuidSchema,
-    startOffset: z.number().int().nonnegative(),
-    endOffset: z.number().int().positive(),
+    startOffset: z.number().int().nonnegative().refine(Number.isSafeInteger, {
+      message: 'evidence startOffset must be a safe integer',
+    }),
+    endOffset: z.number().int().positive().refine(Number.isSafeInteger, {
+      message: 'evidence endOffset must be a safe integer',
+    }),
   })
   .refine((value) => value.endOffset > value.startOffset, {
     message: 'evidence endOffset must be greater than startOffset',

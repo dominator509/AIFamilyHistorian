@@ -79,6 +79,26 @@ describe('authoritative fact and dispute invariants', () => {
     expect(Object.isFrozen(fact)).toBe(true);
   });
 
+  it('rejects evidence offsets that cannot be represented safely', () => {
+    expectCode(
+      () =>
+        confirmFact({
+          id: ids.fact,
+          text: 'Unsafe offset',
+          confirmerId: ids.actor,
+          confirmedAt: '2026-08-06T00:00:00.000Z',
+          evidence: [
+            {
+              ...evidence,
+              startOffset: Number.MAX_SAFE_INTEGER + 1,
+              endOffset: Number.MAX_SAFE_INTEGER + 2,
+            },
+          ],
+        }),
+      'VALIDATION_FAILED',
+    );
+  });
+
   it('preserves competing recollections instead of forcing agreement', () => {
     const dispute = createDisputedClaim(ids.claim, [
       { id: ids.account1, text: 'The move happened in spring.', evidence: [evidence] },
