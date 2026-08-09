@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 27 files / 147 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 28 files / 151 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -28,6 +28,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-163 declares a dedicated 30 GiB Fly worker scratch volume mounted at `/tmp` for the worker process and documents the exact volume-creation command; hosted volume existence, filesystem mode, and sandbox attestation remain release gates.
 - HARDENING-164 replaces the non-empty sandbox-evidence check with structured, bounded, time-valid JSON attestation validation requiring every declared isolation control. Signature authenticity remains an external operations verification; arbitrary placeholder text no longer satisfies the local gate.
 - HARDENING-165 bounds the Deepgram live-fire probe response at 8 MiB before JSON parsing and neutralizes untrusted request identifiers in probe logs; provider credentials and authenticated live-fire remain external release evidence.
+- HARDENING-166 validates AI model/prompt metadata and caps serialized dynamic gateway input at 8 MiB before cache-key construction or provider dispatch; focused coverage and the full local unit suite pass.
 - HARDENING-144 enforces UTF-8 byte ceilings for storage object keys, multipart upload IDs, and content types before provider dispatch.
 - The read-only runtime image preinstalls pinned pnpm under an image-owned Corepack home; the rebuilt worker stayed `Up (healthy)` in the real internal Compose stack. The local rehearsal is explicitly development-mode for its internal HTTP MinIO endpoint; hosted Fly remains production/HTTPS-only.
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.

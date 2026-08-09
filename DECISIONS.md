@@ -629,3 +629,7 @@ The sandbox evidence probe now requires a bounded JSON document with schema vers
 ### ADR-165: Bound the Deepgram live-fire probe response
 
 The authenticated Deepgram transcription probe now caps streamed and non-streamed response bodies at 8 MiB before JSON parsing and emits only a validated request identifier (or a neutral `present` marker). Live-fire diagnostics must not permit an unbounded provider response or attacker-controlled log-line injection, even though the probe is operator-run and does not persist provider data.
+
+### ADR-166: Bound direct AI gateway request materialization
+
+The shared AI gateway now validates model and prompt metadata for bounded, control-free values, caps the stable policy prefix, and rejects serialized dynamic input above 8 MiB before cache-key construction or provider dispatch. This protects direct callers and alternate providers from bypassing the source-text limit with oversized structured input.

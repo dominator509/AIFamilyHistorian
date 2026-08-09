@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   AiGateway,
   MAX_AI_CACHE_VALUE_BYTES,
+  MAX_AI_DYNAMIC_INPUT_BYTES,
   MAX_AI_INPUT_TEXT_BYTES,
   MAX_AI_PROVIDER_CONTENT_BYTES,
   RedisAiResultCache,
@@ -245,6 +246,35 @@ describe('AI gateway', () => {
     await expect(
       gateway.execute({ ...base, inputText: 'x'.repeat(MAX_AI_INPUT_TEXT_BYTES + 1) }),
     ).rejects.toThrow('AI input text exceeds the allowed size');
+    expect(provider.requests).toHaveLength(0);
+  });
+
+  it('rejects oversized serialized structured input and unsafe metadata before provider dispatch', async () => {
+    const provider = new RecordingProvider('{"claims":[]}');
+    const gateway = new AiGateway(provider);
+    const base = {
+      organizationId: '01900000-0000-7000-8000-000000000001',
+      familyArchiveId: '01900000-0000-7000-8000-000000000002',
+      purpose: 'chapter_drafting' as const,
+      consentPurposes: ['chapter_drafting' as const],
+      aiProcessingEnabled: true,
+      promptFamily: 'chapter-drafting',
+      promptVersion: '1',
+      policyVersion: '1',
+      model: 'deepseek-chat',
+      inputText: 'source',
+      outputSchema: z.object({ claims: z.array(z.never()) }),
+      maxInputTokens: 1_000_000,
+    };
+    await expect(
+      gateway.execute({
+        ...base,
+        input: { evidence: 'x'.repeat(MAX_AI_DYNAMIC_INPUT_BYTES) },
+      }),
+    ).rejects.toThrow('AI dynamic input exceeds the allowed size');
+    await expect(
+      gateway.execute({ ...base, input: {}, model: `deepseek-chat\u0000` }),
+    ).rejects.toThrow('AI model is invalid');
     expect(provider.requests).toHaveLength(0);
   });
 

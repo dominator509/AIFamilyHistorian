@@ -14,6 +14,10 @@ export const MAX_AI_CACHE_VALUE_BYTES = 16 * 1024 * 1024;
 export const MAX_AI_INPUT_TEXT_BYTES = 4 * 1024 * 1024;
 /** Generic providers must not return an arbitrarily large structured response. */
 export const MAX_AI_PROVIDER_CONTENT_BYTES = 8 * 1024 * 1024;
+/** Direct callers must not serialize an unbounded structured request payload. */
+export const MAX_AI_DYNAMIC_INPUT_BYTES = 8 * 1024 * 1024;
+const MAX_AI_METADATA_CHARS = 512;
+const MAX_AI_STABLE_PREFIX_BYTES = 64 * 1024;
 const MAX_AI_PROVIDER_METADATA_CHARS = 512;
 const MAX_AI_PROVIDER_USAGE_TOKENS = 1_000_000_000;
 
@@ -126,6 +130,23 @@ function isValidCachedResult(value: unknown): value is GatewayResult<unknown> {
   );
 }
 
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return code < 0x20 || code === 0x7f;
+  });
+}
+
+function assertMetadata(value: string, label: string): void {
+  if (
+    !value.trim() ||
+    value.length > MAX_AI_METADATA_CHARS ||
+    Buffer.byteLength(value, 'utf8') > MAX_AI_METADATA_CHARS ||
+    hasControlCharacter(value)
+  )
+    throw new Error(`AI ${label} is invalid`);
+}
+
 export interface AiGatewayOptions {
   readonly cache?: AiResultCache;
   readonly cacheTtlSeconds?: number;
@@ -148,6 +169,10 @@ export class AiGateway {
       request.maxInputTokens > 1_000_000
     )
       throw new Error('AI input budget is invalid');
+    assertMetadata(request.model, 'model');
+    assertMetadata(request.promptFamily, 'prompt family');
+    assertMetadata(request.promptVersion, 'prompt version');
+    assertMetadata(request.policyVersion, 'policy version');
     if (
       typeof request.inputText !== 'string' ||
       Buffer.byteLength(request.inputText, 'utf8') > MAX_AI_INPUT_TEXT_BYTES
@@ -178,12 +203,16 @@ export class AiGateway {
         'Every factual claim must reference supplied evidence.',
       ],
     });
+    if (Buffer.byteLength(stablePrefix, 'utf8') > MAX_AI_STABLE_PREFIX_BYTES)
+      throw new Error('AI stable prompt exceeds the allowed size');
     const dynamicInput = canonicalJson({
       organizationScope: sha256(request.organizationId),
       archiveScope: sha256(request.familyArchiveId),
       input: sanitizedInput.value,
       sourceText: policy.outboundText,
     });
+    if (Buffer.byteLength(dynamicInput, 'utf8') > MAX_AI_DYNAMIC_INPUT_BYTES)
+      throw new Error('AI dynamic input exceeds the allowed size');
     const cacheKey = `ai-result:v1:${sha256(
       canonicalJson({
         provider: this.provider.name,
