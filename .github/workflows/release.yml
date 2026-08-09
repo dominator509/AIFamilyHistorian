@@ -129,10 +129,10 @@ jobs:
               for line in lines
           ) + '\n')
           PY
+          trap 'docker compose --profile worker down --volumes --remove-orphans' EXIT
           docker compose --profile worker up -d postgres redis object-storage object-storage-init smtp telemetry clamav
           docker build --target worker-runtime --tag family-historian-worker:local .
           sh scripts/local-services-check.sh
-          trap 'docker compose --profile worker down --volumes --remove-orphans' EXIT
           sh scripts/verify.sh
           sh scripts/production-readiness-check.sh
       - uses: docker/login-action@v3

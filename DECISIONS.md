@@ -365,3 +365,7 @@ The release workflow now receives a dedicated `WORKER_SANDBOX_EVIDENCE` secret, 
 ### ADR-099: Separate external credential proof from disposable CI services
 
 Release CI first runs preflight against the configured nonproduction provider endpoints, then rewrites only database, Redis, S3-compatible storage, and OTLP endpoints to the generated disposable Compose stack before the full local verification suite. This prevents remote database credentials from being used against local containers while preserving an explicit authenticated-provider probe and real local integration/E2E coverage.
+
+### ADR-100: Tear down CI dependencies on every failure path
+
+The release verification step installs its Compose teardown trap before starting any dependency or worker image build. A failed image build, readiness probe, verification gate, or production-readiness check therefore removes the disposable volumes and containers instead of leaving runner state behind.

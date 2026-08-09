@@ -216,6 +216,7 @@ HARDENING-79 checkpoint: privacy, export, and narration intake transactions now 
 HARDENING-80 checkpoint: preflight now requires `WORKER_SANDBOX_EVIDENCE_FILE` and a bounded non-empty-file probe for hosted syscall, network-egress, cgroup/PID, read-only-root, and scratch controls. The current preflight fails closed with 16 unresolved requirements; no attestation or hosted isolation success is claimed.
 HARDENING-83 checkpoint: release CI now accepts `WORKER_SANDBOX_EVIDENCE` as an ephemeral secret, writes it only under the runner temporary directory, and injects its path into `.env` for the same bounded preflight probe. Missing or empty evidence remains a failure; no hosted attestation is claimed here.
 HARDENING-84 checkpoint: release CI now runs the external preflight before rewriting only database, Redis, R2, and OTLP endpoints to generated disposable Compose services, starts the real local dependency stack and worker image, and then runs full verification plus production readiness. Remote credentials are not sent to local containers; CI workflow YAML parses successfully locally.
+HARDENING-85 checkpoint: release CI installs dependency teardown before startup/build, so failed verification or readiness gates cannot leave Compose volumes and containers on the runner. Workflow YAML, format, and secret checks pass locally.
 
 ## Final operator checklist
 
