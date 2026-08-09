@@ -80,6 +80,36 @@ export class RedisAiResultCache implements AiResultCache {
   }
 }
 
+function isValidCachedResult(value: unknown): value is GatewayResult<unknown> {
+  if (value === null || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  const provenance = candidate.provenance;
+  const usage = candidate.usage;
+  if (provenance === null || typeof provenance !== 'object') return false;
+  if (usage === null || typeof usage !== 'object') return false;
+  const p = provenance as Record<string, unknown>;
+  const u = usage as Record<string, unknown>;
+  const usageValues = [u.inputTokens, u.outputTokens, u.cacheHitTokens, u.cacheMissTokens];
+  return (
+    Object.prototype.hasOwnProperty.call(candidate, 'value') &&
+    typeof p.provider === 'string' &&
+    (!('providerRequestId' in p) || typeof p.providerRequestId === 'string') &&
+    typeof p.model === 'string' &&
+    typeof p.promptFamily === 'string' &&
+    typeof p.promptVersion === 'string' &&
+    typeof p.policyVersion === 'string' &&
+    typeof p.inputHash === 'string' &&
+    typeof p.stablePrefixHash === 'string' &&
+    Number.isInteger(p.redactions) &&
+    (p.redactions as number) >= 0 &&
+    usageValues.every((entry) => Number.isInteger(entry) && (entry as number) >= 0) &&
+    typeof u.cacheRatio === 'number' &&
+    Number.isFinite(u.cacheRatio) &&
+    u.cacheRatio >= 0 &&
+    u.cacheRatio <= 1
+  );
+}
+
 export interface AiGatewayOptions {
   readonly cache?: AiResultCache;
   readonly cacheTtlSeconds?: number;
@@ -143,12 +173,11 @@ export class AiGateway {
     )}`;
     if (this.options.cache) {
       const cached = await this.options.cache.get(cacheKey);
-      if (cached !== undefined && cached !== null && typeof cached === 'object') {
+      if (isValidCachedResult(cached)) {
         try {
-          const cachedResult = cached as GatewayResult<T>;
-          const value = request.outputSchema.parse(cachedResult.value);
+          const value = request.outputSchema.parse(cached.value);
           return {
-            ...cachedResult,
+            ...cached,
             value,
             applicationCacheHit: true,
           };

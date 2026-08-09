@@ -233,3 +233,7 @@ The local worker profile now runs the official ClamAV service on the internal wo
 ### ADR-066: Keep media metadata outputs private to scratch
 
 Media pipeline steps now declare whether an output is publishable. `ffprobe` and image metadata-scrub outputs remain scratch-only, while waveform, playback, thumbnail, and OCR outputs are the only derivatives persisted to object storage and authoritative derivative tables. This prevents diagnostic metadata files from appearing as customer derivatives.
+
+### ADR-067: Validate cached AI envelopes before reuse
+
+AI result cache hits now require valid provenance fields, non-negative integer token counters, and a finite cache ratio between zero and one before schema validation and reuse. Malformed or legacy envelopes are deleted and recomputed through the provider, preserving trustworthy provenance and cost telemetry.

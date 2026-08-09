@@ -138,4 +138,36 @@ describe('AI gateway', () => {
     await gateway.execute({ ...base, organizationId: '01900000-0000-7000-8000-000000000003' });
     expect(provider.requests).toHaveLength(2);
   });
+
+  it('discards cache envelopes with invalid provenance or usage telemetry', async () => {
+    const provider = new RecordingProvider('{"claims":[]}');
+    const cache = new MemoryCache();
+    const gateway = new AiGateway(provider, { cache });
+    const base = {
+      organizationId: '01900000-0000-7000-8000-000000000001',
+      familyArchiveId: '01900000-0000-7000-8000-000000000002',
+      purpose: 'chapter_drafting' as const,
+      consentPurposes: ['chapter_drafting' as const],
+      aiProcessingEnabled: true,
+      promptFamily: 'chapter-drafting',
+      promptVersion: '1',
+      policyVersion: '1',
+      model: 'deepseek-chat',
+      input: { evidenceIds: [] },
+      inputText: 'No factual claims are supplied.',
+      outputSchema: z.object({ claims: z.array(z.never()) }),
+      maxInputTokens: 2_000,
+    };
+    await gateway.execute(base);
+    const key = [...cache.values.keys()][0]!;
+    const stored = cache.values.get(key) as Record<string, unknown>;
+    cache.values.set(key, {
+      ...stored,
+      usage: { ...(stored.usage as Record<string, unknown>), cacheRatio: 4 },
+    });
+    const result = await gateway.execute(base);
+    expect(result.applicationCacheHit).not.toBe(true);
+    expect(provider.requests).toHaveLength(2);
+    expect(cache.values.get(key)).toMatchObject({ usage: { cacheRatio: 0.6 } });
+  });
 });

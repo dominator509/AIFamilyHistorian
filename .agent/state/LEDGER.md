@@ -293,3 +293,6 @@
 2026-08-09T01:05:00Z | codex | HARDENING-52 | COMMAND_FAILED | docker_build_worker_runtime_exit_124_after_300s_no_sentinel; host_build_and_source-mounted_fixture_remain_green; no_source_data_loss
 2026-08-09T01:12:00Z | codex | HARDENING-52 | RECOVERY | docker_build_worker_runtime_plain_progress_completed_worker_runtime_image; prior_timeout_was_silent_build_progress_not_source_failure
 2026-08-09T01:13:00Z | codex | HARDENING-52 | FINAL_VERIFICATION | fresh_worker_image_tool_probe_clamscan_with_real_signature_volume_ok; fresh_image_real_media_fixture_1_test_passed; compose_clamav_healthy
+2026-08-09T01:16:00Z | codex | HARDENING-53 | SECURITY_FINDING | AI_gateway_reused_cached_envelopes_after_validating_only_output_value; provenance_and_usage_telemetry_could_be_malformed
+2026-08-09T01:17:00Z | codex | HARDENING-53 | FIX_APPLIED | cache_hit_requires_valid_provenance_usage_nonnegative_integer_counters_and_cache_ratio_0_to_1; malformed_envelope_deleted_and_recomputed
+2026-08-09T01:18:00Z | codex | HARDENING-53 | LOCAL_VERIFICATION | ai_gateway_focus5_tests_passed; full_unit24_files_84_tests_passed; build_security_typecheck_lint_format_passed
