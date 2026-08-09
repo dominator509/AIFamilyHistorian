@@ -229,6 +229,8 @@ HARDENING-93 checkpoint: a real rebuilt read-only worker image exposed a Corepac
 
 HARDENING-94/95 checkpoint: the real worker rehearsal then exposed two configuration-boundary defects: the shared production schema requires an explicit HTTPS CORS origin, and the local internal MinIO endpoint is intentionally HTTP. Hosted Fly remains production with `https://worker.invalid` as an inert non-routable CORS origin; the opt-in local Compose worker is explicitly development mode. The rebuilt image started successfully in the real internal stack and Docker reported `Up (healthy)`; the worker was stopped after the probe to avoid consuming stale fixture jobs.
 
+HARDENING-96 checkpoint: the current pushed source passed the real internal integration suite (13 files/41 tests), E2E suite (3 files/11 tests), all 16 live-fire proofs, network-aware dependency readiness, performance smoke (100 requests, p95 0.59ms), and fresh encrypted backup/restore (`schema_migrations=12`). Production readiness was rerun and remains fail-closed on 16 external, legal, and hosted-sandbox requirements.
+
 ## Final operator checklist
 
 1. Implement and verify remaining worker fulfillment families (privacy, export, transcription, narration synthesis, and deletion), then run hosted-equivalent object-storage and provider fixtures through `worker-runtime`.
