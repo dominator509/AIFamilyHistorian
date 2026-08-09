@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   completeUploadInputSchema,
   editionInputSchema,
+  MAX_FACT_TEXT_CHARS,
   MAX_EDITION_MANIFEST_BYTES,
   MAX_EDITION_MANIFEST_KEYS,
+  MAX_TRANSCRIPT_TEXT_CHARS,
   factInputSchema,
   healthStatusSchema,
   MAX_MULTIPART_TOKEN_CHARS,
+  transcriptInputSchema,
 } from '../../packages/contracts/src/index.js';
 import {
   MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES,
@@ -63,6 +66,19 @@ describe('foundation contracts', () => {
           { length: 1_001 },
           () => '01900000-0000-7000-8000-000000000002',
         ),
+      }),
+    ).toThrow();
+    expect(() =>
+      factInputSchema.parse({
+        text: 'x'.repeat(MAX_FACT_TEXT_CHARS + 1),
+        confirmerId: '01900000-0000-7000-8000-000000000001',
+        evidenceLinkIds: ['01900000-0000-7000-8000-000000000002'],
+      }),
+    ).toThrow();
+    expect(() =>
+      transcriptInputSchema.parse({
+        mediaAssetId: '01900000-0000-7000-8000-000000000003',
+        text: 'x'.repeat(MAX_TRANSCRIPT_TEXT_CHARS + 1),
       }),
     ).toThrow();
   });

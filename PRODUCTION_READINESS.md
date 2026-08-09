@@ -46,6 +46,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-184 bounds approved quotation/source-span text to 1,000,000 characters before exact lineage materialization, preventing oversized transcript excerpts from crossing the quotation domain boundary. Unit passed 30 files/162 tests; format, typecheck, and security checks passed.
 - HARDENING-185 bounds provenance claim text to 1,000,000 characters before evidence validation, preventing oversized claim materialization while preserving large transcript storage. Focused provenance coverage passed 1 file/5 tests; unit passed 30 files/162 tests; format, typecheck, and security checks passed.
 - HARDENING-186 applies the shared 1,000,000-character domain text ceiling to confirmed facts, disputed accounts, and generated chapter claims. Unit passed 30 files/162 tests; typecheck, format, and security checks passed.
+- HARDENING-187 applies the same 1,000,000-character ceiling at transcript and fact API contracts before route/service persistence. Unit passed 30 files/162 tests; integration passed 13 files/43 tests; E2E passed 3 files/11 tests; typecheck, format, and security checks passed.
 
 ## Engineering work still pending
 

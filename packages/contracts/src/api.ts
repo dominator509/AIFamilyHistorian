@@ -59,13 +59,15 @@ export const completeUploadInputSchema = z
       seen.add(part.PartNumber);
     });
   });
+export const MAX_TRANSCRIPT_TEXT_CHARS = 1_000_000;
+export const MAX_FACT_TEXT_CHARS = 1_000_000;
 export const transcriptInputSchema = z.object({
   mediaAssetId: uuidSchema,
-  text: z.string().min(1),
+  text: z.string().min(1).max(MAX_TRANSCRIPT_TEXT_CHARS),
   status: z.enum(['draft', 'corrected', 'approved']).default('draft'),
 });
 export const factInputSchema = z.object({
-  text: z.string().min(1),
+  text: z.string().min(1).max(MAX_FACT_TEXT_CHARS),
   confirmerId: uuidSchema,
   evidenceLinkIds: z.array(uuidSchema).min(1).max(1_000),
   status: factStatusSchema.default('confirmed'),
