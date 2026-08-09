@@ -227,6 +227,11 @@ describe('PostgreSQL persistence invariants', () => {
     await expect(
       pool.query('update job_outbox set payload = $2 where id = $1', [jobId, { forged: true }]),
     ).rejects.toThrow(/authoritative fields are immutable/u);
+    await pool.query("update job_outbox set status = 'running' where id = $1", [jobId]);
+    await pool.query("update job_outbox set status = 'completed' where id = $1", [jobId]);
+    await expect(
+      pool.query("update job_outbox set status = 'running' where id = $1", [jobId]),
+    ).rejects.toThrow(/status transition is invalid/u);
   });
 
   it('enforces one immutable derivative recipe per original object', async () => {

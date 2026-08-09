@@ -66,9 +66,9 @@ try {
     throw new Error(`required RLS enforcement missing: ${[...missing, ...weak].join(', ')}`);
   }
   const triggers = await pool.query<{ tgname: string }>(
-    "select tgname from pg_trigger where not tgisinternal and tgname in ('audit_events_append_only','provenance_events_append_only','original_objects_immutable','provider_callback_events_append_only','job_outbox_scope_immutable')",
+    "select tgname from pg_trigger where not tgisinternal and tgname in ('audit_events_append_only','provenance_events_append_only','original_objects_immutable','provider_callback_events_append_only','job_outbox_scope_immutable','job_outbox_status_transition')",
   );
-  if (triggers.rowCount !== 5) throw new Error('immutability triggers missing');
+  if (triggers.rowCount !== 6) throw new Error('immutability triggers missing');
   const migrationPrivilege = await pool.query<{ has_privilege: boolean }>(
     "select has_table_privilege('family_historian_runtime', 'schema_migrations', 'INSERT,UPDATE,DELETE') as has_privilege",
   );
