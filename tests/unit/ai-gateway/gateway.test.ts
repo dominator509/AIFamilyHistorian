@@ -170,4 +170,30 @@ describe('AI gateway', () => {
     expect(provider.requests).toHaveLength(2);
     expect(cache.values.get(key)).toMatchObject({ usage: { cacheRatio: 0.6 } });
   });
+
+  it('rejects invalid input budgets before contacting the provider', async () => {
+    const provider = new RecordingProvider('{"claims":[]}');
+    const gateway = new AiGateway(provider);
+    const base = {
+      organizationId: '01900000-0000-7000-8000-000000000001',
+      familyArchiveId: '01900000-0000-7000-8000-000000000002',
+      purpose: 'chapter_drafting' as const,
+      consentPurposes: ['chapter_drafting' as const],
+      aiProcessingEnabled: true,
+      promptFamily: 'chapter-drafting',
+      promptVersion: '1',
+      policyVersion: '1',
+      model: 'deepseek-chat',
+      input: {},
+      inputText: 'source',
+      outputSchema: z.object({ claims: z.array(z.never()) }),
+    };
+    await expect(gateway.execute({ ...base, maxInputTokens: Number.NaN })).rejects.toThrow(
+      'AI input budget is invalid',
+    );
+    await expect(gateway.execute({ ...base, maxInputTokens: 0 })).rejects.toThrow(
+      'AI input budget is invalid',
+    );
+    expect(provider.requests).toHaveLength(0);
+  });
 });

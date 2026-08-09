@@ -343,3 +343,6 @@
 2026-08-09T03:25:00Z | codex | HARDENING-67 | SECURITY_FINDING | Stripe_signature_verification_allowed_invalid_nowSeconds_or_excessive_tolerance_to_bypass_freshness_comparison
 2026-08-09T03:26:00Z | codex | HARDENING-67 | FIX_APPLIED | webhook_clock_and_tolerance_are_bounded_before_timestamp_freshness_evaluation
 2026-08-09T03:27:00Z | codex | HARDENING-67 | LOCAL_VERIFICATION | provider_focus4_tests_passed; full_unit24_files_93_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T03:35:00Z | codex | HARDENING-68 | SECURITY_FINDING | AI_gateway_maxInputTokens_allowed_NaN_or_nonpositive_values_to_bypass_budget_comparison
+2026-08-09T03:36:00Z | codex | HARDENING-68 | FIX_APPLIED | gateway_rejects_nonfinite_nonpositive_or_overlarge_input_budgets_before_policy_and_provider_dispatch
+2026-08-09T03:37:00Z | codex | HARDENING-68 | LOCAL_VERIFICATION | gateway_focus6_tests_passed; full_unit24_files_94_tests_passed; build_security_typecheck_lint_format_secret_scan_passed

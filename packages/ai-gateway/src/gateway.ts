@@ -126,6 +126,12 @@ export class AiGateway {
   }
 
   public async execute<T>(request: GatewayRequest<T>): Promise<GatewayResult<T>> {
+    if (
+      !Number.isSafeInteger(request.maxInputTokens) ||
+      request.maxInputTokens < 1 ||
+      request.maxInputTokens > 1_000_000
+    )
+      throw new Error('AI input budget is invalid');
     const policy = enforceOutboundPolicy({
       purpose: request.purpose,
       consentPurposes: request.consentPurposes,

@@ -297,3 +297,7 @@ Quota checks now parse and validate both the current time and subscription grace
 ### ADR-082: Bound Stripe webhook clock configuration
 
 Stripe signature verification now rejects non-finite, negative, unsafe, or excessively broad clock and tolerance inputs before evaluating freshness. This prevents malformed test/configuration clocks from turning a signed-but-replayed callback into an accepted webhook.
+
+### ADR-083: Fail closed on invalid AI input budgets
+
+The AI Policy Gateway now validates `maxInputTokens` as a bounded positive safe integer before policy evaluation or provider dispatch. Invalid numeric values such as `NaN` can no longer bypass the budget comparison through JavaScript's false `NaN` comparisons.
