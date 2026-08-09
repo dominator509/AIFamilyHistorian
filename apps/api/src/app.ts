@@ -97,14 +97,23 @@ export async function createApp(dependencies?: AppDependencies): Promise<Fastify
           if (!principalDecision.allowed) decision = principalDecision;
           const archiveId = (request.params as { archiveId?: unknown } | undefined)?.archiveId;
           if (typeof archiveId === 'string' && session.archiveIds.includes(archiveId)) {
-            if (
-              dependencies?.sessionMembershipChecker &&
-              !(await dependencies.sessionMembershipChecker(
-                { organizationId: session.organizationId, familyArchiveId: archiveId },
-                session.userId,
-              ))
-            )
-              throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
+            if (dependencies?.sessionMembershipChecker) {
+              let current: boolean;
+              try {
+                current = await dependencies.sessionMembershipChecker(
+                  { organizationId: session.organizationId, familyArchiveId: archiveId },
+                  session.userId,
+                );
+              } catch {
+                throw new ApiProblem(
+                  'PROVIDER_UNAVAILABLE',
+                  'Archive authorization is unavailable',
+                  true,
+                );
+              }
+              if (!current)
+                throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
+            }
             const archiveDecision = await rateLimiter.consume(
               `archive:${session.organizationId}:${archiveId}`,
             );

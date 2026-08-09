@@ -330,4 +330,40 @@ describe('API principal and archive rate scopes', () => {
       await app.close();
     }
   });
+
+  it('fails closed as retryable when the live permission checker is unavailable', async () => {
+    const archiveId = '01900000-0000-7000-8000-000000000095';
+    const token = issueSessionToken('u'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000096',
+      organizationId: '01900000-0000-7000-8000-000000000097',
+      archiveIds: [archiveId],
+      permissions: ['people:read'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    const app = await createApp({
+      service: {
+        ready: () => Promise.resolve(true),
+        list: () => Promise.resolve([]),
+      } as never,
+      sessionSecret: 'u'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionPermissionChecker: () => Promise.reject(new Error('database unavailable')),
+    });
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/archives/${archiveId}/people`,
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.statusCode).toBe(503);
+      expect(response.json()).toMatchObject({
+        code: 'PROVIDER_UNAVAILABLE',
+        retryable: true,
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });

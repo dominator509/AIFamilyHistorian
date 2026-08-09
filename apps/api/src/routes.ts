@@ -108,15 +108,7 @@ async function authorizeArchive(
         : 'AUTH_REQUIRED';
     throw new ApiProblem(code, 'Archive access is not authorized');
   }
-  if (
-    dependencies.sessionPermissionChecker &&
-    !(await dependencies.sessionPermissionChecker(
-      { organizationId: value.organizationId, familyArchiveId: archiveId },
-      value.userId,
-      permission,
-    ))
-  )
-    throw new ApiProblem('PERMISSION_DENIED', 'Archive permission is no longer valid');
+  await assertCurrentArchivePermission(dependencies, value, archiveId, permission);
   return value;
 }
 
@@ -125,14 +117,37 @@ async function assertCurrentArchiveMembership(
   value: SessionPrincipal,
   archiveId: string,
 ): Promise<void> {
-  if (
-    dependencies.sessionMembershipChecker &&
-    !(await dependencies.sessionMembershipChecker(
+  if (!dependencies.sessionMembershipChecker) return;
+  let current: boolean;
+  try {
+    current = await dependencies.sessionMembershipChecker(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,
-    ))
-  )
-    throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
+    );
+  } catch {
+    throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Archive authorization is unavailable', true);
+  }
+  if (!current) throw new ApiProblem('AUTH_REQUIRED', 'Session membership is no longer valid');
+}
+
+async function assertCurrentArchivePermission(
+  dependencies: RouteDependencies,
+  value: SessionPrincipal,
+  archiveId: string,
+  permission: string,
+): Promise<void> {
+  if (!dependencies.sessionPermissionChecker) return;
+  let current: boolean;
+  try {
+    current = await dependencies.sessionPermissionChecker(
+      { organizationId: value.organizationId, familyArchiveId: archiveId },
+      value.userId,
+      permission,
+    );
+  } catch {
+    throw new ApiProblem('PROVIDER_UNAVAILABLE', 'Archive authorization is unavailable', true);
+  }
+  if (!current) throw new ApiProblem('PERMISSION_DENIED', 'Archive permission is no longer valid');
 }
 
 function idempotencyKey(request: FastifyRequest): string {
@@ -541,15 +556,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
       throw new ApiProblem('PERMISSION_DENIED', 'Billing permission is required');
     const archiveId = value.archiveIds[0];
     if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
-    if (
-      dependencies.sessionPermissionChecker &&
-      !(await dependencies.sessionPermissionChecker(
-        { organizationId: value.organizationId, familyArchiveId: archiveId },
-        value.userId,
-        'billing:write',
-      ))
-    )
-      throw new ApiProblem('PERMISSION_DENIED', 'Billing permission is no longer valid');
+    await assertCurrentArchivePermission(dependencies, value, archiveId, 'billing:write');
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },

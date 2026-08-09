@@ -257,3 +257,7 @@ The worker dispatcher now renews each active outbox lease at one-third of its co
 ### ADR-072: Keep release handoff claims aligned with current evidence
 
 The handoff and production-readiness documents now distinguish historical checkpoint evidence from current status. Current blocker counts, worker heartbeat/session isolation proofs, and the real internal media fixture are updated from observed command output; older checkpoint narratives remain preserved as historical records. This prevents stale “14 blockers” or “media unverified” text from being mistaken for the present release state.
+
+### ADR-073: Fail closed with an explicit retryable authorization-provider error
+
+Request-time membership and permission checks now convert database/checker failures into a redacted `PROVIDER_UNAVAILABLE` 503 with `retryable: true`. A checker returning `false` still produces the appropriate 401/403 denial, while no route proceeds on an unavailable authorization source. This keeps outages fail-closed without misclassifying them as generic internal errors or leaking database details.
