@@ -4,6 +4,8 @@ import {
   buildProvenanceManifest,
   createEvidenceSpan,
   createProvenanceEvent,
+  MAX_PROVENANCE_CANONICAL_BYTES,
+  MAX_PROVENANCE_CANONICAL_DEPTH,
   ProvenanceError,
   verifyProvenanceChain,
 } from '../../packages/provenance/src/index.js';
@@ -80,5 +82,35 @@ describe('provenance integrity', () => {
         'Ada moved',
       ),
     ).not.toThrow();
+  });
+
+  it('fails closed on cyclic, unsupported, deeply nested, and oversized lineage', () => {
+    const base = {
+      id: '01900000-0000-7000-8000-000000000013',
+      organizationId: organizationId,
+      familyArchiveId: archiveId,
+      entityType: 'source',
+      entityId,
+      eventType: 'captured',
+      occurredAt: '2026-08-07T00:00:00.000Z',
+    } as const;
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() => createProvenanceEvent({ ...base, lineage: cyclic })).toThrow(/cycle/u);
+    expect(() => createProvenanceEvent({ ...base, lineage: { value: undefined } })).toThrow(
+      /unsupported/u,
+    );
+    expect(() => createProvenanceEvent({ ...base, lineage: { value: Number.NaN } })).toThrow(
+      /non-finite/u,
+    );
+    let nested: unknown = 'leaf';
+    for (let index = 0; index <= MAX_PROVENANCE_CANONICAL_DEPTH; index += 1) nested = { nested };
+    expect(() => createProvenanceEvent({ ...base, lineage: { nested } })).toThrow(/nesting depth/u);
+    expect(() =>
+      createProvenanceEvent({
+        ...base,
+        lineage: { value: 'x'.repeat(MAX_PROVENANCE_CANONICAL_BYTES) },
+      }),
+    ).toThrow(/serialized size/u);
   });
 });

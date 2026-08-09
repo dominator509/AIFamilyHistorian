@@ -445,3 +445,7 @@ Restricted-text encryption now caps plaintext at 16 MiB and serialized envelopes
 ### ADR-119: Fail closed on export canonicalization
 
 Portable export JSONL canonicalization now rejects cyclic values, unsupported JSON values, non-finite numbers, and nesting deeper than 32 levels before serialization and fixity computation. Object keys remain deterministically sorted, while invalid payloads raise an explicit `ExportCanonicalizationError` instead of being silently dropped or coerced by `JSON.stringify`. This keeps manifest hashes and exported evidence bound to valid, reproducible JSON; the full export-fulfillment worker remains a separate blueprint task.
+
+### ADR-120: Bound provenance lineage canonicalization
+
+Provenance lineage validation now runs before schema cloning and rejects cycles, unsupported values, non-finite numbers, nesting beyond 32 levels, and canonical JSON larger than 16 MiB. Canonical object-key ordering remains deterministic, so event hashes cannot be computed over silently coerced or recursively unbounded lineage values. Forbidden raw-content keys continue to fail closed.

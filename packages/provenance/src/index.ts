@@ -16,6 +16,9 @@ const lineageValueSchema = z.union([
 
 const lineageSchema = z.record(z.string().min(1), lineageValueSchema);
 
+export const MAX_PROVENANCE_CANONICAL_DEPTH = 32;
+export const MAX_PROVENANCE_CANONICAL_BYTES = 16 * 1024 * 1024;
+
 export interface EvidenceSpan {
   readonly sourceId: EntityId;
   readonly revisionId: EntityId;
@@ -92,8 +95,8 @@ export function createProvenanceEvent(
   uuidSchema.parse(input.entityId);
   const previousHash = input.previousHash ?? null;
   if (previousHash !== null) hashSchema.parse(previousHash);
+  assertSafeLineage(input.lineage);
   const lineage = lineageSchema.parse(input.lineage);
-  assertSafeLineage(lineage);
   const canonical = canonicalJson({
     id: input.id,
     organizationId: input.organizationId,
@@ -152,27 +155,66 @@ export function buildProvenanceManifest(events: readonly ProvenanceEvent[]): {
 function assertSafeLineage(value: Record<string, unknown>): void {
   const forbidden =
     /^(?:sourceText|transcript|rawPrompt|prompt|content|payload|filename|email|address|phone)$/iu;
-  const walk = (current: unknown): void => {
-    if (Array.isArray(current)) {
-      current.forEach(walk);
+  const seen = new WeakSet<object>();
+  const walk = (current: unknown, depth: number): void => {
+    if (depth > MAX_PROVENANCE_CANONICAL_DEPTH)
+      throw new ProvenanceError('lineage exceeds the maximum nesting depth');
+    if (current === null || typeof current === 'string' || typeof current === 'boolean') return;
+    if (typeof current === 'number') {
+      if (!Number.isFinite(current))
+        throw new ProvenanceError('lineage contains a non-finite number');
       return;
     }
-    if (!current || typeof current !== 'object') return;
+    if (typeof current !== 'object')
+      throw new ProvenanceError('lineage contains an unsupported value');
+    if (seen.has(current)) throw new ProvenanceError('lineage contains a cycle');
+    seen.add(current);
+    if (Array.isArray(current)) {
+      current.forEach((nested) => walk(nested, depth + 1));
+      seen.delete(current);
+      return;
+    }
     for (const [key, nested] of Object.entries(current)) {
       if (forbidden.test(key)) throw new ProvenanceError(`lineage field is not allowed: ${key}`);
-      walk(nested);
+      walk(nested, depth + 1);
     }
+    seen.delete(current);
   };
-  walk(value);
+  walk(value, 0);
 }
 
 function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== 'object') return JSON.stringify(value);
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
-  return `{${Object.entries(value as Record<string, unknown>)
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, nested]) => `${JSON.stringify(key)}:${canonicalJson(nested)}`)
-    .join(',')}}`;
+  const seen = new WeakSet<object>();
+  const normalize = (current: unknown, depth: number): unknown => {
+    if (depth > MAX_PROVENANCE_CANONICAL_DEPTH)
+      throw new ProvenanceError('lineage exceeds the maximum nesting depth');
+    if (current === null || typeof current === 'string' || typeof current === 'boolean')
+      return current;
+    if (typeof current === 'number') {
+      if (!Number.isFinite(current))
+        throw new ProvenanceError('lineage contains a non-finite number');
+      return current;
+    }
+    if (typeof current !== 'object')
+      throw new ProvenanceError('lineage contains an unsupported value');
+    if (seen.has(current)) throw new ProvenanceError('lineage contains a cycle');
+    seen.add(current);
+    try {
+      if (Array.isArray(current)) return current.map((nested) => normalize(nested, depth + 1));
+      return Object.fromEntries(
+        Object.entries(current)
+          .sort(([left], [right]) => left.localeCompare(right))
+          .map(([key, nested]) => [key, normalize(nested, depth + 1)]),
+      );
+    } finally {
+      seen.delete(current);
+    }
+  };
+  const encoded = JSON.stringify(normalize(value, 0));
+  if (encoded === undefined) throw new ProvenanceError('lineage is not serializable');
+  if (Buffer.byteLength(encoded, 'utf8') > MAX_PROVENANCE_CANONICAL_BYTES)
+    throw new ProvenanceError('lineage exceeds the maximum serialized size');
+  return encoded;
 }
 
 function sha256(value: string): string {
