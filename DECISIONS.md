@@ -253,3 +253,7 @@ Session listing, targeted revoke, and administrative revoke-all now include the 
 ### ADR-071: Renew outbox leases during long-running handlers
 
 The worker dispatcher now renews each active outbox lease at one-third of its configured duration, with a 250 ms minimum cadence and serialized renewal calls. Completion, failure, and handler side effects remain lock-token fenced, so a renewal failure cannot fabricate success; it only preserves the lease margin for media and other bounded long-running tools. The real PostgreSQL dispatcher regression proves a second worker cannot reclaim a job held by a sleeping first handler.
+
+### ADR-072: Keep release handoff claims aligned with current evidence
+
+The handoff and production-readiness documents now distinguish historical checkpoint evidence from current status. Current blocker counts, worker heartbeat/session isolation proofs, and the real internal media fixture are updated from observed command output; older checkpoint narratives remain preserved as historical records. This prevents stale “14 blockers” or “media unverified” text from being mistaken for the present release state.
