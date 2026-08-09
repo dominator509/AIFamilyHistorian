@@ -50,8 +50,10 @@ export interface OutboxDispatcherOptions {
 
 /**
  * Claims database outbox rows with SKIP LOCKED and runs each handler at most
- * once per lease. Handler effects must be idempotent; failed rows retain a
- * bounded retry schedule and become terminal_failed instead of looping forever.
+ * once per lease. Long-running handlers renew their lease while executing;
+ * handler effects must still be idempotent and token-fenced because a worker
+ * can terminate between heartbeats. Failed rows retain a bounded retry
+ * schedule and become terminal_failed instead of looping forever.
  */
 export class OutboxDispatcher {
   readonly #pool: DatabasePool;
@@ -100,6 +102,7 @@ export class OutboxDispatcher {
     const job = await this.claim();
     if (!job) return false;
     const handler = this.#handlers.get(job.jobType);
+    const heartbeat = this.startLeaseHeartbeat(job);
     try {
       if (!handler)
         throw new WorkerJobError('job handler is not configured', 'JOB_UNSUPPORTED', false);
@@ -129,6 +132,8 @@ export class OutboxDispatcher {
         },
         'worker job failed',
       );
+    } finally {
+      heartbeat.stop();
     }
     return true;
   }
@@ -254,6 +259,48 @@ export class OutboxDispatcher {
       [job.id, job.lockToken],
     );
     if (result.rowCount !== 1) throw new Error('worker completion update was lost');
+  }
+
+  private startLeaseHeartbeat(job: OutboxJob): { stop: () => void } {
+    let stopped = false;
+    let inFlight = false;
+    const intervalMilliseconds = Math.max(250, Math.floor(this.#leaseMilliseconds / 3));
+    const timer = setInterval(() => {
+      if (stopped || inFlight) return;
+      inFlight = true;
+      void this.renewLease(job)
+        .catch((error: unknown) => {
+          if (stopped) return;
+          this.#logger.error(
+            {
+              jobId: job.id,
+              jobType: job.jobType,
+              errorCode: 'WORKER_LEASE_RENEWAL_FAILED',
+              error: error instanceof Error ? error.message : 'unknown error',
+            },
+            'worker lease renewal failed',
+          );
+        })
+        .finally(() => {
+          inFlight = false;
+        });
+    }, intervalMilliseconds);
+    return {
+      stop: () => {
+        stopped = true;
+        clearInterval(timer);
+      },
+    };
+  }
+
+  private async renewLease(job: OutboxJob): Promise<void> {
+    const result = await this.#pool.query(
+      `update job_outbox
+          set locked_at = now()
+        where id = $1 and status = 'running' and lock_token = $2`,
+      [job.id, job.lockToken],
+    );
+    if (result.rowCount !== 1) throw new Error('worker lease renewal update was lost');
   }
 
   private async fail(job: OutboxJob, failure: { code: string; retryable: boolean }): Promise<void> {

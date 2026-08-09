@@ -245,6 +245,63 @@ describe('SQL outbox worker dispatcher', () => {
     expect(result.rows[0]).toEqual({ status: 'completed', attempt_count: 2, lock_token: null });
   });
 
+  it('renews a long-running lease so another worker cannot reclaim it', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Heartbeat family', 'Heartbeat archive');
+    const jobId = uuidV7();
+    const jobType = `heartbeat.${jobId}`;
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [jobId, context.organizationId, context.familyArchiveId, jobType, {}],
+    );
+    let entered!: () => void;
+    let release!: () => void;
+    const enteredPromise = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const releasePromise = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const first = new OutboxDispatcher({
+      pool,
+      logger,
+      leaseMilliseconds: 1_500,
+      handlers: new Map([
+        [
+          jobType,
+          async () => {
+            entered();
+            await releasePromise;
+          },
+        ],
+      ]),
+      jobTypes: [jobType],
+      archiveIds: [context.familyArchiveId],
+      pollMilliseconds: 50,
+    });
+
+    const processing = first.processOne();
+    await enteredPromise;
+    await new Promise((resolve) => setTimeout(resolve, 1_800));
+    const second = new OutboxDispatcher({
+      pool,
+      logger,
+      leaseMilliseconds: 1_500,
+      handlers: new Map([[jobType, () => Promise.resolve()]]),
+      jobTypes: [jobType],
+      archiveIds: [context.familyArchiveId],
+      pollMilliseconds: 50,
+    });
+    expect(await second.processOne()).toBe(false);
+    release();
+    await expect(processing).resolves.toBe(true);
+    const result = await pool.query<{ status: string; attempt_count: number }>(
+      'select status, attempt_count from job_outbox where id = $1',
+      [jobId],
+    );
+    expect(result.rows[0]).toEqual({ status: 'completed', attempt_count: 1 });
+  });
+
   it('claims only jobs from an archive partition', async () => {
     const first: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     const second: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };

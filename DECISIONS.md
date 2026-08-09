@@ -249,3 +249,7 @@ The media scan error path now verifies and locks the active outbox lease before 
 ### ADR-070: Scope session inventory to the active organization
 
 Session listing and administrative revoke-all now include the authenticated organization in their PostgreSQL predicates. Targeted session revocation also requires the stored row to belong to the same organization as the caller. This prevents a user with sessions in multiple organizations from browsing or revoking another organization’s session inventory while preserving self-revocation and explicit administrative controls.
+
+### ADR-071: Renew outbox leases during long-running handlers
+
+The worker dispatcher now renews each active outbox lease at one-third of its configured duration, with a 250 ms minimum cadence and serialized renewal calls. Completion, failure, and handler side effects remain lock-token fenced, so a renewal failure cannot fabricate success; it only preserves the lease margin for media and other bounded long-running tools. The real PostgreSQL dispatcher regression proves a second worker cannot reclaim a job held by a sleeping first handler.
