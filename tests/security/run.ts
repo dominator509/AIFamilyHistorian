@@ -12,6 +12,7 @@ const [
   workerSessionRevokeMigration,
   workerEvidenceProbe,
   workerEvidenceShell,
+  deployment,
   envExample,
   verifyWorkflow,
   releaseWorkflow,
@@ -25,6 +26,7 @@ const [
   readFile('drizzle/0015_revoke_worker_session_access.sql', 'utf8'),
   readFile('scripts/probes/worker-sandbox-evidence.mjs', 'utf8'),
   readFile('scripts/probes/worker_sandbox_evidence.sh', 'utf8'),
+  readFile('DEPLOYMENT.md', 'utf8'),
   readFile('.env.example', 'utf8'),
   readFile('.github/workflows/verify.yml', 'utf8'),
   readFile('.github/workflows/release.yml', 'utf8'),
@@ -111,6 +113,12 @@ if (
   !releaseWorkflow.includes('flyctl deploy --config fly.worker.toml --image "$WORKER_IMAGE:')
 )
   throw new Error('release workflow must publish and deploy a distinct worker-runtime image');
+if (
+  !deployment.includes('FLY_APP_WORKER_PRODUCTION') ||
+  !deployment.includes('fly deploy --config fly.worker.toml --app "$FLY_APP_WORKER_PRODUCTION"') ||
+  !deployment.includes('WORKER_IMAGE="ghcr.io/${GITHUB_REPOSITORY}-worker:${RELEASE_TAG}"')
+)
+  throw new Error('manual production deployment must include a separately named worker app/image');
 for (const [name, content, controls] of [
   [
     'worker evidence probe',

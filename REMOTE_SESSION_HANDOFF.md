@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175/176)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -15,6 +15,7 @@
 - Worker access to global `auth_sessions` is revoked from both runtime and worker roles by migration `0015_revoke_worker_session_access.sql`; verifier and security harness enforce the invariant, and the local PostgreSQL probe returned `f|f`.
 - Staging release wiring now deploys `fly.worker.toml` separately, preserving the native `worker-runtime` image for media processing; the security harness asserts that dedicated deployment command.
 - HARDENING-175 closes the remaining workflow image drift: release CI builds and pushes `ghcr.io/<owner>/<repo>-worker:<tag>` from the `worker-runtime` target and deploys that distinct image through `fly.worker.toml`; the API image is no longer reused for the worker.
+- HARDENING-176 adds `FLY_APP_WORKER_PRODUCTION` and a paired manual production command so the private native-tool worker app cannot be omitted from production deployment or rollback.
 - Hosted scratch wiring now declares a named 30 GiB `worker_scratch` volume at `/tmp` for the worker process. The exact `fly volumes create` command is documented, but the volume, filesystem mode, and hosted sandbox controls remain unverified because no Fly credential was available.
 - The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. HARDENING-170 verifies its Ed25519 signature against `WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE`; current hosted enforcement and signed evidence remain external.
 - The Deepgram transcription live-fire probe now bounds streamed and non-streamed provider responses at 8 MiB before JSON parsing and emits only a validated request identifier or neutral presence marker; this changes no production-provider credential state.
@@ -36,7 +37,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-175`; provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `HARDENING-176`; provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, explicit private production worker-app targeting, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits are now recorded. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
@@ -170,7 +171,7 @@ The authoritative full register is [.agent/state/DEFERRED_EXTERNALS.md](.agent/s
 | Turnstile | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | `sh scripts/probes/turnstile.sh` | `sh scripts/preflight.sh` | Yes |
 | Sentry/hosted OTLP | `SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_HEADERS` | `sh scripts/probes/sentry.sh` and `sh scripts/probes/otel.sh` | `sh scripts/preflight.sh` | Yes under current gate |
 | GitHub/GHCR | `GITHUB_TOKEN`, `GITHUB_REPOSITORY` | `sh scripts/probes/github.sh` | `sh scripts/preflight.sh` and remote workflow run | Yes |
-| Fly staging/production | `FLY_API_TOKEN`, `FLY_APP_STAGING`, `FLY_APP_PRODUCTION` | `sh scripts/probes/fly.sh` | staging deploy and smoke, then manual production command | Yes |
+| Fly staging/production | `FLY_API_TOKEN`, `FLY_APP_STAGING`, `FLY_APP_PRODUCTION`, `FLY_APP_WORKER_PRODUCTION` | `sh scripts/probes/fly.sh` | staging deploy and smoke, then paired API/worker production command | Yes |
 | Application production secrets | `SESSION_SECRET`, `FIELD_ENCRYPTION_MASTER_KEY`, `DOWNLOAD_SIGNING_SECRET`, `BACKUP_ENCRYPTION_KEY` | Presence check in `sh scripts/preflight.sh` | production secret-manager/KMS injection plus readiness check | Yes |
 | Legal/vendor/insurance/DPIA/retention | `LEGAL_APPROVAL_FILE`, `VENDOR_RISK_APPROVAL_FILE`, `INSURANCE_EVIDENCE_FILE`, `DPIA_APPROVAL_FILE`, `RETENTION_APPROVAL_FILE` | File-presence gates in `sh scripts/preflight.sh` | `sh scripts/production-readiness-check.sh` | Yes |
 | Data region and data-broker determinations | `compliance/evidence/data-region-verification.md`, `compliance/evidence/data-broker-determination.md` | `sh scripts/production-readiness-check.sh` | same command after signed artifacts exist | Yes |
@@ -202,7 +203,7 @@ curl --fail --silent --show-error "$STAGING_BASE_URL/health/ready"
 Manual production deployment remains explicitly operator-authorized only:
 
 ```text
-fly deploy --app "$FLY_APP_PRODUCTION" --image "ghcr.io/$GITHUB_REPOSITORY:$RELEASE_TAG" --strategy rolling
+API_IMAGE="ghcr.io/$GITHUB_REPOSITORY:$RELEASE_TAG" WORKER_IMAGE="ghcr.io/$GITHUB_REPOSITORY-worker:$RELEASE_TAG" fly deploy --config fly.toml --app "$FLY_APP_PRODUCTION" --image "$API_IMAGE" --strategy rolling && fly deploy --config fly.worker.toml --app "$FLY_APP_WORKER_PRODUCTION" --image "$WORKER_IMAGE" --strategy rolling
 ```
 
 ## Legal and business actions

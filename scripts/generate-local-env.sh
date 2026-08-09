@@ -60,6 +60,7 @@ trap 'rm -f "$tmp"' EXIT
   echo 'FLY_API_TOKEN='
   echo 'FLY_APP_STAGING='
   echo 'FLY_APP_PRODUCTION='
+  echo 'FLY_APP_WORKER_PRODUCTION='
   printf 'SESSION_SECRET=%s\n' "$session_secret"
   printf 'FIELD_ENCRYPTION_MASTER_KEY=%s\n' "$field_key"
   printf 'DOWNLOAD_SIGNING_SECRET=%s\n' "$download_secret"

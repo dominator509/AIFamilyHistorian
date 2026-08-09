@@ -65,6 +65,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_APP_STAGING: ${{ secrets.FLY_APP_STAGING }}
           FLY_APP_PRODUCTION: ${{ secrets.FLY_APP_PRODUCTION }}
+          FLY_APP_WORKER_PRODUCTION: ${{ secrets.FLY_APP_WORKER_PRODUCTION }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
           FIELD_ENCRYPTION_MASTER_KEY: ${{ secrets.FIELD_ENCRYPTION_MASTER_KEY }}
           DOWNLOAD_SIGNING_SECRET: ${{ secrets.DOWNLOAD_SIGNING_SECRET }}
