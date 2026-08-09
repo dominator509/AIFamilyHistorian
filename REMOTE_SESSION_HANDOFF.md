@@ -11,7 +11,7 @@
 - Latest worker continuation: `a5c0438` (`HARDENING-56`); active outbox leases renew during long-running handlers and the real dispatcher heartbeat regression passes.
 - Latest implementation continuation: `1a506d9` (`HARDENING-51`); the prior descriptive checkpoint line remains the last full feature inventory.
 - Superseding checkpoint: `8d08634` (`hardening: bound shared AI gateway payloads`); older implementation hashes below are retained only as historical provenance.
-- Current source checkpoint: `8d08634` (`origin/master` synchronized).
+- Current source checkpoint: `b6d0864` (`origin/master` synchronized; code checkpoint remains `8d08634` plus finalized evidence docs).
 - Current code checkpoint: `8d08634` (all capabilities listed below, plus shared AI gateway payload and telemetry bounds, storage upload-metadata validation, storage object-key validation, normalized provider errors, bounded parsed provider fields, current readiness evidence, private hosted-worker ingress guard, bounded multipart provider tokens, bounded publication readiness reports, quotation offset fidelity, bounded persisted session metadata, bounded direct streamed object downloads, bounded presigned URL lifetimes, bounded rate-limiter inputs, bounded telemetry materialization, and complete preservation check-set validation).
 - Branch: `master`
 - Final repository commit: run `git rev-parse HEAD`; `origin/master` must match the returned commit after each handoff update.
