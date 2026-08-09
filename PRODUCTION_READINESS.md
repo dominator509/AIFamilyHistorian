@@ -36,7 +36,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - Complete native Better Auth/passkey/WebAuthn and Argon2id identity issuance, migration, device lifecycle, and live-fire coverage.
 - Tagged PDF structure semantics and EPUB language/navigation metadata are implemented and regression-tested; complete formal accessibility/PDF/EPUB audits, large-transfer/recovery rehearsal, hosted queue topology/fairness, production KMS wrapping/restore drills, and hosted media/provider fixtures remain pending.
 - `sh scripts/accessibility-check.sh` now provides a deterministic local semantic probe for those PDF/EPUB invariants; it does not claim formal PDF/UA or screen-reader conformance.
-- The current repository-wide security recheck reports three open findings: broad worker `SET ROLE family_historian_runtime` activation across tenant tables (high), hosted worker sandbox controls not source-attested (high), and hosted scratch capacity not declared for the 25 GiB input ceiling (medium). HARDENING-161 closes only the worker's global `auth_sessions` table access; it does not resolve the broader runtime-role boundary.
+- The latest completed repository-wide security recheck (against the pre-HARDENING-163 commit) reported three open findings: broad worker `SET ROLE family_historian_runtime` activation across tenant tables (high), hosted worker sandbox controls not source-attested (high), and hosted scratch capacity not declared for the 25 GiB input ceiling (medium). HARDENING-163 now declares the scratch volume in source, but hosted existence/mode evidence and a post-change scan are still pending; HARDENING-161 does not resolve the broader runtime-role boundary.
 
 ## External and release gates
 
