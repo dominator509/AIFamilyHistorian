@@ -225,3 +225,11 @@ The publication bundle contract now requires the authoritative current edition h
 ### ADR-064: Use the installed ClamAV client contract
 
 The media pipeline now invokes `clamscan` with only its supported `--no-summary` option. The prior `--fdpass` argument was rejected by the installed `clamscan` binary and would make every media scan fail before inspecting content. Signature-database availability remains a separate fail-closed worker release dependency; the image must not claim a successful malware scan without usable definitions.
+
+### ADR-065: Provision ClamAV signatures through an isolated updater service
+
+The local worker profile now runs the official ClamAV service on the internal worker network plus an egress-capable default network solely for signature updates. The worker mounts the resulting signature volume read-only and remains internal-only; customer objects never traverse the updater's egress network. The service healthcheck must pass before the worker starts.
+
+### ADR-066: Keep media metadata outputs private to scratch
+
+Media pipeline steps now declare whether an output is publishable. `ffprobe` and image metadata-scrub outputs remain scratch-only, while waveform, playback, thumbnail, and OCR outputs are the only derivatives persisted to object storage and authoritative derivative tables. This prevents diagnostic metadata files from appearing as customer derivatives.

@@ -113,6 +113,26 @@ services:
       retries: 12
     restart: unless-stopped
 
+  # Signature updater/scanner dependency for the opt-in worker rehearsal. It
+  # alone receives ordinary egress so fresh definitions can be downloaded;
+  # customer objects never traverse this network. The worker mounts only the
+  # resulting signature volume read-only and remains on the internal network.
+  clamav:
+    image: clamav/clamav:1.4.5-debian13-slim
+    profiles: ['worker']
+    volumes:
+      - clamav_signatures:/var/lib/clamav
+    networks:
+      - family_historian_internal
+      - default
+    healthcheck:
+      test: ['CMD-SHELL', 'clamdcheck.sh']
+      interval: 10s
+      timeout: 5s
+      start_period: 90s
+      retries: 30
+    restart: unless-stopped
+
   # Opt-in local worker rehearsal. The profile keeps the default dependency
   # stack lightweight while making the OS-level sandbox explicit when the
   # worker is run locally.
@@ -139,7 +159,11 @@ services:
         condition: service_healthy
       object-storage-init:
         condition: service_healthy
+      clamav:
+        condition: service_healthy
     networks: [family_historian_internal]
+    volumes:
+      - clamav_signatures:/var/lib/clamav:ro
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=1g
@@ -155,7 +179,9 @@ volumes:
   postgres_data:
   redis_data:
   object_storage_data:
+  clamav_signatures:
 
 networks:
   family_historian_internal:
     internal: true
+  default: {}

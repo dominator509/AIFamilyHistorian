@@ -50,6 +50,10 @@ describe('media pipeline boundaries', () => {
       'waveform-derivative',
     ]);
     expect(plan[0]?.args).toEqual(['--no-summary', descriptor.objectKey]);
+    expect(plan[1]?.args).toContain('-o');
+    expect(plan[1]?.args).toContain(plan[1]?.outputObjectKey);
+    expect(plan[1]?.persistOutput).toBe(false);
+    expect(plan[2]?.persistOutput).not.toBe(false);
     for (const step of plan) {
       expect(step.args.join(' ')).not.toMatch(/[;&|`$]/u);
       expect(step.timeoutSeconds).toBeGreaterThan(0);

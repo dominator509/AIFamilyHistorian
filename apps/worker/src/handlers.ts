@@ -407,7 +407,7 @@ async function handleMediaScan(
           resolveObjectKey,
           ...(options.binaries ? { binaries: options.binaries } : {}),
         });
-        if (step.outputObjectKey) {
+        if (step.outputObjectKey && step.persistOutput !== false) {
           const outputPath = resolveObjectKey(step.outputObjectKey);
           const outputSize = (await stat(outputPath)).size;
           if (outputSize > MAX_DERIVATIVE_BYTES)

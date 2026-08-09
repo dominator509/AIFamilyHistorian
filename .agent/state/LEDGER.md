@@ -286,3 +286,10 @@
 2026-08-09T00:46:00Z | codex | HARDENING-51 | SECURITY_FINDING | worker_image_clamscan_rejected_pipeline_fdpass_argument_exit_2; installed_clamscan_accepts_no_summary_but_signature_database_is_absent
 2026-08-09T00:47:00Z | codex | HARDENING-51 | FIX_APPLIED | media_pipeline_clamscan_plan_removed_unsupported_fdpass_flag; unit_asserts_exact_supported_argv
 2026-08-09T00:48:00Z | codex | HARDENING-51 | LOCAL_VERIFICATION | media_unit8_tests_passed; typecheck_lint_format_passed; worker_clamscan_no_summary_reached_missing_database_fail_closed_error
+2026-08-09T01:00:00Z | codex | HARDENING-52 | SECURITY_FINDING | real_media_fixture_reached_worker_but_ffprobe_metadata_output_missing_and_handler_persisted_internal_metadata_as_derivative; initial_test_timeout_then_observed_error
+2026-08-09T01:01:00Z | codex | HARDENING-52 | COMMAND_FAILED | media_fixture_first_run_exit_1_vitest_default_5s_timeout_during_clamav_signature_load; second_run_exposed_missing_ffprobe_output_file
+2026-08-09T01:03:00Z | codex | HARDENING-52 | FIX_APPLIED | ffprobe_plan_uses_supported_o_flag; PipelineStep_persistOutput_false_for_metadata; worker_persists_only_explicit_derivative_outputs; compose_adds_real_healthy_clamav_signature_updater_and_readonly_worker_volume
+2026-08-09T01:04:00Z | codex | HARDENING-52 | LOCAL_VERIFICATION | real_internal_media_fixture_passed_1_test_ClamAV_ffprobe_ffmpeg_fixity_derivative_quarantine_outbox; media_unit8_full_unit83_compose_config_security_check_typecheck_lint_passed
+2026-08-09T01:05:00Z | codex | HARDENING-52 | COMMAND_FAILED | docker_build_worker_runtime_exit_124_after_300s_no_sentinel; host_build_and_source-mounted_fixture_remain_green; no_source_data_loss
+2026-08-09T01:12:00Z | codex | HARDENING-52 | RECOVERY | docker_build_worker_runtime_plain_progress_completed_worker_runtime_image; prior_timeout_was_silent_build_progress_not_source_failure
+2026-08-09T01:13:00Z | codex | HARDENING-52 | FINAL_VERIFICATION | fresh_worker_image_tool_probe_clamscan_with_real_signature_volume_ok; fresh_image_real_media_fixture_1_test_passed; compose_clamav_healthy

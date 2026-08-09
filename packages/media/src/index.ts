@@ -25,6 +25,8 @@ export interface PipelineStep {
   readonly timeoutSeconds: number;
   readonly inputObjectKey: string;
   readonly outputObjectKey?: string;
+  /** Metadata/tool outputs stay in scratch and are not published as derivatives. */
+  readonly persistOutput?: boolean;
 }
 
 export interface MediaToolExecutionOptions {
@@ -185,11 +187,14 @@ export function buildMediaPipelinePlan(descriptor: MediaDescriptor): readonly Pi
         'json',
         '-show_format',
         '-show_streams',
+        '-o',
+        `${scratch}/metadata.json`,
         media.objectKey,
       ],
       timeoutSeconds: 120,
       inputObjectKey: media.objectKey,
       outputObjectKey: `${scratch}/metadata.json`,
+      persistOutput: false,
     });
   }
   if (media.kind === 'audio') {
@@ -243,6 +248,7 @@ export function buildMediaPipelinePlan(descriptor: MediaDescriptor): readonly Pi
         timeoutSeconds: 120,
         inputObjectKey: media.objectKey,
         outputObjectKey: `${scratch}/metadata.json`,
+        persistOutput: false,
       },
       {
         name: 'thumbnail-derivative',
