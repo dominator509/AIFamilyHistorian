@@ -18,6 +18,7 @@ const lineageSchema = z.record(z.string().min(1), lineageValueSchema);
 
 export const MAX_PROVENANCE_CANONICAL_DEPTH = 32;
 export const MAX_PROVENANCE_CANONICAL_BYTES = 16 * 1024 * 1024;
+export const MAX_CLAIM_EVIDENCE_SPANS = 1_000;
 
 export interface EvidenceSpan {
   readonly sourceId: EntityId;
@@ -56,9 +57,9 @@ export class ProvenanceError extends Error {
 export function createEvidenceSpan(input: EvidenceSpan, sourceText?: string): EvidenceSpan {
   uuidSchema.parse(input.sourceId);
   uuidSchema.parse(input.revisionId);
-  if (!Number.isInteger(input.startOffset) || input.startOffset < 0)
+  if (!Number.isSafeInteger(input.startOffset) || input.startOffset < 0)
     throw new ProvenanceError('evidence startOffset must be a non-negative integer');
-  if (!Number.isInteger(input.endOffset) || input.endOffset <= input.startOffset)
+  if (!Number.isSafeInteger(input.endOffset) || input.endOffset <= input.startOffset)
     throw new ProvenanceError('evidence endOffset must be greater than startOffset');
   if (sourceText !== undefined && input.endOffset > sourceText.length)
     throw new ProvenanceError('evidence span exceeds source text');
@@ -68,6 +69,8 @@ export function createEvidenceSpan(input: EvidenceSpan, sourceText?: string): Ev
 /** Factual claims require evidence; quotations additionally require byte-for-byte source text. */
 export function assertClaimEvidence(claim: ClaimEvidence, sourceText?: string): void {
   if (claim.text.trim().length === 0) throw new ProvenanceError('claim text is required');
+  if (claim.evidence.length > MAX_CLAIM_EVIDENCE_SPANS)
+    throw new ProvenanceError('claim evidence exceeds the maximum span count');
   if (claim.classification === 'factual' && claim.evidence.length === 0)
     throw new ProvenanceError('factual claims require evidence');
   for (const span of claim.evidence) createEvidenceSpan(span, sourceText);

@@ -4,6 +4,7 @@ import {
   buildProvenanceManifest,
   createEvidenceSpan,
   createProvenanceEvent,
+  MAX_CLAIM_EVIDENCE_SPANS,
   MAX_PROVENANCE_CANONICAL_BYTES,
   MAX_PROVENANCE_CANONICAL_DEPTH,
   ProvenanceError,
@@ -112,5 +113,29 @@ describe('provenance integrity', () => {
         lineage: { value: 'x'.repeat(MAX_PROVENANCE_CANONICAL_BYTES) },
       }),
     ).toThrow(/serialized size/u);
+  });
+
+  it('bounds evidence span offsets and fan-out', () => {
+    expect(() =>
+      createEvidenceSpan({
+        sourceId: entityId,
+        revisionId: archiveId,
+        startOffset: Number.MAX_SAFE_INTEGER + 1,
+        endOffset: Number.MAX_SAFE_INTEGER + 2,
+      }),
+    ).toThrow(/startOffset/u);
+    const span = createEvidenceSpan({
+      sourceId: entityId,
+      revisionId: archiveId,
+      startOffset: 0,
+      endOffset: 1,
+    });
+    expect(() =>
+      assertClaimEvidence({
+        text: 'a',
+        classification: 'factual',
+        evidence: Array.from({ length: MAX_CLAIM_EVIDENCE_SPANS + 1 }, () => span),
+      }),
+    ).toThrow(/maximum span count/u);
   });
 });

@@ -449,3 +449,7 @@ Portable export JSONL canonicalization now rejects cyclic values, unsupported JS
 ### ADR-120: Bound provenance lineage canonicalization
 
 Provenance lineage validation now runs before schema cloning and rejects cycles, unsupported values, non-finite numbers, nesting beyond 32 levels, and canonical JSON larger than 16 MiB. Canonical object-key ordering remains deterministic, so event hashes cannot be computed over silently coerced or recursively unbounded lineage values. Forbidden raw-content keys continue to fail closed.
+
+### ADR-121: Bound provenance evidence fan-out and offsets
+
+Evidence spans now require safe integer offsets and claim evidence is capped at 1,000 spans, matching the existing evidence-link fan-out contract. This prevents unsafe numeric coercion and unbounded validation work while preserving exact source-span and quotation checks.
