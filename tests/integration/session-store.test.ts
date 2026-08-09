@@ -86,14 +86,32 @@ describe('PostgreSQL server-side sessions', () => {
   it('supports user-scoped inventory and administrative revocation', async () => {
     const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     await bootstrapArchive(pool, context, 'Inventory family', 'Inventory archive');
+    const foreignContext: DatabaseContext = {
+      organizationId: uuidV7(),
+      familyArchiveId: uuidV7(),
+    };
+    await bootstrapArchive(pool, foreignContext, 'Foreign inventory family', 'Foreign archive');
     const first = principal(context);
     const second = { ...first, sessionId: uuidV7() };
+    const foreign = {
+      ...first,
+      sessionId: uuidV7(),
+      organizationId: foreignContext.organizationId,
+      archiveIds: [foreignContext.familyArchiveId],
+    };
     await store.ensure(first);
     await store.ensure(second);
-    await expect(store.listForUser(first.userId)).resolves.toHaveLength(2);
-    await expect(store.revokeAllForUser(first.userId, first.sessionId)).resolves.toBe(1);
+    await store.ensure(foreign);
+    await expect(store.listForUser(first.userId, context.organizationId)).resolves.toHaveLength(2);
+    await expect(
+      store.listForUser(first.userId, foreignContext.organizationId),
+    ).resolves.toHaveLength(1);
+    await expect(
+      store.revokeAllForUser(first.userId, first.sessionId, context.organizationId),
+    ).resolves.toBe(1);
     const revoked = await store.find(second.sessionId);
     expect(typeof revoked?.revokedAt).toBe('string');
     await expect(store.find(first.sessionId)).resolves.toMatchObject({ revokedAt: null });
+    await expect(store.find(foreign.sessionId)).resolves.toMatchObject({ revokedAt: null });
   });
 });
