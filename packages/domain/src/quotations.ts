@@ -40,6 +40,8 @@ export function createQuotation(
     span.endOffset <= span.startOffset
   )
     throw new DomainError('VALIDATION_FAILED', 'source span offsets are invalid');
+  if (span.endOffset - span.startOffset !== span.text.length)
+    throw new DomainError('VALIDATION_FAILED', 'source span offsets do not match quotation text');
   return Object.freeze({
     id,
     sourceSpanId: span.id,

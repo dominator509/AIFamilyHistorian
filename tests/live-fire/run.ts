@@ -249,7 +249,7 @@ function citedMemoirDraft(): void {
     text: 'We crossed the river at dawn.',
     approved: true,
     startOffset: 0,
-    endOffset: 30,
+    endOffset: 'We crossed the river at dawn.'.length,
   };
   const quotation = createQuotation(id(), source.text, source);
   assert.equal(quotation.text, source.text);
@@ -269,7 +269,7 @@ function citedMemoirDraft(): void {
             sourceId: source.id,
             revisionId: source.revisionId,
             startOffset: 0,
-            endOffset: 30,
+            endOffset: source.text.length,
           },
         ],
       },

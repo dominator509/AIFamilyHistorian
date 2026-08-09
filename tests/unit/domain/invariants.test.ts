@@ -137,6 +137,10 @@ describe('quotation lineage invariant', () => {
         }),
       'VALIDATION_FAILED',
     );
+    expectCode(
+      () => createQuotation(ids.quote, span.text, { ...span, endOffset: span.endOffset + 1 }),
+      'VALIDATION_FAILED',
+    );
   });
 });
 

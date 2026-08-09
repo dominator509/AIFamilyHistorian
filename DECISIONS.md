@@ -537,3 +537,7 @@ Observability helpers now cap context fields at 512 characters, metric names at 
 ### ADR-142: Enforce complete annual preservation check sets
 
 Annual preservation reviews now validate finding objects through an unknown-safe boundary, reject unknown or duplicate check names, require valid statuses and non-empty bounded details, and cap the finding set to the seven required checks. The review can no longer silently overwrite duplicate checks in a map or accept malformed direct callers that bypass the API schema.
+
+### ADR-143: Enforce quotation offset fidelity
+
+Quotation source spans now require `endOffset - startOffset` to equal the quotation text length after safe-integer and ordering checks. This prevents a structurally valid but semantically inconsistent span from being persisted or used as provenance evidence; the live-fire cited-memoir fixture now derives offsets from the source text.
