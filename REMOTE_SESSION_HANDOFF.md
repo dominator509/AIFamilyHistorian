@@ -13,8 +13,9 @@
 
 ### Current security scan
 
-- Codex Security standard scan `9f2f9e2a-1c13-434c-8034-402f6bceeab0` is complete against immutable revision `3a7ece4d540b83d704226de36941359365591c1e` with partial semantic coverage and two source-backed findings: high `worker-database-overprivilege` and low `provider-header-control-chars`.
-- Both findings were remediated in the current working tree through HARDENING-155/156; the scan intentionally remains historical to the scanned revision and does not certify the uncommitted fixes. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\3a7ece4d540b83d704226de36941359365591c1e_20260809T134428Z_7zgh35ie\report.md`.
+- Current Codex Security standard scan `0efbcd50-aacd-493f-8571-0f81f8865d90` is complete against immutable revision `b792abd35e2e81652778d79f370468a5ea941a47` with complete repository coverage and three current source-backed findings: high hosted worker sandbox absence, medium worker scratch-capacity mismatch, and medium archive-global permission claims. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\b792abd35e2e81652778d79f370468a5ea941a47_20260809T150515Z_xtf6vjv8\report.md`.
+- The hosted sandbox and scratch-capacity findings remain release/deployment blockers. The archive-global claim finding is medium-confidence and partially mitigated by current database-backed route checks; no token issuer that aggregates cross-archive permissions exists in this repository.
+- Historical scan `9f2f9e2a-1c13-434c-8034-402f6bceeab0` remains retained for provenance only; its owner-credential and provider-header findings were remediated by HARDENING-155/156 and are not current findings. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\3a7ece4d540b83d704226de36941359365591c1e_20260809T134428Z_7zgh35ie\report.md`.
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
