@@ -565,3 +565,7 @@ Deepgram transcript fields/channels/alternatives, provider request IDs, Resend I
 ### ADR-149: Normalize malformed provider responses
 
 Provider adapters now convert schema-validation failures into stable non-retryable `ProviderAdapterError` instances. DeepSeek similarly uses a non-retryable `DeepSeekProviderError` for malformed, oversized, or invalid JSON responses, preventing raw Zod details from leaking and avoiding futile retries of deterministic upstream contract violations.
+
+### ADR-150: Validate storage object keys at every access boundary
+
+All `ObjectStorage` key-bearing methods now reject empty, overlong, or control-character keys before issuing provider commands. The 1,024-character ceiling and control-code rejection apply to direct callers as well as API/worker-generated keys, reducing malformed-key and provider-request amplification risk.

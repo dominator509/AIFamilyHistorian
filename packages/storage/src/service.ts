@@ -29,6 +29,23 @@ export const MAX_IN_MEMORY_OBJECT_BYTES = 256 * 1024 * 1024;
 export const MAX_STREAMED_OBJECT_BYTES = 25 * 1024 * 1024 * 1024;
 export const MAX_MULTIPART_PARTS = 10_000;
 export const MAX_SIGNED_URL_EXPIRES_SECONDS = 60 * 60;
+export const MAX_OBJECT_KEY_CHARS = 1_024;
+
+export function validateObjectKey(key: string): void {
+  const hasControlCharacter =
+    typeof key === 'string' &&
+    [...key].some((character) => {
+      const code = character.codePointAt(0) ?? 0;
+      return code < 0x20 || code === 0x7f;
+    });
+  if (
+    typeof key !== 'string' ||
+    key.length < 1 ||
+    key.length > MAX_OBJECT_KEY_CHARS ||
+    hasControlCharacter
+  )
+    throw new RangeError('object storage key is invalid');
+}
 
 export class ObjectStorage {
   readonly #client: S3Client;
@@ -49,6 +66,7 @@ export class ObjectStorage {
     contentType: string,
     sha256Base64: string,
   ): Promise<string> {
+    validateObjectKey(key);
     const response = await this.#client.send(
       new CreateMultipartUploadCommand({
         Bucket: this.config.bucket,
@@ -67,6 +85,7 @@ export class ObjectStorage {
     contentType: string,
     sha256Base64: string,
   ): Promise<void> {
+    validateObjectKey(key);
     await this.#client.send(
       new PutObjectCommand({
         Bucket: this.config.bucket,
@@ -86,6 +105,7 @@ export class ObjectStorage {
     partNumber: number,
     expiresIn = 900,
   ): Promise<string> {
+    validateObjectKey(key);
     if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > 10_000)
       throw new RangeError('multipart part number is invalid');
     if (!Number.isInteger(expiresIn) || expiresIn < 1 || expiresIn > MAX_SIGNED_URL_EXPIRES_SECONDS)
@@ -107,6 +127,7 @@ export class ObjectStorage {
     uploadId: string,
     parts: readonly CompletedUploadPart[],
   ): Promise<void> {
+    validateObjectKey(key);
     const validatedParts = validateCompletedUploadParts(parts);
     await this.#client.send(
       new CompleteMultipartUploadCommand({
@@ -122,6 +143,7 @@ export class ObjectStorage {
   }
 
   public async abortMultipart(key: string, uploadId: string): Promise<void> {
+    validateObjectKey(key);
     await this.#client.send(
       new AbortMultipartUploadCommand({ Bucket: this.config.bucket, Key: key, UploadId: uploadId }),
     );
@@ -131,6 +153,7 @@ export class ObjectStorage {
     key: string,
     uploadId: string,
   ): Promise<readonly { partNumber: number; etag: string; byteSize: number }[]> {
+    validateObjectKey(key);
     const parts: { partNumber: number; etag: string; byteSize: number }[] = [];
     const seenPartNumbers = new Set<number>();
     let marker: string | undefined;
@@ -179,6 +202,7 @@ export class ObjectStorage {
   public async head(
     key: string,
   ): Promise<{ byteSize: number; contentType?: string; expectedSha256?: string }> {
+    validateObjectKey(key);
     const response = await this.#client.send(
       new HeadObjectCommand({ Bucket: this.config.bucket, Key: key }),
     );
@@ -192,6 +216,7 @@ export class ObjectStorage {
   }
 
   public async readBytes(key: string, maxBytes = MAX_IN_MEMORY_OBJECT_BYTES): Promise<Uint8Array> {
+    validateObjectKey(key);
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_IN_MEMORY_OBJECT_BYTES)
       throw new RangeError('object in-memory byte ceiling is invalid');
     const response = await this.#client.send(
@@ -205,6 +230,7 @@ export class ObjectStorage {
 
   /** Read only a bounded object prefix for content-signature validation. */
   public async readPrefix(key: string, maxBytes = 4096): Promise<Uint8Array> {
+    validateObjectKey(key);
     if (!Number.isInteger(maxBytes) || maxBytes < 1 || maxBytes > 1_048_576)
       throw new RangeError('object prefix limit is invalid');
     const response = await this.#client.send(
@@ -226,6 +252,7 @@ export class ObjectStorage {
     destinationPath: string,
     maxBytes = MAX_STREAMED_OBJECT_BYTES,
   ): Promise<{ sha256Base64: string; byteSize: number }> {
+    validateObjectKey(key);
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_STREAMED_OBJECT_BYTES)
       throw new RangeError('object download byte ceiling is invalid');
     const response = await this.#client.send(
@@ -260,6 +287,7 @@ export class ObjectStorage {
     key: string,
     maxBytes = MAX_STREAMED_OBJECT_BYTES,
   ): Promise<{ sha256Base64: string; byteSize: number }> {
+    validateObjectKey(key);
     if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > MAX_STREAMED_OBJECT_BYTES)
       throw new RangeError('object hash byte ceiling is invalid');
     const response = await this.#client.send(
@@ -280,6 +308,7 @@ export class ObjectStorage {
   }
 
   public async delete(key: string): Promise<void> {
+    validateObjectKey(key);
     await this.#client.send(new DeleteObjectCommand({ Bucket: this.config.bucket, Key: key }));
   }
 

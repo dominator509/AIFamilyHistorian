@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_MULTIPART_TOKEN_CHARS } from '../../packages/contracts/src/index.js';
 import {
+  MAX_OBJECT_KEY_CHARS,
   ObjectStorageLimitError,
+  validateObjectKey,
   validateCompletedUploadParts,
 } from '../../packages/storage/src/service.js';
 
 describe('multipart completion validation', () => {
+  it('rejects malformed object keys before provider calls', () => {
+    expect(() => validateObjectKey('')).toThrow('object storage key is invalid');
+    expect(() => validateObjectKey(`x${'a'.repeat(MAX_OBJECT_KEY_CHARS)}`)).toThrow(
+      'object storage key is invalid',
+    );
+    expect(() => validateObjectKey('safe/\u0000-key')).toThrow('object storage key is invalid');
+    expect(() => validateObjectKey('tenants/archive/originals/object-1')).not.toThrow();
+  });
+
   it('normalizes valid parts into provider order', () => {
     expect(
       validateCompletedUploadParts([
