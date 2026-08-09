@@ -92,6 +92,7 @@ async function handleExportIntake(
     throw new WorkerJobError('export archive scope is missing', 'JOB_SCOPE_INVALID', false);
   const { aggregateId } = parsed.data;
   await context.withTenant(async (client) => {
+    await assertWorkerLease(client, context);
     const current = await client.query<{ status: string }>(
       `select status from export_jobs
         where id = $1 and organization_id = $2 and family_archive_id = $3`,
@@ -128,6 +129,7 @@ async function handleNarrationIntake(context: Parameters<WorkerJobHandler>[0]): 
     throw new WorkerJobError('narration archive scope is missing', 'JOB_SCOPE_INVALID', false);
   const { aggregateId, payload } = parsed.data;
   await context.withTenant(async (client) => {
+    await assertWorkerLease(client, context);
     const current = await client.query<{
       status: string;
       edition_id: string;
@@ -210,6 +212,7 @@ async function handlePrivacyRequest(context: Parameters<WorkerJobHandler>[0]): P
     );
   const { aggregateId, payload } = parsed.data;
   await context.withTenant(async (client) => {
+    await assertWorkerLease(client, context);
     const current = await client.query<{
       request_type: string;
       status: string;
@@ -347,11 +350,23 @@ async function handleMediaScan(
             'MEDIA_UNSAFE',
             false,
           );
-        if (current.quarantine_status === 'pending' || current.quarantine_status === 'error')
-          await client.query(
-            "update original_objects set quarantine_status = 'scanning' where id = $1",
-            [aggregateId],
+        if (current.quarantine_status === 'pending' || current.quarantine_status === 'error') {
+          const scanning = await client.query(
+            `update original_objects
+                set quarantine_status = 'scanning'
+              where id = $1
+                and organization_id = $2
+                and family_archive_id = $3
+                and quarantine_status in ('pending', 'error')`,
+            [aggregateId, context.job.organizationId, context.job.familyArchiveId],
           );
+          if (scanning.rowCount !== 1)
+            throw new WorkerJobError(
+              'media quarantine state changed before scanning',
+              'MEDIA_STATE_CONFLICT',
+              true,
+            );
+        }
         const media = await loadMedia(
           client,
           current.media_asset_id,
@@ -518,7 +533,8 @@ async function loadOriginal(
   const result = await client.query(
     `select id, media_asset_id, object_key, content_type, byte_size, sha256, quarantine_status
        from original_objects
-      where id = $1 and organization_id = $2 and family_archive_id = $3`,
+      where id = $1 and organization_id = $2 and family_archive_id = $3
+      for update`,
     [id, organizationId, familyArchiveId],
   );
   const row = result.rows[0] as

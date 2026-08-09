@@ -345,3 +345,7 @@ The OTLP preflight probe first checks the configured endpoint directly, then—o
 ### ADR-094: Validate multipart completion at the storage provider boundary
 
 `ObjectStorage.completeMultipart` now independently rejects empty, malformed, duplicate, out-of-range, and over-cardinality part manifests and sorts a frozen normalized copy before invoking the S3 client. HTTP schemas already validate API requests, but workers and operational tooling can call storage directly; defense-in-depth here prevents a nonconforming caller from sending ambiguous completion data to a provider.
+
+### ADR-095: Fence every worker intake transaction to its outbox lease
+
+Privacy, export, and narration intake handlers now verify and lock their active outbox row before reading or mutating authoritative status, audit, or deletion-hold records. Media scan loading also locks the original row and uses a tenant-scoped compare-and-set transition into `scanning`. A reclaimed or stale worker therefore cannot publish review evidence or overwrite quarantine state after losing its lease; the dispatcher still records completion/failure only with the same lock token.
