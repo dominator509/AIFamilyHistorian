@@ -1,0 +1,50 @@
+import { describe, expect, it } from 'vitest';
+import { DeepSeekProvider } from '../../../packages/ai-gateway/src/index.js';
+
+const request = {
+  model: 'deepseek-chat',
+  stablePrefix: 'policy',
+  dynamicInput: 'source',
+  temperature: 0,
+};
+
+describe('DeepSeek provider response boundaries', () => {
+  it('rejects declared responses above the bounded JSON budget', async () => {
+    const provider = new DeepSeekProvider({
+      apiKey: 'sk-test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response('{}', {
+            status: 200,
+            headers: { 'content-length': String(8 * 1024 * 1024 + 1) },
+          }),
+        ),
+    });
+    await expect(provider.complete(request)).rejects.toThrow(
+      'DeepSeek response exceeds the allowed size',
+    );
+  });
+
+  it('parses a bounded valid response normally', async () => {
+    const provider = new DeepSeekProvider({
+      apiKey: 'sk-test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: 'request-1',
+              choices: [{ message: { content: '{"claims":[]}' } }],
+              usage: { prompt_tokens: 1, completion_tokens: 1 },
+            }),
+            { status: 200 },
+          ),
+        ),
+    });
+    await expect(provider.complete(request)).resolves.toMatchObject({
+      content: '{"claims":[]}',
+      providerRequestId: 'request-1',
+    });
+  });
+});

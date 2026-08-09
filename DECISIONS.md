@@ -305,3 +305,7 @@ The AI Policy Gateway now validates `maxInputTokens` as a bounded positive safe 
 ### ADR-084: Bound provider response materialization
 
 Provider adapters now enforce response-size ceilings before JSON parsing or audio materialization, using a streaming reader that aborts oversized bodies. JSON control responses are capped at 8 MiB and narration audio at 128 MiB; declared `content-length` values are checked before reading. This prevents a malformed or compromised upstream provider response from causing unbounded memory growth while preserving the existing schema and error mapping.
+
+### ADR-085: Apply response ceilings to the DeepSeek boundary
+
+The DeepSeek adapter has its own package boundary and now applies the same 8 MiB streaming JSON ceiling before schema parsing. Oversized declared or streamed responses fail closed, while bounded valid completions retain the existing structured-output and usage behavior.

@@ -355,3 +355,6 @@
 2026-08-09T04:22:00Z | codex | HARDENING-69 | LOCAL_VERIFICATION | full_unit24_files_95_tests_passed; typecheck_lint_build_security_secret_scan_passed; prettier_format_check_passed
 2026-08-09T04:24:00Z | codex | HARDENING-69 | COMMAND_FAILED | sh_scripts_verify.sh_exit_1_preflight_reports_same_15_unresolved_external_legal_requirements; provider_hardening_static_gates_remain_green; no_gate_weakened
 2026-08-09T04:27:00Z | codex | HARDENING-69 | CHECKPOINT | committed_2833c2d_and_36afe49; pushed_origin_master; git_HEAD_equals_origin_master; graph_next_RESUME_EP-000
+2026-08-09T04:31:00Z | codex | HARDENING-70 | SECURITY_FINDING | DeepSeek_adapter_remained_outside_shared_provider_helper_and_materialized_response.json_without_a_byte_ceiling
+2026-08-09T04:32:00Z | codex | HARDENING-70 | FIX_APPLIED | DeepSeek_streaming_JSON_reader_caps_response_at_8MiB_and_aborts_oversized_bodies; direct_valid_and_oversized_regressions_added
+2026-08-09T04:33:00Z | codex | HARDENING-70 | LOCAL_VERIFICATION | full_unit25_files_97_tests_passed; typecheck_lint_build_security_secret_scan_format_passed

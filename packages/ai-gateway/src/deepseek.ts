@@ -14,6 +14,55 @@ const responseSchema = z.object({
     .optional(),
 });
 
+const MAX_DEEPSEEK_RESPONSE_BYTES = 8 * 1024 * 1024;
+
+async function readBoundedJson(response: Response): Promise<unknown> {
+  const declaredLength = response.headers.get('content-length');
+  if (declaredLength !== null) {
+    const length = Number(declaredLength);
+    if (!Number.isSafeInteger(length) || length < 0 || length > MAX_DEEPSEEK_RESPONSE_BYTES)
+      throw new Error('DeepSeek response exceeds the allowed size');
+  }
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > MAX_DEEPSEEK_RESPONSE_BYTES)
+      throw new Error('DeepSeek response exceeds the allowed size');
+    try {
+      return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+    } catch {
+      throw new Error('DeepSeek returned invalid JSON');
+    }
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const next = await reader.read();
+      if (next.done) break;
+      total += next.value.byteLength;
+      if (total > MAX_DEEPSEEK_RESPONSE_BYTES) {
+        await reader.cancel();
+        throw new Error('DeepSeek response exceeds the allowed size');
+      }
+      chunks.push(next.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  } catch {
+    throw new Error('DeepSeek returned invalid JSON');
+  }
+}
+
 export interface DeepSeekConfig {
   apiKey: string;
   baseUrl?: string;
@@ -116,7 +165,7 @@ export class DeepSeekProvider implements AiProvider {
           await new Promise((resolve) => setTimeout(resolve, attempt * 250));
           continue;
         }
-        const parsed = responseSchema.parse(await response.json());
+        const parsed = responseSchema.parse(await readBoundedJson(response));
         const usage = parsed.usage;
         return {
           content: parsed.choices[0]?.message.content ?? '',
