@@ -102,7 +102,7 @@ export class ObjectStorage {
     uploadId: string,
     parts: readonly CompletedUploadPart[],
   ): Promise<void> {
-    if (parts.length === 0) throw new Error('multipart completion requires at least one part');
+    const validatedParts = validateCompletedUploadParts(parts);
     await this.#client.send(
       new CompleteMultipartUploadCommand({
         Bucket: this.config.bucket,
@@ -110,7 +110,7 @@ export class ObjectStorage {
         UploadId: uploadId,
         IfNoneMatch: '*',
         MultipartUpload: {
-          Parts: [...parts].sort((left, right) => (left.PartNumber ?? 0) - (right.PartNumber ?? 0)),
+          Parts: [...validatedParts],
         },
       }),
     );
@@ -301,4 +301,41 @@ export interface CompletedUploadPart {
   ETag?: string;
   PartNumber?: number;
   ChecksumSHA256?: string;
+}
+
+/**
+ * Validate provider-facing multipart completion data before making a network call.
+ * API schemas perform the same checks at the HTTP boundary, but this method is
+ * also used by workers and live-fire tooling and must not trust those callers.
+ */
+export function validateCompletedUploadParts(
+  parts: readonly CompletedUploadPart[],
+): readonly CompletedUploadPart[] {
+  if (parts.length === 0) throw new Error('multipart completion requires at least one part');
+  if (parts.length > MAX_MULTIPART_PARTS)
+    throw new ObjectStorageLimitError('multipart completion contains too many parts');
+  const seen = new Set<number>();
+  const normalized = parts.map((part) => {
+    const partNumber = part.PartNumber;
+    const etag = part.ETag;
+    if (
+      partNumber === undefined ||
+      !Number.isInteger(partNumber) ||
+      partNumber < 1 ||
+      partNumber > MAX_MULTIPART_PARTS ||
+      typeof etag !== 'string' ||
+      etag.trim().length === 0 ||
+      etag.length > 1024
+    )
+      throw new Error('multipart completion contains an invalid part');
+    if (seen.has(partNumber))
+      throw new Error('multipart completion contains duplicate part numbers');
+    seen.add(partNumber);
+    return Object.freeze({
+      ETag: etag,
+      PartNumber: partNumber,
+      ...(part.ChecksumSHA256 ? { ChecksumSHA256: part.ChecksumSHA256 } : {}),
+    });
+  });
+  return Object.freeze(normalized.sort((left, right) => left.PartNumber - right.PartNumber));
 }

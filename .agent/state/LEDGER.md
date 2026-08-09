@@ -387,3 +387,6 @@
 2026-08-09T05:53:00Z | codex | HARDENING-77 | FIX_APPLIED | otel_probe_falls_back_to_real_telemetry_service_DNS_from_disposable_worker_image_only_when_compose_container_and_network_are_present
 2026-08-09T05:54:00Z | codex | HARDENING-77 | LOCAL_VERIFICATION | otel_probe_passed_internal_path; preflight_now_reports_genuine_15_unresolved_requirements; no_hosted_telemetry_success_inferred
 2026-08-09T05:58:00Z | codex | HARDENING-77 | RELEASE_REASSESSMENT | production-readiness-check_exit1; 15_external_and_legal_requirements_remain; local_integration_and_e2e_are_now_green_through_internal_runner
+2026-08-09T06:04:00Z | codex | HARDENING-78 | SECURITY_HARDENING | ObjectStorage.completeMultipart now validates and normalizes provider-facing part manifests independently of HTTP schemas; empty, malformed, duplicate, out-of-range, and >10,000-part manifests fail before the S3 call.
+2026-08-09T06:05:00Z | codex | HARDENING-78 | LOCAL_VERIFICATION | typecheck: ok; test-unit: 27 files, 104 tests passed; no provider or production effect was invoked.
+2026-08-09T06:12:00Z | codex | HARDENING-78 | LOCAL_VERIFICATION | format-check, lint, build, security-check, secret-scan, integration 13 files/41 tests, E2E 3 files/11 tests, and all 16 live-fire proofs passed; production-readiness-check exit1 with the same genuine 15 external/legal requirements.

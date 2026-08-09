@@ -341,3 +341,7 @@ The E2E wrapper uses the same disposable internal runner and read-only source mo
 ### ADR-093: Probe local OTLP through the isolated service network when needed
 
 The OTLP preflight probe first checks the configured endpoint directly, then—only when the local worker image and healthy Compose telemetry container exist—probes the real collector at `telemetry:4318` from the internal network. This removes a host-port-forwarding false negative while preserving fail-closed behavior when the collector or runner is absent; it does not mark hosted telemetry credentials or delivery as verified.
+
+### ADR-094: Validate multipart completion at the storage provider boundary
+
+`ObjectStorage.completeMultipart` now independently rejects empty, malformed, duplicate, out-of-range, and over-cardinality part manifests and sorts a frozen normalized copy before invoking the S3 client. HTTP schemas already validate API requests, but workers and operational tooling can call storage directly; defense-in-depth here prevents a nonconforming caller from sending ambiguous completion data to a provider.
