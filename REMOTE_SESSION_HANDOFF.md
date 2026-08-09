@@ -18,6 +18,7 @@
 - The sandbox evidence gate now requires a bounded, time-valid `worker-sandbox-attestation/v1` JSON document with every isolation control affirmed; arbitrary non-empty text no longer satisfies preflight. Signature authenticity and hosted enforcement remain external.
 - The Deepgram transcription live-fire probe now bounds streamed and non-streamed provider responses at 8 MiB before JSON parsing and emits only a validated request identifier or neutral presence marker; this changes no production-provider credential state.
 - The broader worker role boundary remains open: the worker still executes `SET LOCAL ROLE family_historian_runtime`, whose broad tenant-table grants rely on mutable `app.current_*` settings. This requires a database-enforced scoped worker API or equivalent least-privilege redesign before production.
+- Post-checkpoint verification: `sh scripts/graph-next.sh` returned `RESUME EP-000`; `sh scripts/preflight.sh` remains fail-closed with 16 unresolved requirements. The current commit is available from `git rev-parse HEAD` and must match `git ls-remote origin refs/heads/master`.
 
 ### Current security scan
 
