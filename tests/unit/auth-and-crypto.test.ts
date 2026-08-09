@@ -86,6 +86,42 @@ describe('session principal and auth policy', () => {
     );
   });
 
+  it('requires archive-scoped claims when issuing a multi-archive session', () => {
+    expect(() =>
+      issueSessionToken(secret, {
+        ...principal,
+        archiveIds: [
+          '019fd8a1-f366-7961-b027-89cf42f5c220',
+          '019fd8a1-f366-7961-b027-89cf42f5c221',
+        ],
+      }),
+    ).toThrow('archive-scoped permissions are required');
+  });
+
+  it('authorizes each multi-archive request from its selected archive claims', () => {
+    const firstArchiveId = '019fd8a1-f366-7961-b027-89cf42f5c220';
+    const secondArchiveId = '019fd8a1-f366-7961-b027-89cf42f5c221';
+    const value = verifySessionToken(
+      secret,
+      issueSessionToken(secret, {
+        ...principal,
+        archiveIds: [firstArchiveId, secondArchiveId],
+        archivePermissions: {
+          [firstArchiveId]: ['records:read'],
+          [secondArchiveId]: ['uploads:write'],
+        },
+      }),
+    );
+    expect(() => authorizeArchivePermission(value, firstArchiveId, 'records:read')).not.toThrow();
+    expect(() => authorizeArchivePermission(value, firstArchiveId, 'uploads:write')).toThrow(
+      'PERMISSION_DENIED',
+    );
+    expect(() => authorizeArchivePermission(value, secondArchiveId, 'uploads:write')).not.toThrow();
+    expect(() => authorizeArchivePermission(value, secondArchiveId, 'records:read')).toThrow(
+      'PERMISSION_DENIED',
+    );
+  });
+
   it('bounds server-side session metadata before hashing or persistence', () => {
     expect(() =>
       validateSessionMetadata({ deviceLabel: 'x'.repeat(MAX_SESSION_DEVICE_LABEL_CHARS + 1) }),

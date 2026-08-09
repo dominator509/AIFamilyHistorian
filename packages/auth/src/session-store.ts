@@ -36,10 +36,14 @@ export function validateSessionMetadata(metadata: SessionMetadata = {}): Session
   });
 }
 
-export interface StoredSession extends Omit<SessionPrincipal, 'archiveIds' | 'permissions'> {
+export interface StoredSession extends Omit<
+  SessionPrincipal,
+  'archiveIds' | 'permissions' | 'archivePermissions'
+> {
   readonly sessionId: string;
   readonly archiveIds: readonly string[];
   readonly permissions: readonly string[];
+  readonly archivePermissions?: Readonly<Record<string, readonly string[]>>;
   readonly createdAt: string;
   readonly lastSeenAt: string;
   readonly revokedAt: string | null;

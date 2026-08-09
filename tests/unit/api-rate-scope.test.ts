@@ -450,6 +450,10 @@ describe('API principal and archive rate scopes', () => {
       organizationId: '01900000-0000-7000-8000-000000000107',
       archiveIds: [firstArchiveId, secondArchiveId],
       permissions: ['billing:write'],
+      archivePermissions: {
+        [firstArchiveId]: ['billing:write'],
+        [secondArchiveId]: ['billing:write'],
+      },
       expiresAt: Math.floor(Date.now() / 1000) + 60,
     });
     let created = false;
@@ -497,6 +501,10 @@ describe('API principal and archive rate scopes', () => {
       organizationId: '01900000-0000-7000-8000-000000000111',
       archiveIds: [firstArchiveId, secondArchiveId],
       permissions: ['privacy:write'],
+      archivePermissions: {
+        [firstArchiveId]: ['privacy:write'],
+        [secondArchiveId]: ['privacy:write'],
+      },
       expiresAt: Math.floor(Date.now() / 1000) + 60,
     });
     let created = false;

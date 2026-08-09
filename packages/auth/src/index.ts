@@ -16,16 +16,42 @@ const MAX_TOTP_ISSUER_LENGTH = 128;
 const MAX_RECOVERY_CODE_INPUT_LENGTH = 64;
 const MAX_RECOVERY_CODE_HASHES = 20;
 
-export const sessionSchema = z.object({
-  sessionId: z.uuid().optional(),
-  userId: z.uuid(),
-  organizationId: z.uuid(),
-  archiveIds: z.array(z.uuid()).min(1).max(MAX_SESSION_ARCHIVES),
-  permissions: z
-    .array(z.string().min(1).max(MAX_SESSION_PERMISSION_LENGTH))
-    .max(MAX_SESSION_PERMISSIONS),
-  expiresAt: z.number().int().positive(),
-});
+export const sessionSchema = z
+  .object({
+    sessionId: z.uuid().optional(),
+    userId: z.uuid(),
+    organizationId: z.uuid(),
+    archiveIds: z.array(z.uuid()).min(1).max(MAX_SESSION_ARCHIVES),
+    permissions: z
+      .array(z.string().min(1).max(MAX_SESSION_PERMISSION_LENGTH))
+      .max(MAX_SESSION_PERMISSIONS),
+    archivePermissions: z
+      .record(
+        z.uuid(),
+        z.array(z.string().min(1).max(MAX_SESSION_PERMISSION_LENGTH)).max(MAX_SESSION_PERMISSIONS),
+      )
+      .optional(),
+    expiresAt: z.number().int().positive(),
+  })
+  .superRefine((value, context) => {
+    if (!value.archivePermissions) return;
+    const archiveIds = new Set(value.archiveIds);
+    for (const archiveId of Object.keys(value.archivePermissions))
+      if (!archiveIds.has(archiveId))
+        context.addIssue({
+          code: 'custom',
+          path: ['archivePermissions', archiveId],
+          message: 'archive permission claims must target a listed archive',
+        });
+    if (value.archiveIds.length > 1)
+      for (const archiveId of value.archiveIds)
+        if (!value.archivePermissions[archiveId])
+          context.addIssue({
+            code: 'custom',
+            path: ['archivePermissions', archiveId],
+            message: 'multi-archive sessions require permissions for every archive',
+          });
+  });
 export type SessionPrincipal = z.infer<typeof sessionSchema>;
 const MAX_SESSION_LIFETIME_SECONDS = 24 * 60 * 60;
 
@@ -42,6 +68,8 @@ export function issueSessionToken(
     ...principal,
     sessionId: principal.sessionId ?? randomUUID(),
   });
+  if (parsed.archiveIds.length > 1 && !parsed.archivePermissions)
+    throw new Error('archive-scoped permissions are required');
   const now = Math.floor(Date.now() / 1000);
   if (parsed.expiresAt <= now || parsed.expiresAt > now + MAX_SESSION_LIFETIME_SECONDS)
     throw new Error('session lifetime is invalid');
@@ -80,7 +108,12 @@ export function authorizeArchivePermission(
   permission: string,
 ): void {
   if (!principal.archiveIds.includes(archiveId)) throw new Error('PERMISSION_DENIED');
-  if (!principal.permissions.includes(permission) && !principal.permissions.includes('archive:*'))
+  const permissions =
+    principal.archiveIds.length > 1
+      ? principal.archivePermissions?.[archiveId]
+      : (principal.archivePermissions?.[archiveId] ?? principal.permissions);
+  if (!permissions) throw new Error('PERMISSION_DENIED');
+  if (!permissions.includes(permission) && !permissions.includes('archive:*'))
     throw new Error('PERMISSION_DENIED');
 }
 

@@ -29,12 +29,26 @@ function sameValues(left: readonly string[], right: readonly string[]): boolean 
   return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
+function canonicalArchivePermissions(
+  value: Readonly<Record<string, readonly string[]>> | null | undefined,
+): string | null {
+  if (!value) return null;
+  return JSON.stringify(
+    Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((archiveId) => [archiveId, [...value[archiveId]!].sort()]),
+    ),
+  );
+}
+
 type SessionRow = {
   session_id: string;
   user_id: string;
   organization_id: string;
   archive_ids: string[];
   permissions: string[];
+  archive_permissions: Record<string, string[]> | null;
   created_at: Date;
   last_seen_at: Date;
   expires_at: Date;
@@ -49,6 +63,18 @@ function rowToSession(row: SessionRow): StoredSession {
     organizationId: row.organization_id,
     archiveIds: Object.freeze([...row.archive_ids]),
     permissions: Object.freeze([...row.permissions]),
+    ...(row.archive_permissions
+      ? {
+          archivePermissions: Object.freeze(
+            Object.fromEntries(
+              Object.entries(row.archive_permissions).map(([archiveId, permissions]) => [
+                archiveId,
+                Object.freeze([...permissions]),
+              ]),
+            ),
+          ),
+        }
+      : {}),
     expiresAt: Math.floor(row.expires_at.getTime() / 1000),
     createdAt: row.created_at.toISOString(),
     lastSeenAt: row.last_seen_at.toISOString(),
@@ -72,9 +98,9 @@ export class PostgresSessionStore implements SessionStore {
     for (const archiveId of principal.archiveIds) assertUuid(archiveId, 'archiveId');
     await this.pool.query(
       `insert into auth_sessions(
-         session_id, user_id, organization_id, archive_ids, permissions,
+         session_id, user_id, organization_id, archive_ids, permissions, archive_permissions,
          device_label, user_agent_hash, ip_hash, expires_at
-       ) values ($1,$2,$3,$4::uuid[],$5::text[],$6,$7,$8,to_timestamp($9))
+       ) values ($1,$2,$3,$4::uuid[],$5::text[],$6::jsonb,$7,$8,$9,to_timestamp($10))
        on conflict (session_id) do nothing`,
       [
         principal.sessionId,
@@ -82,6 +108,7 @@ export class PostgresSessionStore implements SessionStore {
         principal.organizationId,
         principal.archiveIds,
         principal.permissions,
+        principal.archivePermissions ? JSON.stringify(principal.archivePermissions) : null,
         validatedMetadata.deviceLabel ?? null,
         hashMetadata(validatedMetadata.userAgent),
         hashMetadata(validatedMetadata.ipAddress),
@@ -95,7 +122,9 @@ export class PostgresSessionStore implements SessionStore {
       existing.userId !== principal.userId ||
       existing.organizationId !== principal.organizationId ||
       !sameValues(existing.archiveIds, principal.archiveIds) ||
-      !sameValues(existing.permissions, principal.permissions)
+      !sameValues(existing.permissions, principal.permissions) ||
+      canonicalArchivePermissions(existing.archivePermissions) !==
+        canonicalArchivePermissions(principal.archivePermissions)
     )
       return null;
     await this.pool.query(
@@ -127,8 +156,9 @@ export class PostgresSessionStore implements SessionStore {
         organization_id: string;
         archive_ids: string[];
         permissions: string[];
+        archive_permissions: Record<string, string[]> | null;
       }>(
-        `select session_id, user_id, organization_id, archive_ids, permissions
+        `select session_id, user_id, organization_id, archive_ids, permissions, archive_permissions
            from auth_sessions
           where session_id = $1
             and revoked_at is null
@@ -142,7 +172,9 @@ export class PostgresSessionStore implements SessionStore {
         currentRow.user_id !== replacement.userId ||
         currentRow.organization_id !== replacement.organizationId ||
         !sameValues(currentRow.archive_ids, replacement.archiveIds) ||
-        !sameValues(currentRow.permissions, replacement.permissions)
+        !sameValues(currentRow.permissions, replacement.permissions) ||
+        canonicalArchivePermissions(currentRow.archive_permissions) !==
+          canonicalArchivePermissions(replacement.archivePermissions)
       )
         throw new Error('AUTH_REQUIRED');
       await client.query(
@@ -152,15 +184,16 @@ export class PostgresSessionStore implements SessionStore {
       );
       await client.query(
         `insert into auth_sessions(
-           session_id, user_id, organization_id, archive_ids, permissions,
+           session_id, user_id, organization_id, archive_ids, permissions, archive_permissions,
            device_label, user_agent_hash, ip_hash, expires_at
-         ) values ($1,$2,$3,$4::uuid[],$5::text[],$6,$7,$8,to_timestamp($9))`,
+         ) values ($1,$2,$3,$4::uuid[],$5::text[],$6::jsonb,$7,$8,$9,to_timestamp($10))`,
         [
           replacement.sessionId,
           replacement.userId,
           replacement.organizationId,
           replacement.archiveIds,
           replacement.permissions,
+          replacement.archivePermissions ? JSON.stringify(replacement.archivePermissions) : null,
           validatedMetadata.deviceLabel ?? null,
           hashMetadata(validatedMetadata.userAgent),
           hashMetadata(validatedMetadata.ipAddress),
@@ -215,7 +248,7 @@ export class PostgresSessionStore implements SessionStore {
     assertUuid(userId, 'userId');
     if (organizationId) assertUuid(organizationId, 'organizationId');
     const result = await this.pool.query<SessionRow>(
-      `select session_id, user_id, organization_id, archive_ids, permissions,
+      `select session_id, user_id, organization_id, archive_ids, permissions, archive_permissions,
               created_at, last_seen_at, expires_at, revoked_at, device_label
          from auth_sessions
         where user_id = $1
@@ -229,7 +262,7 @@ export class PostgresSessionStore implements SessionStore {
   public async find(sessionId: string): Promise<StoredSession | null> {
     assertUuid(sessionId, 'sessionId');
     const result = await this.pool.query<SessionRow>(
-      `select session_id, user_id, organization_id, archive_ids, permissions,
+      `select session_id, user_id, organization_id, archive_ids, permissions, archive_permissions,
               created_at, last_seen_at, expires_at, revoked_at, device_label
          from auth_sessions
         where session_id = $1`,
