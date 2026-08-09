@@ -397,3 +397,7 @@ The shared production environment schema requires an explicit HTTPS CORS allowli
 ### ADR-107: Keep the local worker rehearsal in development mode
 
 The opt-in Compose worker connects to the real internal MinIO service over Docker DNS and HTTP. Marking that local-only profile as `NODE_ENV=production` made the storage HTTPS guard reject the deliberately internal endpoint before the worker could start. The profile now uses `development`; the hosted Fly manifest remains `production` and retains the HTTPS object-storage requirement.
+
+### ADR-108: Revalidate membership inside generated resource routes
+
+Generated archive resource GET and POST routes now call `assertCurrentArchiveMembership` after the current permission check. The global request hook normally performs the same check, but route-local enforcement prevents a partially configured application (permission checker present, membership checker absent) from serving or mutating archive resources. Missing or unavailable membership authority fails closed with a retryable `PROVIDER_UNAVAILABLE` response.

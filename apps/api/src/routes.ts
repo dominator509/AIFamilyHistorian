@@ -485,6 +485,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
         `${resource.kind}:read`,
         dependencies,
       );
+      await assertCurrentArchiveMembership(dependencies, value, archiveId);
       return {
         items: await dependencies.service.list(resource.kind, {
           organizationId: value.organizationId,
@@ -501,6 +502,7 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
         `${resource.kind}:write`,
         dependencies,
       );
+      await assertCurrentArchiveMembership(dependencies, value, archiveId);
       const result = await dependencies.service.create(
         { organizationId: value.organizationId, familyArchiveId: archiveId },
         value.userId,

@@ -231,6 +231,8 @@ HARDENING-94/95 checkpoint: the real worker rehearsal then exposed two configura
 
 HARDENING-96 checkpoint: the current pushed source passed the real internal integration suite (13 files/41 tests), E2E suite (3 files/11 tests), all 16 live-fire proofs, network-aware dependency readiness, performance smoke (100 requests, p95 0.59ms), and fresh encrypted backup/restore (`schema_migrations=12`). Production readiness was rerun and remains fail-closed on 16 external, legal, and hosted-sandbox requirements.
 
+HARDENING-97 checkpoint: generated archive resource GET/POST routes now enforce current archive membership inside the route after permission checks, closing a partial-authority fail-open seam. Focused authorization (11/11), unit (27/106), integration (13/41), E2E (3/11), and all 16 live-fire proofs passed; typecheck, lint, format, security, and build prerequisites remain green.
+
 ## Final operator checklist
 
 1. Implement and verify remaining worker fulfillment families (privacy, export, transcription, narration synthesis, and deletion), then run hosted-equivalent object-storage and provider fixtures through `worker-runtime`.

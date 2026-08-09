@@ -401,6 +401,47 @@ describe('API principal and archive rate scopes', () => {
     }
   });
 
+  it('fails closed when a resource route has no current membership checker', async () => {
+    const archiveId = '01900000-0000-7000-8000-000000000101';
+    const token = issueSessionToken('w'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000102',
+      organizationId: '01900000-0000-7000-8000-000000000103',
+      archiveIds: [archiveId],
+      permissions: ['people:read'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    let listed = false;
+    const app = await createApp({
+      service: {
+        ready: () => Promise.resolve(true),
+        list: () => {
+          listed = true;
+          return Promise.resolve([]);
+        },
+      } as never,
+      sessionSecret: 'w'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionPermissionChecker: () => Promise.resolve(true),
+    });
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/archives/${archiveId}/people`,
+        headers: { authorization: `Bearer ${token}` },
+      });
+      expect(response.statusCode).toBe(503);
+      expect(response.json()).toMatchObject({
+        code: 'PROVIDER_UNAVAILABLE',
+        retryable: true,
+      });
+      expect(listed).toBe(false);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('fails closed as retryable when request-time membership lookup is unavailable', async () => {
     const archiveId = '01900000-0000-7000-8000-000000000098';
     const token = issueSessionToken('v'.repeat(32), {
