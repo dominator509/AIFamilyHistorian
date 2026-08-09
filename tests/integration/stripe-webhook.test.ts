@@ -244,5 +244,19 @@ describe('Stripe webhook ingestion', () => {
         ],
       ),
     ).rejects.toThrow();
+    await expect(
+      pool.query(
+        `insert into provider_callback_events
+          (id, organization_id, family_archive_id, provider, provider_event_id, event_type, payload, payload_sha256, signature_verified)
+         values ($1,$2,$3,'stripe','evt_oversized','invoice.paid',$4::jsonb,$5,true)`,
+        [
+          uuidV7(),
+          organizationId,
+          familyArchiveId,
+          JSON.stringify({ body: 'x'.repeat(1048576) }),
+          'a'.repeat(64),
+        ],
+      ),
+    ).rejects.toThrow();
   });
 });
