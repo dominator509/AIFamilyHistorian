@@ -27,6 +27,7 @@ export class ObjectStorageLimitError extends Error {
 export const MAX_IN_MEMORY_OBJECT_BYTES = 256 * 1024 * 1024;
 export const MAX_STREAMED_OBJECT_BYTES = 25 * 1024 * 1024 * 1024;
 export const MAX_MULTIPART_PARTS = 10_000;
+export const MAX_SIGNED_URL_EXPIRES_SECONDS = 60 * 60;
 
 export class ObjectStorage {
   readonly #client: S3Client;
@@ -86,6 +87,8 @@ export class ObjectStorage {
   ): Promise<string> {
     if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > 10_000)
       throw new RangeError('multipart part number is invalid');
+    if (!Number.isInteger(expiresIn) || expiresIn < 1 || expiresIn > MAX_SIGNED_URL_EXPIRES_SECONDS)
+      throw new RangeError('multipart signed URL expiry is invalid');
     return getSignedUrl(
       this.#client,
       new UploadPartCommand({

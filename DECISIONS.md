@@ -521,3 +521,7 @@ Session device labels, user-agent strings, and IP-address metadata are now valid
 ### ADR-138: Bound direct streamed object downloads
 
 `ObjectStorage.downloadToFile` now defaults to the authoritative 25 GiB streamed-object ceiling and rejects non-safe, non-positive, or larger ceilings before issuing an object-provider request. Production callers already pass the authoritative upload/original size; the default prevents worker, tooling, and future direct callers from accidentally creating an unbounded disk-write path.
+
+### ADR-139: Bound multipart presigned URL lifetimes
+
+`ObjectStorage.signUploadPart` now accepts only integer lifetimes from 1 second through one hour, rejecting invalid values before presigning. The API remains at its existing 15-minute default, while direct worker and tooling callers cannot create unexpectedly long-lived upload capabilities.

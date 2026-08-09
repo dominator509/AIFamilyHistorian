@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import {
   ObjectStorage,
   ObjectStorageLimitError,
+  MAX_SIGNED_URL_EXPIRES_SECONDS,
   MAX_STREAMED_OBJECT_BYTES,
   originalObjectKey,
   parseStorageConfig,
@@ -53,6 +54,10 @@ describe('S3-compatible object storage', () => {
   it('creates, signs, and aborts a real multipart upload', async () => {
     const key = originalObjectKey(uuidV7(), uuidV7());
     const checksum = createHash('sha256').update('multipart').digest('base64');
+    await expect(storage.signUploadPart(key, uuidV7(), 1, 0)).rejects.toBeInstanceOf(RangeError);
+    await expect(
+      storage.signUploadPart(key, uuidV7(), 1, MAX_SIGNED_URL_EXPIRES_SECONDS + 1),
+    ).rejects.toBeInstanceOf(RangeError);
     const uploadId = await storage.beginMultipart(key, 'application/octet-stream', checksum);
     const url = await storage.signUploadPart(key, uploadId, 1, 60);
     expect(new URL(url).searchParams.get('uploadId')).toBe(uploadId);
