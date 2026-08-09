@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { Redis } from 'ioredis';
 import pino from 'pino';
 import { parseRuntimeEnvironment } from '@family-historian/config';
@@ -19,9 +20,33 @@ const redis = new Redis(environment.REDIS_URL, {
   maxRetriesPerRequest: 1,
 });
 const controller = new AbortController();
+let ready = false;
+const healthServer = createServer((request, response) => {
+  if (request.url === '/health/live') {
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end('{"status":"ok"}');
+    return;
+  }
+  if (request.url === '/health/ready') {
+    response.writeHead(ready ? 200 : 503, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ status: ready ? 'ready' : 'starting' }));
+    return;
+  }
+  response.writeHead(404);
+  response.end();
+});
+
+const healthPort = Number.parseInt(process.env.PORT ?? '8080', 10);
+if (!Number.isInteger(healthPort) || healthPort < 1 || healthPort > 65_535)
+  throw new Error('worker health port is invalid');
+await new Promise<void>((resolve, reject) => {
+  healthServer.once('error', reject);
+  healthServer.listen(healthPort, '127.0.0.1', () => resolve());
+});
 
 await redis.connect();
 await redis.ping();
+ready = true;
 const dispatcher = new OutboxDispatcher({
   pool,
   logger,
@@ -31,12 +56,15 @@ logger.info({ service: 'worker', status: 'ready' }, 'worker dependency check pas
 
 const requestShutdown = (signal: string): void => {
   logger.info({ signal }, 'shutdown requested');
+  ready = false;
   controller.abort();
+  healthServer.close();
 };
 
 process.once('SIGINT', () => requestShutdown('SIGINT'));
 process.once('SIGTERM', () => requestShutdown('SIGTERM'));
 await dispatcher.run(controller.signal);
+healthServer.close();
 await redis.quit();
 storage.destroy();
 await pool.end();

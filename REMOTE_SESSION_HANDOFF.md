@@ -223,6 +223,8 @@ HARDENING-89 checkpoint: GitHub Actions in verify/release are pinned to reviewed
 HARDENING-90 checkpoint: `PRODUCTION_READINESS.md` was synchronized to the current 27-file/105-test unit evidence and now records HARDENING-89’s immutable CI/image supply-chain gate. No production-readiness or release approval status changed.
 HARDENING-91 checkpoint: `local-services-check.sh` now uses the real worker image over the Compose internal network for Mailpit and OTEL health checks when host ports are unavailable, while retaining host probes first. Shell syntax, local-services-check, security, and format gates passed; no production gate was weakened.
 
+HARDENING-92 checkpoint: the completed standard Codex Security scan (`f36d18e7-f4c4-457e-8a6c-e71d31395474`) reports one high-confidence hosted worker sandbox finding: `fly.worker.toml` and the worker image do not declare the deny-by-default egress, syscall, capability, cgroup, and bounded-scratch controls that are present only in local Compose. This remains an external release gate; no hosted isolation success is claimed. Independently, the worker now serves loopback-only `/health/live` and `/health/ready` endpoints so the existing image healthcheck reflects actual process and Redis readiness. Worker formatting, repository typecheck, lint, and format checks passed.
+
 ## Final operator checklist
 
 1. Implement and verify remaining worker fulfillment families (privacy, export, transcription, narration synthesis, and deletion), then run hosted-equivalent object-storage and provider fixtures through `worker-runtime`.

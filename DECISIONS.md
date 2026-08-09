@@ -381,3 +381,7 @@ All GitHub Actions in the verify and release workflows now reference reviewed 40
 ### ADR-103: Make local service health checks network-aware
 
 `local-services-check.sh` now probes Mailpit and the OTEL health extension through the real Compose internal network when host port forwarding is unavailable, using the already-built worker image as the probe runtime. Host curls remain the first path; an internal fallback is accepted only when the Compose network, target services, and worker image are present. This removes a false negative without weakening the internal-only network boundary or fabricating health responses.
+
+### ADR-104: Give the worker a loopback-only health contract
+
+The worker image healthcheck already targeted `/health/live`, but the worker process did not expose an HTTP server, making a healthy worker appear unhealthy. The worker now serves loopback-only `/health/live` and `/health/ready` endpoints, reports readiness only after Redis is reachable, and marks readiness false during shutdown. The listener is bound to `127.0.0.1` so the worker remains non-public; hosted sandbox and network-egress enforcement still require external evidence.
