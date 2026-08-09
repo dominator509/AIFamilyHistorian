@@ -5,6 +5,7 @@ import {
   createEvidenceSpan,
   createProvenanceEvent,
   MAX_CLAIM_EVIDENCE_SPANS,
+  MAX_CLAIM_TEXT_CHARS,
   MAX_PROVENANCE_CANONICAL_BYTES,
   MAX_PROVENANCE_CANONICAL_DEPTH,
   MAX_PROVENANCE_EVENTS,
@@ -138,6 +139,13 @@ describe('provenance integrity', () => {
         evidence: Array.from({ length: MAX_CLAIM_EVIDENCE_SPANS + 1 }, () => span),
       }),
     ).toThrow(/maximum span count/u);
+    expect(() =>
+      assertClaimEvidence({
+        text: 'x'.repeat(MAX_CLAIM_TEXT_CHARS + 1),
+        classification: 'interpretation',
+        evidence: [],
+      }),
+    ).toThrow(/maximum size/u);
   });
 
   it('bounds provenance chain and manifest cardinality', () => {

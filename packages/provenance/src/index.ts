@@ -21,6 +21,7 @@ export const MAX_PROVENANCE_CANONICAL_BYTES = 16 * 1024 * 1024;
 export const MAX_PROVENANCE_EVENTS = 10_000;
 export const MAX_PROVENANCE_MANIFEST_BYTES = 16 * 1024 * 1024;
 export const MAX_CLAIM_EVIDENCE_SPANS = 1_000;
+export const MAX_CLAIM_TEXT_CHARS = 1_000_000;
 
 export interface EvidenceSpan {
   readonly sourceId: EntityId;
@@ -71,6 +72,8 @@ export function createEvidenceSpan(input: EvidenceSpan, sourceText?: string): Ev
 /** Factual claims require evidence; quotations additionally require byte-for-byte source text. */
 export function assertClaimEvidence(claim: ClaimEvidence, sourceText?: string): void {
   if (claim.text.trim().length === 0) throw new ProvenanceError('claim text is required');
+  if (claim.text.length > MAX_CLAIM_TEXT_CHARS)
+    throw new ProvenanceError('claim text exceeds the maximum size');
   if (claim.evidence.length > MAX_CLAIM_EVIDENCE_SPANS)
     throw new ProvenanceError('claim evidence exceeds the maximum span count');
   if (claim.classification === 'factual' && claim.evidence.length === 0)

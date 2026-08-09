@@ -43,7 +43,8 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-181 bounds deletion evidence references to 2,048 control-free characters, preventing oversized or log-injection proof identifiers from entering the deletion record. Unit, format, typecheck, and security gates passed.
 - HARDENING-182 bounds voice license and provider-verification references to 512 control-free characters, preventing oversized or log-injection authorization metadata from entering voice policy and audit flows. Unit passed 30 files/161 tests; format, typecheck, and security checks passed.
 - HARDENING-183 validates consent record identifiers, purposes, statuses, policy versions, and decision timestamps before authorization or withdrawal; policy versions are bounded to 128 control-free characters. Unit passed 30 files/162 tests; format, typecheck, and security checks passed.
-- HARDENING-184 bounds approved quotation/source-span text to 1,000,000 characters before exact lineage materialization, preventing oversized transcript excerpts from crossing the quotation domain boundary. Unit passed 30 files/163 tests; format, typecheck, and security checks passed.
+- HARDENING-184 bounds approved quotation/source-span text to 1,000,000 characters before exact lineage materialization, preventing oversized transcript excerpts from crossing the quotation domain boundary. Unit passed 30 files/162 tests; format, typecheck, and security checks passed.
+- HARDENING-185 bounds provenance claim text to 1,000,000 characters before evidence validation, preventing oversized claim materialization while preserving large transcript storage. Focused provenance coverage passed 1 file/5 tests; unit passed 30 files/162 tests; format, typecheck, and security checks passed.
 
 ## Engineering work still pending
 
