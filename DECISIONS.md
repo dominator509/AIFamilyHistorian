@@ -601,3 +601,7 @@ The worker now requires `WORKER_DATABASE_URL`, provisions a dedicated `family_hi
 ### ADR-158: Scope media quarantine failure transitions explicitly
 
 Media-scan failure cleanup now requires the authoritative organization and archive predicates in addition to the original-object identifier and `scanning` state. The worker transaction and RLS remain defense layers, but the explicit predicates make the error transition safe under direct-call reuse, future policy changes, and stale/racing handlers. A real internal media-worker regression verifies checksum failure becomes a tenant-scoped quarantine error and terminal outbox failure.
+
+### ADR-159: Make multi-archive session permissions archive-scoped
+
+Session principals now carry an optional archive-to-permission map. Issuance rejects multi-archive tokens without a complete map, authorization evaluates the selected archive's claims instead of a global permission union, and server-side session persistence stores and compares the map through a new JSONB migration. Single-archive sessions retain the existing permission representation for compatibility; multi-archive tokens without scoped claims fail closed.
