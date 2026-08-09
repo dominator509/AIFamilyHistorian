@@ -334,3 +334,6 @@
 2026-08-09T02:56:00Z | codex | HARDENING-64 | SECURITY_FINDING | deletion_workflow_accepted_invalid_request_grace_transition_or_evidence_timestamps_and_empty_evidence_references
 2026-08-09T02:57:00Z | codex | HARDENING-64 | FIX_APPLIED | deletion_begin_and_advance_reject_nonfinite_timestamps; evidence_target_reference_and_verifiedAt_are_validated_before_recording
 2026-08-09T02:59:00Z | codex | HARDENING-64 | LOCAL_VERIFICATION | deletion_invariant_focus11_tests_passed; full_unit24_files_92_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T03:05:00Z | codex | HARDENING-65 | SECURITY_FINDING | media_scan_final_clean_transition_overwrote_authoritative_quarantine_state_without_compare_and_set
+2026-08-09T03:06:00Z | codex | HARDENING-65 | FIX_APPLIED | media_scan_locks_original_row_and_requires_scanning_before_clean; infected_or_unexpected_state_is_preserved_and_mapped_to_media_unsafe_or_retryable_conflict
+2026-08-09T03:07:00Z | codex | HARDENING-65 | COMMAND_FAILED | corepack_pnpm_exec_vitest_run_tests/integration/media-worker.test.ts_exit_1_ECONNREFUSED_127.0.0.1:35432; real_PostgreSQL/MinIO_media_fixture_not_started; no_source_or_data_mutation

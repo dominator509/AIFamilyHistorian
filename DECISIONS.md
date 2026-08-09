@@ -285,3 +285,7 @@ Resumable export planning now requires an RFC 3339 timestamp before hashing or r
 ### ADR-079: Fail closed on deletion timestamps and evidence
 
 Deletion workflow transitions now reject non-finite request, grace-period, and transition timestamps, and deletion evidence must identify an allowed target, include a non-empty reference, and carry a parseable verification timestamp. This prevents malformed temporal or proof metadata from advancing a deletion workflow or being recorded as completion evidence.
+
+### ADR-080: Compare-and-set media quarantine publication
+
+Media scans now lock the authoritative original row and require `scanning` state before publishing `clean`. A concurrent infected or terminal state is never overwritten, and unexpected state changes produce an explicit retryable conflict. The lease fence remains checked before the row lock, so stale handlers cannot publish a successful quarantine transition.

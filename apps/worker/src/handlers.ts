@@ -451,11 +451,7 @@ async function handleMediaScan(
             artifact.contentType,
             () => assertWorkerLease(client, context),
           );
-        await assertWorkerLease(client, context);
-        await client.query(
-          "update original_objects set quarantine_status = 'clean' where id = $1",
-          [aggregateId],
-        );
+        await markMediaClean(client, context, aggregateId);
       });
     } finally {
       await rm(workDir, { recursive: true, force: true });
@@ -643,6 +639,51 @@ async function storeDerivative(
     "insert into fixity_records(id, organization_id, family_archive_id, object_kind, object_id, algorithm, digest, byte_size, verified_at) values ($1,$2,$3,'derivative',$4,'sha256',$5,$6,now())",
     [uuidV7(), organizationId, familyArchiveId, derivativeId, digest, bytes.byteLength],
   );
+}
+
+async function markMediaClean(
+  client: DatabaseClient,
+  context: Parameters<WorkerJobHandler>[0],
+  originalObjectId: string,
+): Promise<void> {
+  await assertWorkerLease(client, context);
+  const current = await client.query<{ quarantine_status: string }>(
+    `select quarantine_status
+       from original_objects
+      where id = $1
+        and organization_id = $2
+        and family_archive_id = $3
+      for update`,
+    [originalObjectId, context.job.organizationId, context.job.familyArchiveId],
+  );
+  const status = current.rows[0]?.quarantine_status;
+  if (status === 'infected')
+    throw new WorkerJobError(
+      'media object was marked infected during processing',
+      'MEDIA_UNSAFE',
+      false,
+    );
+  if (status !== 'scanning')
+    throw new WorkerJobError(
+      'media quarantine state changed during processing',
+      'MEDIA_STATE_CONFLICT',
+      true,
+    );
+  const updated = await client.query(
+    `update original_objects
+        set quarantine_status = 'clean'
+      where id = $1
+        and organization_id = $2
+        and family_archive_id = $3
+        and quarantine_status = 'scanning'`,
+    [originalObjectId, context.job.organizationId, context.job.familyArchiveId],
+  );
+  if (updated.rowCount !== 1)
+    throw new WorkerJobError(
+      'media quarantine state changed during processing',
+      'MEDIA_STATE_CONFLICT',
+      true,
+    );
 }
 
 async function assertWorkerLease(
