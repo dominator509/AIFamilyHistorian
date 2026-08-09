@@ -48,6 +48,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-186 applies the shared 1,000,000-character domain text ceiling to confirmed facts, disputed accounts, and generated chapter claims. Unit passed 30 files/162 tests; typecheck, format, and security checks passed.
 - HARDENING-187 applies the same 1,000,000-character ceiling at transcript and fact API contracts before route/service persistence. Unit passed 30 files/162 tests; integration passed 13 files/43 tests; E2E passed 3 files/11 tests; typecheck, format, and security checks passed.
 - HARDENING-188 bounds durable outbox payload JSON serialization to 256 KiB before JSONB persistence, rejecting cyclic or oversized queue payloads. Unit passed 30 files/163 tests; integration passed 13 files/43 tests; E2E passed 3 files/11 tests; typecheck, format, and security checks passed.
+- HARDENING-190 rejects C0/DEL control characters in device labels, user-agent metadata, and IP metadata before session persistence or inventory exposure. Unit passed 30 files/163 tests; integration passed 13 files/43 tests; E2E passed 3 files/11 tests; typecheck, format, and security checks passed.
 
 ## Engineering work still pending
 

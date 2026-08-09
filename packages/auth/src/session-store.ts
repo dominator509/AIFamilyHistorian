@@ -9,24 +9,32 @@ export interface SessionMetadata {
 export const MAX_SESSION_DEVICE_LABEL_CHARS = 256;
 export const MAX_SESSION_USER_AGENT_CHARS = 2_048;
 export const MAX_SESSION_IP_ADDRESS_CHARS = 128;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
+
+function hasControlCharacter(value: string): boolean {
+  return CONTROL_CHARACTER_PATTERN.test(value);
+}
 
 export function validateSessionMetadata(metadata: SessionMetadata = {}): SessionMetadata {
   if (
     metadata.deviceLabel !== undefined &&
     (typeof metadata.deviceLabel !== 'string' ||
-      metadata.deviceLabel.length > MAX_SESSION_DEVICE_LABEL_CHARS)
+      metadata.deviceLabel.length > MAX_SESSION_DEVICE_LABEL_CHARS ||
+      hasControlCharacter(metadata.deviceLabel))
   )
     throw new Error('SESSION_METADATA_INVALID');
   if (
     metadata.userAgent !== undefined &&
     (typeof metadata.userAgent !== 'string' ||
-      metadata.userAgent.length > MAX_SESSION_USER_AGENT_CHARS)
+      metadata.userAgent.length > MAX_SESSION_USER_AGENT_CHARS ||
+      hasControlCharacter(metadata.userAgent))
   )
     throw new Error('SESSION_METADATA_INVALID');
   if (
     metadata.ipAddress !== undefined &&
     (typeof metadata.ipAddress !== 'string' ||
-      metadata.ipAddress.length > MAX_SESSION_IP_ADDRESS_CHARS)
+      metadata.ipAddress.length > MAX_SESSION_IP_ADDRESS_CHARS ||
+      hasControlCharacter(metadata.ipAddress))
   )
     throw new Error('SESSION_METADATA_INVALID');
   return Object.freeze({

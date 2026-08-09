@@ -129,6 +129,15 @@ describe('session principal and auth policy', () => {
     expect(() => validateSessionMetadata({ userAgent: 'x'.repeat(2_049) })).toThrow(
       'SESSION_METADATA_INVALID',
     );
+    expect(() => validateSessionMetadata({ deviceLabel: 'laptop\nadmin' })).toThrow(
+      'SESSION_METADATA_INVALID',
+    );
+    expect(() => validateSessionMetadata({ userAgent: 'browser\u007Fagent' })).toThrow(
+      'SESSION_METADATA_INVALID',
+    );
+    expect(() => validateSessionMetadata({ ipAddress: '203.0.113.10\u0000' })).toThrow(
+      'SESSION_METADATA_INVALID',
+    );
     expect(validateSessionMetadata({ deviceLabel: 'laptop' })).toEqual({ deviceLabel: 'laptop' });
   });
 
