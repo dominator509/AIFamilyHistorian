@@ -187,6 +187,19 @@ describe('voice authorization invariant', () => {
       'PROVIDER_POLICY_REJECTED',
     );
   });
+
+  it('rejects oversized or control-bearing voice authorization references', () => {
+    expectCode(() => authorizeStockVoice('x'.repeat(513)), 'RIGHTS_UNVERIFIED');
+    expectCode(
+      () =>
+        authorizeSelfVoice({
+          subjectId: ids.actor,
+          providerVerificationReference: 'receipt\nforged',
+          subjectIsLiving: true,
+        }),
+      'RIGHTS_UNVERIFIED',
+    );
+  });
 });
 
 describe('edition approval invariant', () => {

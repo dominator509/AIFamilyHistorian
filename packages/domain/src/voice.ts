@@ -2,6 +2,8 @@ import type { EntityId } from '@family-historian/contracts';
 import { uuidSchema } from '@family-historian/contracts';
 import { DomainError } from './errors.js';
 
+export const MAX_VOICE_REFERENCE_CHARS = 512;
+
 export type VoiceAuthorization =
   | { readonly kind: 'stock'; readonly licenseReference: string }
   | {
@@ -12,7 +14,7 @@ export type VoiceAuthorization =
     };
 
 export function authorizeStockVoice(licenseReference: string): VoiceAuthorization {
-  if (licenseReference.trim().length === 0)
+  if (!isSafeReference(licenseReference))
     throw new DomainError('RIGHTS_UNVERIFIED', 'stock voice license is required');
   return Object.freeze({ kind: 'stock', licenseReference });
 }
@@ -25,7 +27,7 @@ export function authorizeSelfVoice(input: {
   uuidSchema.parse(input.subjectId);
   if (!input.subjectIsLiving)
     throw new DomainError('PROVIDER_POLICY_REJECTED', 'posthumous voice cloning is prohibited');
-  if (input.providerVerificationReference.trim().length === 0)
+  if (!isSafeReference(input.providerVerificationReference))
     throw new DomainError('RIGHTS_UNVERIFIED', 'provider self-verification is required');
   return Object.freeze({
     kind: 'verified_self_voice',
@@ -33,4 +35,15 @@ export function authorizeSelfVoice(input: {
     providerVerificationReference: input.providerVerificationReference,
     subjectIsLiving: true,
   });
+}
+
+function isSafeReference(reference: string): boolean {
+  return (
+    reference.trim().length > 0 &&
+    reference.length <= MAX_VOICE_REFERENCE_CHARS &&
+    ![...reference].some((character) => {
+      const code = character.codePointAt(0) ?? 0;
+      return code < 0x20 || code === 0x7f;
+    })
+  );
 }

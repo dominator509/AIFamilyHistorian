@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175/176/178/179/180/181)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174/175/176/178/179/180/181/182)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -29,6 +29,7 @@
 - HARDENING-179 replaces media derivative `stat`/`readFile` materialization with a bounded streaming read that fails closed above the per-artifact ceiling. Unit passed 30 files/160 tests, integration passed 13 files/43 tests including the real media worker, E2E passed 3 files/11 tests, and format/typecheck/security passed. The three Vitest test commands now cap file workers at 50% to prevent host-contention timeouts.
 - HARDENING-180 rejects future-dated deletion evidence at the transition clock, keeping deletion completion evidence temporally verifiable. Unit, format, typecheck, and security gates passed; no deletion or production provider effect was invoked.
 - HARDENING-181 bounds deletion evidence references to 2,048 control-free characters. Unit, format, typecheck, and security gates passed; deletion fulfillment remains review-gated.
+- HARDENING-182 bounds voice license and provider-verification references to 512 control-free characters. Unit passed 30 files/161 tests; format, typecheck, and security gates passed.
 
 ### Current security scan
 
@@ -41,7 +42,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-181`; deletion evidence is now time-bound and bounded/control-free, in addition to bounded media derivative materialization, adaptive Vitest file parallelism, single-use publication evidence IDs, provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, explicit private production worker-app targeting, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits. Earlier bounds and fail-closed gates remain active.
+- Latest implementation continuation: `HARDENING-182`; voice authorization references are now bounded and control-free, in addition to time-bound deletion evidence, bounded media derivative materialization, adaptive Vitest file parallelism, single-use publication evidence IDs, provider redirect rejection, worker `auth_sessions` privilege revocation, distinct immutable worker-image publication/deployment, explicit private production worker-app targeting, hosted scratch-volume declaration, structured sandbox evidence validation, cryptographic Ed25519 attestation verification, bounded Deepgram probe responses, and direct AI request limits. Earlier bounds and fail-closed gates remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
