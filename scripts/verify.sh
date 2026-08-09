@@ -8,6 +8,7 @@ sh scripts/typecheck.sh
 sh scripts/test-unit.sh
 sh scripts/test-integration.sh
 sh scripts/test-e2e.sh
+sh scripts/accessibility-check.sh
 sh scripts/build.sh
 sh scripts/security-check.sh
 sh scripts/secret-scan.sh

@@ -25,6 +25,7 @@ jobs:
       - run: sh scripts/format-check.sh
       - run: sh scripts/typecheck.sh
       - run: sh scripts/test-unit.sh
+      - run: sh scripts/accessibility-check.sh
       - run: sh scripts/build.sh
       - run: sh scripts/security-check.sh
       - run: sh scripts/secret-scan.sh

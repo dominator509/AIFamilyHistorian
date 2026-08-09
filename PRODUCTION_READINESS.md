@@ -18,6 +18,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - Implement and verify privacy fulfillment, export generation, transcription, narration synthesis, and deletion execution workers. Current intake handlers intentionally stop at review-required states and unsupported job types fail closed.
 - Complete native Better Auth/passkey/WebAuthn and Argon2id identity issuance, migration, device lifecycle, and live-fire coverage.
 - Tagged PDF structure semantics and EPUB language/navigation metadata are implemented and regression-tested; complete formal accessibility/PDF/EPUB audits, large-transfer/recovery rehearsal, hosted queue topology/fairness, production KMS wrapping/restore drills, and hosted media/provider fixtures remain pending.
+- `sh scripts/accessibility-check.sh` now provides a deterministic local semantic probe for those PDF/EPUB invariants; it does not claim formal PDF/UA or screen-reader conformance.
 
 ## External and release gates
 

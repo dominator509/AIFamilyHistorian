@@ -413,3 +413,7 @@ HTTP provider adapters and the DeepSeek adapter now cancel non-success response 
 ### ADR-111: Emit tagged PDF structure semantics
 
 The deterministic PDF renderer now emits a minimal tagged-document structure: the catalog references a `StructTreeRoot`, the page declares `StructParents`, each rendered line is marked with an MCID, and corresponding `/H1`/`/P` structure elements are indexed through a parent tree. The existing `/Marked true` claim is therefore backed by actual structure semantics rather than metadata alone. EPUB language, heading, navigation, and package metadata remain unchanged; external screen-reader and PDF/UA audits are still release evidence gates.
+
+### ADR-112: Make accessibility semantics a verification gate
+
+`scripts/accessibility-check.sh` now runs a deterministic semantic probe over the PDF and EPUB renderers. It requires tagged-PDF catalog/page/MCID/structure markers and EPUB language, heading, navigation, and package metadata, and is wired into `scripts/verify.sh` and the immutable-action CI verification workflow. This is a local structural gate, not a substitute for formal PDF/UA or screen-reader review.
