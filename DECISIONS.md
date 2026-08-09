@@ -213,3 +213,7 @@ Upload routes revalidate live archive membership and the service now requires th
 ### ADR-061: Fence media side effects to the active outbox lease
 
 Media handlers now lock and verify the current `job_outbox` row/token before quarantine transitions and before/after derivative object publication and authoritative inserts. A stale handler raises `WORKER_LEASE_LOST` and skips the catch-path quarantine error update, preventing an expired attempt from corrupting a newer scan. Existing immutable-key and SHA-256 idempotency controls remain in place; a lease heartbeat/hosted queue topology is still a deployment concern.
+
+### ADR-062: Reject revoked narration authorizations at worker intake
+
+Narration intake now joins the authoritative voice-authorization row inside the tenant transaction and fails non-retryably when `revoked_at` is set. This closes the revocation race between API enqueue and worker review handoff without claiming that downstream synthesis or publication fulfillment is implemented.

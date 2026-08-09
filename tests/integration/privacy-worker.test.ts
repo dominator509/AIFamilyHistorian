@@ -205,4 +205,64 @@ describe('privacy request worker intake', () => {
       { action: 'narration.accepted', outcome: 'review_required' },
     ]);
   });
+
+  it('fails closed when a narration voice authorization is revoked before intake', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Revoked voice family', 'Revoked voice archive');
+    const editionId = uuidV7();
+    const voiceAuthorizationId = uuidV7();
+    const narrationId = uuidV7();
+    const outboxId = uuidV7();
+    await pool.query(
+      "insert into editions(id, organization_id, family_archive_id, edition_hash, status, manifest) values ($1,$2,$3,$4,'draft',$5)",
+      [
+        editionId,
+        context.organizationId,
+        context.familyArchiveId,
+        `hash:${editionId}`,
+        JSON.stringify({}),
+      ],
+    );
+    await pool.query(
+      "insert into voice_authorizations(id, organization_id, family_archive_id, kind, verification_reference, revoked_at) values ($1,$2,$3,'stock',$4,now())",
+      [voiceAuthorizationId, context.organizationId, context.familyArchiveId, 'stock:revoked'],
+    );
+    await pool.query(
+      "insert into narration_jobs(id, organization_id, family_archive_id, edition_id, voice_authorization_id, status, idempotency_key) values ($1,$2,$3,$4,$5,'queued',$6)",
+      [
+        narrationId,
+        context.organizationId,
+        context.familyArchiveId,
+        editionId,
+        voiceAuthorizationId,
+        `integration:${narrationId}`,
+      ],
+    );
+    await pool.query(
+      'insert into job_outbox(id, organization_id, family_archive_id, job_type, payload) values ($1,$2,$3,$4,$5)',
+      [
+        outboxId,
+        context.organizationId,
+        context.familyArchiveId,
+        'narration.generate',
+        { aggregateId: narrationId, payload: { editionId, voiceAuthorizationId } },
+      ],
+    );
+    const dispatcher = new OutboxDispatcher({
+      pool,
+      logger,
+      handlers: createDefaultHandlers({ storage: {} as ObjectStorage }),
+      jobTypes: ['narration.generate'],
+      archiveIds: [context.familyArchiveId],
+      pollMilliseconds: 50,
+    });
+    expect(await dispatcher.processOne()).toBe(true);
+    const state = await pool.query<{ outbox_status: string; narration_status: string }>(
+      `select
+         (select status from job_outbox where id = $1) as outbox_status,
+         (select status from narration_jobs where id = $2) as narration_status`,
+      [outboxId, narrationId],
+    );
+    expect(state.rows[0]).toEqual({ outbox_status: 'terminal_failed', narration_status: 'queued' });
+  });
 });

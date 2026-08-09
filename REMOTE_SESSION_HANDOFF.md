@@ -75,6 +75,8 @@ The following commands passed after the continuation changes:
 
 HARDENING-48 verification note: publication generation now rejects any readiness report with an empty rights, consent, or citation category; upload status/sign/complete/abort operations require both current archive membership and the initiating user; and media scan quarantine, fixity, and derivative writes are fenced to the active outbox lease token. The focused publication regression passed, the disposable real-PostgreSQL integration suite passed 12 files/38 tests (including the three upload-ownership cases), E2E passed 3 files/11 tests, all sixteen live-fire proofs passed, and the performance smoke remained green at p95 1.61ms. The worker subsystem row above retains the prior fulfillment-family limitations; these changes do not claim export/privacy/transcription/narration/deletion fulfillment.
 
+HARDENING-49 verification note: narration intake now rechecks the authoritative tenant-scoped voice authorization and rejects revoked authorizations before accepting review handoff. The disposable real-PostgreSQL privacy-worker suite passed 3/3, including the revoked-authorization race regression; this does not claim downstream narration synthesis or publication fulfillment.
+
 ## Graph status
 
 | Node | Status | Reason |
@@ -164,6 +166,7 @@ HARDENING-46 checkpoint: the live-fire helper discovers the active Compose inter
 
 HARDENING-47 checkpoint: the outbox dispatcher now reclaims only `running` jobs whose lease is expired, with a fresh lock token and incremented attempt count; active leases remain protected and completion/failure updates remain token-fenced. The real PostgreSQL dispatcher suite passed 6/6, the disposable full integration suite passed 12 files/37 tests, E2E passed 3 files/11 tests, all sixteen live-fire proofs passed, and local quality/security/secret/dependency/reality/smoke/performance gates passed (p95 1.60ms). Production release blockers and fulfillment-family gaps are unchanged.
 HARDENING-48 checkpoint: publication readiness now fails closed when rights, consent, or citation evidence is missing; upload-session reads and mutations require current archive membership plus the initiating user; and media scan side effects verify ownership of the active outbox lease before and between external object/database writes, with stale lease loss mapped to a non-retryable worker error. Unit tests passed 24 files/82 tests, disposable real-service integration passed 12 files/38 tests, E2E passed 3 files/11 tests, all sixteen live-fire proofs passed, and local build/type/lint/format/security/secret/dependency/reality/smoke/performance gates passed (p95 1.61ms). The fresh security scan remains incomplete against the pre-fix revision; production blockers and fulfillment-family gaps are unchanged.
+HARDENING-49 checkpoint: narration intake now joins `voice_authorizations` inside the tenant transaction and raises non-retryable `PERMISSION_DENIED` when `revoked_at` is set, preventing a queued job from entering review-required running state after authorization withdrawal. The disposable real-PostgreSQL privacy-worker suite passed 3/3; downstream synthesis and publication fulfillment remain explicitly pending.
 
 ## Final operator checklist
 

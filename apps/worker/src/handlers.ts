@@ -116,9 +116,15 @@ async function handleNarrationIntake(context: Parameters<WorkerJobHandler>[0]): 
       status: string;
       edition_id: string;
       voice_authorization_id: string;
+      voice_revoked_at: Date | null;
     }>(
-      `select status, edition_id, voice_authorization_id from narration_jobs
-        where id = $1 and organization_id = $2 and family_archive_id = $3`,
+      `select n.status, n.edition_id, n.voice_authorization_id, v.revoked_at as voice_revoked_at
+         from narration_jobs n
+         join voice_authorizations v
+           on v.id = n.voice_authorization_id
+          and v.organization_id = n.organization_id
+          and v.family_archive_id = n.family_archive_id
+        where n.id = $1 and n.organization_id = $2 and n.family_archive_id = $3`,
       [aggregateId, context.job.organizationId, context.job.familyArchiveId],
     );
     const job = current.rows[0];
@@ -137,6 +143,8 @@ async function handleNarrationIntake(context: Parameters<WorkerJobHandler>[0]): 
         'JOB_PAYLOAD_INVALID',
         false,
       );
+    if (job.voice_revoked_at)
+      throw new WorkerJobError('voice authorization is revoked', 'PERMISSION_DENIED', false);
     if (job.status === 'completed' || job.status === 'cancelled') return;
     if (job.status !== 'queued' && job.status !== 'retryable_failed') return;
     const updated = await client.query(
