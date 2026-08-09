@@ -1,6 +1,7 @@
 import type { EntityId, EvidenceLink } from '@family-historian/contracts';
 import { evidenceLinkSchema, uuidSchema } from '@family-historian/contracts';
 import { DomainError } from './errors.js';
+import { MAX_DOMAIN_TEXT_CHARS } from './limits.js';
 
 export const MAX_GENERATED_CLAIMS = 1_000;
 export const MAX_GENERATED_CLAIM_EVIDENCE = 1_000;
@@ -32,6 +33,8 @@ export function createGeneratedChapterRevision(
   for (const claim of input.claims) {
     if (claim.text.trim().length === 0)
       throw new DomainError('VALIDATION_FAILED', 'claim text is required');
+    if (claim.text.length > MAX_DOMAIN_TEXT_CHARS)
+      throw new DomainError('VALIDATION_FAILED', 'claim text exceeds the maximum size');
     if (claim.evidence.length > MAX_GENERATED_CLAIM_EVIDENCE)
       throw new DomainError('VALIDATION_FAILED', 'generated claim evidence count is invalid');
     if (claim.evidence.some((link) => !evidenceLinkSchema.safeParse(link).success))

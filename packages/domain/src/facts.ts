@@ -1,6 +1,7 @@
 import type { EntityId, EvidenceLink } from '@family-historian/contracts';
 import { evidenceLinkSchema, uuidSchema } from '@family-historian/contracts';
 import { DomainError } from './errors.js';
+import { MAX_DOMAIN_TEXT_CHARS } from './limits.js';
 
 export const MAX_DISPUTE_ACCOUNTS = 1_000;
 export const MAX_DISPUTE_ACCOUNT_EVIDENCE = 1_000;
@@ -19,6 +20,8 @@ export function confirmFact(input: Omit<ConfirmedFact, 'disputeState'>): Confirm
   uuidSchema.parse(input.confirmerId);
   if (input.text.trim().length === 0)
     throw new DomainError('VALIDATION_FAILED', 'fact text is required');
+  if (input.text.length > MAX_DOMAIN_TEXT_CHARS)
+    throw new DomainError('VALIDATION_FAILED', 'fact text exceeds the maximum size');
   if (input.evidence.length === 0)
     throw new DomainError('EVIDENCE_MISSING', 'confirmed facts require evidence');
   for (const link of input.evidence)
@@ -56,6 +59,8 @@ export function createDisputedClaim(
     uuidSchema.parse(account.id);
     if (account.text.trim().length === 0)
       throw new DomainError('VALIDATION_FAILED', 'claim text is required');
+    if (account.text.length > MAX_DOMAIN_TEXT_CHARS)
+      throw new DomainError('VALIDATION_FAILED', 'claim text exceeds the maximum size');
     if (account.evidence.length > MAX_DISPUTE_ACCOUNT_EVIDENCE)
       throw new DomainError('VALIDATION_FAILED', 'dispute evidence count is invalid');
     if (account.evidence.some((link) => !evidenceLinkSchema.safeParse(link).success))

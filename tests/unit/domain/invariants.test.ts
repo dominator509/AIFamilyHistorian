@@ -14,6 +14,7 @@ import {
   createGeneratedChapterRevision,
   createQuotation,
   DomainError,
+  MAX_DOMAIN_TEXT_CHARS,
   MAX_QUOTATION_TEXT_CHARS,
   withdrawConsent,
   type ConsentRecord,
@@ -78,6 +79,17 @@ describe('authoritative fact and dispute invariants', () => {
     });
     expect(fact.evidence).toEqual([evidence]);
     expect(Object.isFrozen(fact)).toBe(true);
+    expectCode(
+      () =>
+        confirmFact({
+          id: ids.fact,
+          text: 'x'.repeat(MAX_DOMAIN_TEXT_CHARS + 1),
+          confirmerId: ids.actor,
+          confirmedAt: '2026-08-06T00:00:00.000Z',
+          evidence: [evidence],
+        }),
+      'VALIDATION_FAILED',
+    );
   });
 
   it('rejects evidence offsets that cannot be represented safely', () => {
@@ -107,6 +119,14 @@ describe('authoritative fact and dispute invariants', () => {
     ]);
     expect(dispute.resolution).toBe('unresolved');
     expect(dispute.accounts).toHaveLength(2);
+    expectCode(
+      () =>
+        createDisputedClaim(ids.claim, [
+          { id: ids.account1, text: 'x'.repeat(MAX_DOMAIN_TEXT_CHARS + 1), evidence: [] },
+          { id: ids.account2, text: 'Other account', evidence: [] },
+        ]),
+      'VALIDATION_FAILED',
+    );
   });
 });
 
@@ -306,6 +326,20 @@ describe('generated prose evidence invariant', () => {
         ],
       }).claims,
     ).toHaveLength(1);
+    expectCode(
+      () =>
+        createGeneratedChapterRevision({
+          ...base,
+          claims: [
+            {
+              text: 'x'.repeat(MAX_DOMAIN_TEXT_CHARS + 1),
+              classification: 'interpretation',
+              evidence: [],
+            },
+          ],
+        }),
+      'VALIDATION_FAILED',
+    );
   });
 
   it('rejects malformed generated and disputed evidence before persistence', () => {

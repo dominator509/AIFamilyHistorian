@@ -1,0 +1,1 @@
+export const MAX_DOMAIN_TEXT_CHARS = 1_000_000;

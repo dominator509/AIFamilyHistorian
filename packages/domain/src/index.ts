@@ -8,5 +8,6 @@ export * from './facts.js';
 export * from './publication.js';
 export * from './preservation.js';
 export * from './quotations.js';
+export * from './limits.js';
 export * from './visibility.js';
 export * from './voice.js';
