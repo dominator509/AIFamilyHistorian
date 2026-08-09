@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   AiGateway,
+  MAX_AI_CACHE_VALUE_BYTES,
+  RedisAiResultCache,
   type AiProvider,
   type ProviderRequest,
   type ProviderResponse,
@@ -37,6 +39,30 @@ class MemoryCache {
 }
 
 describe('AI gateway', () => {
+  it('bounds Redis cache envelopes before parsing or writing', async () => {
+    const values = new Map<string, string>();
+    const client = {
+      get: (key: string) => Promise.resolve(values.get(key) ?? null),
+      set: (key: string, value: string) => {
+        values.set(key, value);
+        return Promise.resolve('OK');
+      },
+      del: (key: string) => {
+        values.delete(key);
+        return Promise.resolve(1);
+      },
+    };
+    const cache = new RedisAiResultCache(client);
+    const oversized = 'x'.repeat(MAX_AI_CACHE_VALUE_BYTES + 1);
+    values.set('oversized', JSON.stringify(oversized));
+    await expect(cache.get('oversized')).resolves.toBeUndefined();
+    expect(values.has('oversized')).toBe(false);
+    await expect(cache.set('write-oversized', oversized, 60)).rejects.toThrow(
+      'AI cache value exceeds the allowed size',
+    );
+    expect(values.has('write-oversized')).toBe(false);
+  });
+
   it('validates structured output and records deterministic provenance and cache usage', async () => {
     const provider = new RecordingProvider('{"claims":[]}');
     const gateway = new AiGateway(provider);

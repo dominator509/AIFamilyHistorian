@@ -9,6 +9,8 @@ import {
 } from './policy.js';
 import type { AiProvider, ProviderUsage } from './provider.js';
 
+export const MAX_AI_CACHE_VALUE_BYTES = 16 * 1024 * 1024;
+
 export interface GatewayRequest<T> {
   organizationId: string;
   familyArchiveId: string;
@@ -61,6 +63,10 @@ export class RedisAiResultCache implements AiResultCache {
   public async get(key: string): Promise<unknown> {
     const encoded = await this.client.get(key);
     if (encoded === null) return undefined;
+    if (Buffer.byteLength(encoded, 'utf8') > MAX_AI_CACHE_VALUE_BYTES) {
+      await this.delete(key);
+      return undefined;
+    }
     try {
       return JSON.parse(encoded) as unknown;
     } catch {
@@ -72,7 +78,11 @@ export class RedisAiResultCache implements AiResultCache {
   public async set(key: string, value: unknown, ttlSeconds: number): Promise<void> {
     if (!Number.isInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 86_400)
       throw new Error('AI cache TTL is outside the allowed range');
-    await this.client.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new Error('AI cache value is not serializable');
+    if (Buffer.byteLength(encoded, 'utf8') > MAX_AI_CACHE_VALUE_BYTES)
+      throw new Error('AI cache value exceeds the allowed size');
+    await this.client.set(key, encoded, 'EX', ttlSeconds);
   }
 
   public async delete(key: string): Promise<void> {
