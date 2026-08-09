@@ -2,7 +2,7 @@
 
 ## Executive status
 
-### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173)
+### Current continuation (HARDENING-155/156/157/158/159/160/161/162/163/164/165/166/170/171/172/173/174)
 
 - Provider header hardening is implemented: generic adapters and DeepSeek reject C0/DEL control characters in API keys and header metadata before dispatch; focused coverage is 13/13.
 - Worker database hardening is implemented: `family_historian_worker` is created and provisioned by migration, the worker requires `WORKER_DATABASE_URL`, Compose and release CI inject only the dedicated login, and the verifier rejects owner-level or tenant-table privileges. A real local PostgreSQL login probe returned queue `SELECT,UPDATE=true` and `people SELECT=false`.
@@ -26,7 +26,7 @@
 
 ### Current security scan
 
-- Latest current-head scan `beb7e923-3b93-486c-8e8b-550ae410c1f1` completed against immutable commit `fd8fad689b4e8b948f4c64278e84f35c76567e03` with complete 338-file coverage and two open high findings: worker broad-runtime-role activation across tenant tables (CWE-269/CWE-863) and hosted worker sandbox controls absent/unproven (CWE-693/CWE-250/CWE-668). The source-level scratch-volume declaration and cryptographic attestation verifier are present; hosted enforcement and the broader worker-role redesign remain pending. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\fd8fad689b4e8b948f4c64278e84f35c76567e03_20260809T183153Z_aepyz0hy\report.md`.
+- Latest current-head scan `1b4c826a-1237-4609-a9d5-7aec540e30ae` completed against immutable commit `2fd740c9abe4a2b03afa49b75d8f8c154f80ab79` as a partial, evidence-backed recheck with two open high findings: worker broad-runtime-role activation across tenant tables (CWE-269/CWE-863) and hosted worker sandbox controls absent/unproven (CWE-693/CWE-250/CWE-668). The source-level scratch-volume declaration, cryptographic attestation verifier, and production process-local fail-closed gate are present; hosted enforcement and the broader worker-role redesign remain pending. Report: `C:\tmp\codex-security-scans-k9cTF9\AIFamilyHistorian\2fd740c9abe4a2b03afa49b75d8f8c154f80ab79_20260809T190900Z_alihxpt5\report.md`.
 
 - Historical pre-HARDENING-159 scan `0efbcd50-aacd-493f-8571-0f81f8865d90` remains retained against immutable revision `b792abd35e2e81652778d79f370468a5ea941a47`; its archive-global permission finding is addressed by later source changes.
 - The hosted sandbox and scratch-capacity findings remain release/deployment blockers. The archive-global claim finding is addressed in the current source by archive-scoped issuance, authorization, and persistence; a future security scan should recheck issuer coverage and token migration behavior.
