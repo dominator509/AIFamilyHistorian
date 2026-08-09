@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat, statfs } from 'node:fs/promises';
+import { mkdtemp, open, rm, stat, statfs } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
@@ -459,7 +459,7 @@ async function handleMediaScan(
             );
           artifacts.push({
             recipeVersion: step.name,
-            bytes: await readFile(outputPath),
+            bytes: await readBoundedFile(outputPath, MAX_DERIVATIVE_BYTES),
             contentType: derivativeContentType(step.outputObjectKey),
           });
         }
@@ -518,6 +518,34 @@ async function handleMediaScan(
     const retryable =
       code === 'MEDIA_TOOL_TIMEOUT' || code === 'MEDIA_TOOL_FAILED' || code === 'MEDIA_SCAN_FAILED';
     throw new WorkerJobError('media scan failed', code, retryable);
+  }
+}
+
+/** Read a native-tool derivative without allowing a size race to bypass the output ceiling. */
+export async function readBoundedFile(path: string, maxBytes: number): Promise<Uint8Array> {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1)
+    throw new WorkerJobError('media output ceiling is invalid', 'MEDIA_OUTPUT_INVALID', false);
+  const handle = await open(path, 'r');
+  const chunks: Buffer[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const remaining = maxBytes - total;
+      const buffer = Buffer.alloc(Math.min(64 * 1024, remaining + 1));
+      const result = await handle.read(buffer, 0, buffer.byteLength, null);
+      if (result.bytesRead === 0) break;
+      if (result.bytesRead > remaining)
+        throw new WorkerJobError(
+          'media derivative exceeds the per-artifact output ceiling',
+          'MEDIA_OUTPUT_TOO_LARGE',
+          false,
+        );
+      chunks.push(buffer.subarray(0, result.bytesRead));
+      total += result.bytesRead;
+    }
+    return Buffer.concat(chunks, total);
+  } finally {
+    await handle.close();
   }
 }
 

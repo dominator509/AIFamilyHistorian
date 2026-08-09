@@ -12,9 +12,9 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "tsc -b",
-    "test:unit": "vitest run tests/unit",
-    "test:integration": "vitest run tests/integration",
-    "test:e2e": "vitest run tests/e2e",
+    "test:unit": "vitest run tests/unit --maxWorkers=50%",
+    "test:integration": "vitest run tests/integration --maxWorkers=50%",
+    "test:e2e": "vitest run tests/e2e --maxWorkers=50%",
     "secret-scan": "sh scripts/secret-scan.sh",
     "security:check": "tsx tests/security/run.ts",
     "smoke": "tsx tests/smoke/run.ts"

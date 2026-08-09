@@ -633,3 +633,4 @@ The authenticated Deepgram transcription probe now caps streamed and non-streame
 ### ADR-166: Bound direct AI gateway request materialization
 
 The shared AI gateway now validates model and prompt metadata for bounded, control-free values, caps the stable policy prefix, and rejects serialized dynamic input above 8 MiB before cache-key construction or provider dispatch. This protects direct callers and alternate providers from bypassing the source-text limit with oversized structured input.
+Vitest suites now cap parallel workers at 50% of available capacity for unit, integration, and E2E commands. The prior unbounded file parallelism caused unrelated API tests to exceed their five-second timeout under process contention; the adaptive cap preserves concurrency while making the prescribed gates deterministic across developer and CI hosts.

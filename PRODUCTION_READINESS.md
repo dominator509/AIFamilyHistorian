@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 30 files / 159 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 30 files / 160 tests. Integration: 13 files / 43 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -38,6 +38,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - The read-only runtime image preinstalls pinned pnpm under an image-owned Corepack home; the rebuilt worker stayed `Up (healthy)` in the real internal Compose stack. The local rehearsal is explicitly development-mode for its internal HTTP MinIO endpoint; hosted Fly remains production/HTTPS-only.
 - HARDENING-89 additionally pins CI actions to reviewed immutable commit SHAs and the Node Docker base to a reviewed OCI digest; the security harness rejects mutable action references and undigested Node base lines. Workflow YAML, API/worker image builds, security, typecheck, and format checks pass locally.
 - HARDENING-178 makes publication readiness evidence IDs single-use across rights, consent, and citation categories, preventing one evidence record from satisfying multiple independent release gates. Unit coverage passed 30 files/159 tests; format, typecheck, and security checks passed.
+- HARDENING-179 replaces the media derivative `stat`/`readFile` race with a bounded streaming read that fails closed above the per-artifact ceiling. Real integration media processing passed 13 files/43 tests, E2E passed 3 files/11 tests, and the unit gate passed 30 files/160 tests. Vitest unit/integration/E2E commands now cap file workers at 50% to prevent timeout flakiness under host contention.
 
 ## Engineering work still pending
 
