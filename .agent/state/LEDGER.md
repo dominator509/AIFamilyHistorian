@@ -350,3 +350,7 @@
 2026-08-09T04:09:00Z | codex | HARDENING-68 | COMMAND_FAILED | corepack_pnpm_test_integration_exit_1_host_only_wrapper_ECONNREFUSED_127.0.0.1:35432_39000; real_services_are_running_on_internal_only_compose_network; no_source_or_data_mutation
 2026-08-09T04:10:00Z | codex | HARDENING-68 | COMMAND_FAILED | sh_scripts_verify.sh_exit_1_and_sh_scripts_production-readiness-check.sh_exit_1_preflight_reports_15_unresolved_external_legal_requirements; no_gate_weakened
 2026-08-09T04:11:00Z | codex | HARDENING-68 | COMMAND_FAILED | sh_scripts_probes_resend.sh_exit_1_RESEND_API_KEY_unbound_in_direct_shell; no_provider_success_inferred
+2026-08-09T04:20:00Z | codex | HARDENING-69 | SECURITY_FINDING | provider_adapters_materialized_unbounded_response_json_and_audio_bodies; malformed_or_compromised_upstream_could_exhaust_process_memory
+2026-08-09T04:21:00Z | codex | HARDENING-69 | FIX_APPLIED | streaming_bounded_provider_reader_caps_json_at_8MiB_and_narration_audio_at_128MiB; declared_content_length_rejected_before_read; Deepgram_Resend_Turnstile_Stripe_and_ElevenLabs_use_helper
+2026-08-09T04:22:00Z | codex | HARDENING-69 | LOCAL_VERIFICATION | full_unit24_files_95_tests_passed; typecheck_lint_build_security_secret_scan_passed; prettier_format_check_passed
+2026-08-09T04:24:00Z | codex | HARDENING-69 | COMMAND_FAILED | sh_scripts_verify.sh_exit_1_preflight_reports_same_15_unresolved_external_legal_requirements; provider_hardening_static_gates_remain_green; no_gate_weakened

@@ -186,4 +186,44 @@ describe('provider adapters', () => {
     await expect(mailer.send(input)).rejects.toThrow('resend circuit is open');
     expect(calls).toBe(2);
   });
+
+  it('rejects provider responses that exceed bounded memory budgets', async () => {
+    const oversizedJson = new ResendMailer({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response('{}', {
+            status: 200,
+            headers: { 'content-length': String(8 * 1024 * 1024 + 1) },
+          }),
+        ),
+    });
+    await expect(
+      oversizedJson.send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'oversized-json',
+      }),
+    ).rejects.toMatchObject({ provider: 'resend' });
+
+    const oversizedAudio = new ElevenLabsNarrator({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response('', {
+            status: 200,
+            headers: { 'content-length': String(128 * 1024 * 1024 + 1) },
+          }),
+        ),
+    });
+    await expect(
+      oversizedAudio.synthesize({ voiceId: 'stock-voice', text: 'Approved narration.' }),
+    ).rejects.toMatchObject({ provider: 'elevenlabs' });
+  });
 });

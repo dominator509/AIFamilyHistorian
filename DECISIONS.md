@@ -301,3 +301,7 @@ Stripe signature verification now rejects non-finite, negative, unsafe, or exces
 ### ADR-083: Fail closed on invalid AI input budgets
 
 The AI Policy Gateway now validates `maxInputTokens` as a bounded positive safe integer before policy evaluation or provider dispatch. Invalid numeric values such as `NaN` can no longer bypass the budget comparison through JavaScript's false `NaN` comparisons.
+
+### ADR-084: Bound provider response materialization
+
+Provider adapters now enforce response-size ceilings before JSON parsing or audio materialization, using a streaming reader that aborts oversized bodies. JSON control responses are capped at 8 MiB and narration audio at 128 MiB; declared `content-length` values are checked before reading. This prevents a malformed or compromised upstream provider response from causing unbounded memory growth while preserving the existing schema and error mapping.

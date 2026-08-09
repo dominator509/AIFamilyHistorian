@@ -78,6 +78,61 @@ interface CircuitState {
   openUntil: number;
 }
 
+const MAX_PROVIDER_JSON_BYTES = 8 * 1024 * 1024;
+const MAX_PROVIDER_AUDIO_BYTES = 128 * 1024 * 1024;
+
+async function readBoundedBytes(
+  response: Response,
+  maxBytes: number,
+  provider: string,
+): Promise<Uint8Array> {
+  const declaredLength = response.headers.get('content-length');
+  if (declaredLength !== null) {
+    const length = Number(declaredLength);
+    if (!Number.isSafeInteger(length) || length < 0 || length > maxBytes)
+      throw new ProviderAdapterError(`${provider} response exceeds the allowed size`, provider);
+  }
+  if (!response.body) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength > maxBytes)
+      throw new ProviderAdapterError(`${provider} response exceeds the allowed size`, provider);
+    return bytes;
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const next = await reader.read();
+      if (next.done) break;
+      total += next.value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new ProviderAdapterError(`${provider} response exceeds the allowed size`, provider);
+      }
+      chunks.push(next.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+async function readBoundedJson(response: Response, provider: string): Promise<unknown> {
+  const bytes = await readBoundedBytes(response, MAX_PROVIDER_JSON_BYTES, provider);
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
+  } catch {
+    throw new ProviderAdapterError(`${provider} returned invalid JSON`, provider);
+  }
+}
+
 const circuitStates = new WeakMap<object, CircuitState>();
 
 function circuitState(options: ProviderAdapterOptions): CircuitState {
@@ -234,7 +289,7 @@ export class DeepgramTranscriber {
       headers: { Authorization: `Token ${this.#options.apiKey}`, 'Content-Type': contentType },
       body: bytes.slice().buffer,
     });
-    const parsed = deepgramResponseSchema.parse(await response.json());
+    const parsed = deepgramResponseSchema.parse(await readBoundedJson(response, 'deepgram'));
     const alternative = parsed.results.channels[0]?.alternatives[0];
     if (!alternative)
       throw new ProviderAdapterError('Deepgram returned no transcript alternative', 'deepgram');
@@ -276,7 +331,7 @@ export class ElevenLabsNarrator {
         model_id: input.modelId ?? 'eleven_multilingual_v2',
       }),
     });
-    const audio = new Uint8Array(await response.arrayBuffer());
+    const audio = await readBoundedBytes(response, MAX_PROVIDER_AUDIO_BYTES, 'elevenlabs');
     if (audio.byteLength === 0)
       throw new ProviderAdapterError('ElevenLabs returned empty audio', 'elevenlabs');
     return {
@@ -330,7 +385,7 @@ export class ResendMailer {
         ...(input.text ? { text: input.text } : {}),
       }),
     });
-    return resendResponseSchema.parse(await response.json());
+    return resendResponseSchema.parse(await readBoundedJson(response, 'resend'));
   }
 }
 
@@ -368,7 +423,7 @@ export class TurnstileVerifier {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
     });
-    return turnstileResponseSchema.parse(await response.json());
+    return turnstileResponseSchema.parse(await readBoundedJson(response, 'turnstile'));
   }
 }
 
@@ -409,7 +464,7 @@ export class StripeBillingAdapter {
       },
       body,
     });
-    const parsed = stripeSessionSchema.parse(await response.json());
+    const parsed = stripeSessionSchema.parse(await readBoundedJson(response, 'stripe'));
     return { id: parsed.id, ...(parsed.url === undefined ? {} : { url: parsed.url }) };
   }
 
