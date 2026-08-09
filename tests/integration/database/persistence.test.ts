@@ -224,6 +224,9 @@ describe('PostgreSQL persistence invariants', () => {
     await expect(
       pool.query('update job_outbox set organization_id = $2 where id = $1', [jobId, uuidV7()]),
     ).rejects.toThrow(/tenant scope is immutable/u);
+    await expect(
+      pool.query('update job_outbox set payload = $2 where id = $1', [jobId, { forged: true }]),
+    ).rejects.toThrow(/authoritative fields are immutable/u);
   });
 
   it('enforces one immutable derivative recipe per original object', async () => {
