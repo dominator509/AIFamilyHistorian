@@ -561,3 +561,7 @@ The Fly worker manifest now documents and tests the private-worker invariant: no
 ### ADR-148: Bound parsed provider response fields
 
 Deepgram transcript fields/channels/alternatives, provider request IDs, Resend IDs, Turnstile diagnostics, and Stripe checkout IDs/URLs now have explicit schema limits in addition to aggregate response-byte ceilings. Oversized parsed fields fail closed before adapter results reach callers.
+
+### ADR-149: Normalize malformed provider responses
+
+Provider adapters now convert schema-validation failures into stable non-retryable `ProviderAdapterError` instances. DeepSeek similarly uses a non-retryable `DeepSeekProviderError` for malformed, oversized, or invalid JSON responses, preventing raw Zod details from leaking and avoiding futile retries of deterministic upstream contract violations.

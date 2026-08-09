@@ -316,7 +316,11 @@ describe('provider adapters', () => {
           ),
         ),
     });
-    await expect(deepgram.transcribe(new Uint8Array([1]), 'audio/wav')).rejects.toThrow();
+    await expect(deepgram.transcribe(new Uint8Array([1]), 'audio/wav')).rejects.toMatchObject({
+      provider: 'deepgram',
+      retryable: false,
+      message: 'deepgram returned an invalid response',
+    });
 
     const turnstile = new TurnstileVerifier({
       baseUrl,
@@ -327,7 +331,11 @@ describe('provider adapters', () => {
           new Response(JSON.stringify({ success: false, 'error-codes': ['x'.repeat(257)] })),
         ),
     });
-    await expect(turnstile.verify({ response: 'token' })).rejects.toThrow();
+    await expect(turnstile.verify({ response: 'token' })).rejects.toMatchObject({
+      provider: 'turnstile',
+      retryable: false,
+      message: 'turnstile returned an invalid response',
+    });
 
     const resend = new ResendMailer({
       baseUrl,
@@ -343,7 +351,11 @@ describe('provider adapters', () => {
         text: 'Body',
         idempotencyKey: 'bounded-response',
       }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({
+      provider: 'resend',
+      retryable: false,
+      message: 'resend returned an invalid response',
+    });
   });
 
   it('rejects oversized or unsafe provider request inputs before dispatch', async () => {

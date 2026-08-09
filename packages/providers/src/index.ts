@@ -157,6 +157,14 @@ async function readBoundedJson(response: Response, provider: string): Promise<un
   }
 }
 
+function parseProviderResponse<T>(schema: z.ZodType<T>, payload: unknown, provider: string): T {
+  try {
+    return schema.parse(payload);
+  } catch {
+    throw new ProviderAdapterError(`${provider} returned an invalid response`, provider);
+  }
+}
+
 async function discardResponseBody(response: Response): Promise<void> {
   if (!response.body) return;
   try {
@@ -368,7 +376,11 @@ export class DeepgramTranscriber {
       headers: { Authorization: `Token ${this.#options.apiKey}`, 'Content-Type': contentType },
       body: bytes.slice().buffer,
     });
-    const parsed = deepgramResponseSchema.parse(await readBoundedJson(response, 'deepgram'));
+    const parsed = parseProviderResponse(
+      deepgramResponseSchema,
+      await readBoundedJson(response, 'deepgram'),
+      'deepgram',
+    );
     const alternative = parsed.results.channels[0]?.alternatives[0];
     if (!alternative)
       throw new ProviderAdapterError('Deepgram returned no transcript alternative', 'deepgram');
@@ -475,7 +487,11 @@ export class ResendMailer {
       },
       body,
     });
-    return resendResponseSchema.parse(await readBoundedJson(response, 'resend'));
+    return parseProviderResponse(
+      resendResponseSchema,
+      await readBoundedJson(response, 'resend'),
+      'resend',
+    );
   }
 }
 
@@ -517,7 +533,11 @@ export class TurnstileVerifier {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
     });
-    return turnstileResponseSchema.parse(await readBoundedJson(response, 'turnstile'));
+    return parseProviderResponse(
+      turnstileResponseSchema,
+      await readBoundedJson(response, 'turnstile'),
+      'turnstile',
+    );
   }
 }
 
@@ -563,7 +583,11 @@ export class StripeBillingAdapter {
       },
       body,
     });
-    const parsed = stripeSessionSchema.parse(await readBoundedJson(response, 'stripe'));
+    const parsed = parseProviderResponse(
+      stripeSessionSchema,
+      await readBoundedJson(response, 'stripe'),
+      'stripe',
+    );
     return { id: parsed.id, ...(parsed.url === undefined ? {} : { url: parsed.url }) };
   }
 

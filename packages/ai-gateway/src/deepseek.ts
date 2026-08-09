@@ -1,15 +1,33 @@
 import { z } from 'zod';
 import type { AiProvider, ProviderRequest, ProviderResponse } from './provider.js';
 
+export class DeepSeekProviderError extends Error {
+  public readonly retryable = false;
+  public constructor(message: string) {
+    super(message);
+    this.name = 'DeepSeekProviderError';
+  }
+}
+
+const MAX_DEEPSEEK_TEXT_CHARS = 1_000_000;
+const MAX_DEEPSEEK_METADATA_CHARS = 512;
+
 const responseSchema = z.object({
-  id: z.string().min(1),
-  choices: z.array(z.object({ message: z.object({ content: z.string() }) })).min(1),
+  id: z.string().min(1).max(MAX_DEEPSEEK_METADATA_CHARS),
+  choices: z
+    .array(
+      z.object({
+        message: z.object({ content: z.string().max(MAX_DEEPSEEK_TEXT_CHARS) }),
+      }),
+    )
+    .min(1)
+    .max(32),
   usage: z
     .object({
-      prompt_tokens: z.number().int().nonnegative(),
-      completion_tokens: z.number().int().nonnegative(),
-      prompt_cache_hit_tokens: z.number().int().nonnegative().optional(),
-      prompt_cache_miss_tokens: z.number().int().nonnegative().optional(),
+      prompt_tokens: z.number().int().nonnegative().max(1_000_000_000),
+      completion_tokens: z.number().int().nonnegative().max(1_000_000_000),
+      prompt_cache_hit_tokens: z.number().int().nonnegative().max(1_000_000_000).optional(),
+      prompt_cache_miss_tokens: z.number().int().nonnegative().max(1_000_000_000).optional(),
     })
     .optional(),
 });
@@ -21,17 +39,18 @@ async function readBoundedJson(response: Response): Promise<unknown> {
   if (declaredLength !== null) {
     const length = Number(declaredLength);
     if (!Number.isSafeInteger(length) || length < 0 || length > MAX_DEEPSEEK_RESPONSE_BYTES)
-      throw new Error('DeepSeek response exceeds the allowed size');
+      throw new DeepSeekProviderError('DeepSeek response exceeds the allowed size');
   }
   if (!response.body) {
-    if (declaredLength === null) throw new Error('DeepSeek response has no bounded body length');
+    if (declaredLength === null)
+      throw new DeepSeekProviderError('DeepSeek response has no bounded body length');
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.byteLength > MAX_DEEPSEEK_RESPONSE_BYTES)
-      throw new Error('DeepSeek response exceeds the allowed size');
+      throw new DeepSeekProviderError('DeepSeek response exceeds the allowed size');
     try {
       return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
     } catch {
-      throw new Error('DeepSeek returned invalid JSON');
+      throw new DeepSeekProviderError('DeepSeek returned invalid JSON');
     }
   }
   const reader = response.body.getReader();
@@ -44,7 +63,7 @@ async function readBoundedJson(response: Response): Promise<unknown> {
       total += next.value.byteLength;
       if (total > MAX_DEEPSEEK_RESPONSE_BYTES) {
         await reader.cancel();
-        throw new Error('DeepSeek response exceeds the allowed size');
+        throw new DeepSeekProviderError('DeepSeek response exceeds the allowed size');
       }
       chunks.push(next.value);
     }
@@ -60,7 +79,7 @@ async function readBoundedJson(response: Response): Promise<unknown> {
   try {
     return JSON.parse(new TextDecoder().decode(bytes)) as unknown;
   } catch {
-    throw new Error('DeepSeek returned invalid JSON');
+    throw new DeepSeekProviderError('DeepSeek returned invalid JSON');
   }
 }
 
@@ -176,7 +195,13 @@ export class DeepSeekProvider implements AiProvider {
           await new Promise((resolve) => setTimeout(resolve, attempt * 250));
           continue;
         }
-        const parsed = responseSchema.parse(await readBoundedJson(response));
+        let parsed: z.infer<typeof responseSchema>;
+        try {
+          parsed = responseSchema.parse(await readBoundedJson(response));
+        } catch (error) {
+          if (error instanceof DeepSeekProviderError) throw error;
+          throw new DeepSeekProviderError('DeepSeek returned an invalid response');
+        }
         const usage = parsed.usage;
         return {
           content: parsed.choices[0]?.message.content ?? '',
@@ -190,7 +215,8 @@ export class DeepSeekProvider implements AiProvider {
         };
       } catch (error) {
         lastError = error;
-        retryableFailure = true;
+        retryableFailure = !(error instanceof DeepSeekProviderError);
+        if (error instanceof DeepSeekProviderError) break;
         if (signal.aborted || attempt === this.#maxAttempts) break;
         await new Promise((resolve) => setTimeout(resolve, attempt * 250));
       }
