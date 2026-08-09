@@ -20,8 +20,10 @@ export const MAX_PROVENANCE_CANONICAL_DEPTH = 32;
 export const MAX_PROVENANCE_CANONICAL_BYTES = 16 * 1024 * 1024;
 export const MAX_PROVENANCE_EVENTS = 10_000;
 export const MAX_PROVENANCE_MANIFEST_BYTES = 16 * 1024 * 1024;
+export const MAX_PROVENANCE_TYPE_CHARS = 256;
 export const MAX_CLAIM_EVIDENCE_SPANS = 1_000;
 export const MAX_CLAIM_TEXT_CHARS = 1_000_000;
+const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
 
 export interface EvidenceSpan {
   readonly sourceId: EntityId;
@@ -97,6 +99,8 @@ export function createProvenanceEvent(
     readonly previousHash?: string | null;
   },
 ): ProvenanceEvent {
+  assertSafeType(input.entityType, 'entity type');
+  assertSafeType(input.eventType, 'event type');
   uuidSchema.parse(input.id);
   uuidSchema.parse(input.organizationId);
   uuidSchema.parse(input.familyArchiveId);
@@ -129,6 +133,16 @@ export function createProvenanceEvent(
     previousHash,
     eventHash,
   });
+}
+
+function assertSafeType(value: string, label: string): void {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > MAX_PROVENANCE_TYPE_CHARS ||
+    CONTROL_CHARACTER_PATTERN.test(value)
+  )
+    throw new ProvenanceError(`${label} is invalid`);
 }
 
 /** Verify every hash and link in an ordered append-only event chain. */

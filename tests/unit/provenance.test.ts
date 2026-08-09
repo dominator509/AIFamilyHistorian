@@ -117,6 +117,23 @@ describe('provenance integrity', () => {
     ).toThrow(/serialized size/u);
   });
 
+  it('rejects oversized or control-bearing provenance type metadata', () => {
+    const base = {
+      id: '01900000-0000-7000-8000-000000000013',
+      organizationId,
+      familyArchiveId: archiveId,
+      entityId,
+      lineage: {},
+      occurredAt: '2026-08-07T00:00:00.000Z',
+    };
+    expect(() =>
+      createProvenanceEvent({ ...base, entityType: 'audit\nentry', eventType: 'created' }),
+    ).toThrow(/entity type is invalid/u);
+    expect(() =>
+      createProvenanceEvent({ ...base, entityType: 'source', eventType: 'x'.repeat(257) }),
+    ).toThrow(/event type is invalid/u);
+  });
+
   it('bounds evidence span offsets and fan-out', () => {
     expect(() =>
       createEvidenceSpan({

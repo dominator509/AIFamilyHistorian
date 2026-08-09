@@ -155,6 +155,41 @@ describe('PostgreSQL persistence invariants', () => {
     ).rejects.toThrow(/append-only/);
   });
 
+  it('rejects unsafe audit and provenance metadata at the database boundary', async () => {
+    const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
+    await bootstrapArchive(pool, context, 'Metadata family', 'Metadata archive');
+    const auditId = uuidV7();
+    await expect(
+      withTenantTransaction(pool, context, (client) =>
+        client.query(
+          "insert into audit_events(id, organization_id, family_archive_id, actor_pseudonym, action, outcome, occurred_at) values ($1,$2,$3,'actor-hash',$4,'allowed',now())",
+          [
+            auditId,
+            context.organizationId,
+            context.familyArchiveId,
+            `audit${String.fromCharCode(10)}entry`,
+          ],
+        ),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      withTenantTransaction(pool, context, (client) =>
+        client.query(
+          'insert into provenance_events(id, organization_id, family_archive_id, entity_type, entity_id, event_type, lineage, occurred_at) values ($1,$2,$3,$4,$5,$6,$7,now())',
+          [
+            uuidV7(),
+            context.organizationId,
+            context.familyArchiveId,
+            'audit',
+            uuidV7(),
+            'x'.repeat(257),
+            {},
+          ],
+        ),
+      ),
+    ).rejects.toThrow();
+  });
+
   it('enforces one immutable derivative recipe per original object', async () => {
     const context: DatabaseContext = { organizationId: uuidV7(), familyArchiveId: uuidV7() };
     await bootstrapArchive(pool, context, 'Derivative family', 'Derivative archive');

@@ -5,7 +5,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 ## Verified local engineering
 
 - Real local PostgreSQL, Redis, MinIO, Mailpit, OpenTelemetry, ClamAV, FFmpeg, OCR, and media-worker flows are covered by the internal Compose runner.
-- Unit: 30 files / 163 tests. Integration: 13 files / 44 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
+- Unit: 30 files / 164 tests. Integration: 13 files / 45 tests. E2E: 3 files / 11 tests. All 16 live-fire proofs pass.
 - Typecheck, lint, format, build, security baseline, secret scan, dependency, reality, smoke, and encrypted backup/restore checks pass at the current source checkpoint.
 - Outbox leases renew and are token-fenced. Privacy, export, and narration intake transactions lock their active lease before authoritative writes. Media quarantine transitions are row-locked and compare-and-set; multipart storage completion validates provider-facing manifests independently of HTTP schemas.
 - Local worker isolation is declared read-only, capability-free, no-new-privileges, PID/memory/CPU bounded, scratch-bounded, and internal-network-only. These declarations do not prove hosted isolation.
@@ -52,6 +52,7 @@ Current status is **ENGINEERING CONTINUATION IN PROGRESS; NOT PRODUCTION APPROVE
 - HARDENING-191 makes the database verifier inspect effective PostgreSQL role membership and fail closed when `family_historian_worker` can activate `family_historian_runtime`. The isolated local verifier observed `worker database role can activate the broad runtime role`; this is a release-blocking sentinel, not a claim that the underlying worker authority redesign is complete.
 - HARDENING-192 adds a security-harness regression assertion that the effective-role verifier guard remains present alongside the dedicated-worker migration controls.
 - HARDENING-193 bounds signed Stripe event IDs to 256 characters and rejects C0/DEL controls in event types before callback persistence. Integration passed 13 files/44 tests; unit passed 30 files/163 tests; E2E passed 3 files/11 tests; typecheck, format, and security checks passed.
+- HARDENING-194 bounds audit actions and provenance entity/event types to 256 characters without C0/DEL controls both in package validation and PostgreSQL constraints. Integration passed 13 files/45 tests, including the real persistence rejection regression; unit passed 30 files/164 tests; E2E passed 3 files/11 tests; typecheck, format, build, security, format, and diff checks passed.
 
 ## Engineering work still pending
 
