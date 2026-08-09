@@ -128,6 +128,15 @@ describe('quotation lineage invariant', () => {
       () => createQuotation(ids.quote, span.text, { ...span, approved: false }),
       'QUOTE_NOT_APPROVED',
     );
+    expectCode(
+      () =>
+        createQuotation(ids.quote, span.text, {
+          ...span,
+          startOffset: Number.MAX_SAFE_INTEGER + 1,
+          endOffset: Number.MAX_SAFE_INTEGER + 2,
+        }),
+      'VALIDATION_FAILED',
+    );
   });
 });
 

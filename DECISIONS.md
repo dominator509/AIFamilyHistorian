@@ -457,3 +457,7 @@ Evidence spans now require safe integer offsets and claim evidence is capped at 
 ### ADR-122: Preserve domain errors for invalid evidence links
 
 The evidence-link contract now rejects unsafe integer offsets, and `confirmFact` maps contract failures to the domain's `VALIDATION_FAILED` error instead of leaking a raw Zod exception. This keeps API/domain boundaries consistent while retaining fail-closed validation.
+
+### ADR-123: Enforce safe quotation source spans
+
+Quotation construction now requires non-negative, safe integer source offsets before accepting an approved span. Relational checks alone could accept fractional or unsafe numeric values that cannot identify a stable source range; invalid spans now fail with `VALIDATION_FAILED`.

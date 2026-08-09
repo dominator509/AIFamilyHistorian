@@ -33,7 +33,12 @@ export function createQuotation(
       'QUOTE_NOT_APPROVED',
       'quotation must equal the approved source span byte-for-byte',
     );
-  if (span.endOffset <= span.startOffset)
+  if (
+    !Number.isSafeInteger(span.startOffset) ||
+    span.startOffset < 0 ||
+    !Number.isSafeInteger(span.endOffset) ||
+    span.endOffset <= span.startOffset
+  )
     throw new DomainError('VALIDATION_FAILED', 'source span offsets are invalid');
   return Object.freeze({
     id,
