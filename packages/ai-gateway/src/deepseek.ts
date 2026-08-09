@@ -63,6 +63,15 @@ async function readBoundedJson(response: Response): Promise<unknown> {
   }
 }
 
+async function discardResponseBody(response: Response): Promise<void> {
+  if (!response.body) return;
+  try {
+    await response.body.cancel();
+  } catch {
+    // Failed upstream responses are already unusable; cleanup is best effort.
+  }
+}
+
 export interface DeepSeekConfig {
   apiKey: string;
   baseUrl?: string;
@@ -156,6 +165,7 @@ export class DeepSeekProvider implements AiProvider {
           signal,
         });
         if (!response.ok) {
+          await discardResponseBody(response);
           const retryable = response.status === 429 || response.status >= 500;
           retryableFailure = retryable;
           if (!retryable || attempt === this.#maxAttempts) {

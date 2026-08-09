@@ -187,6 +187,39 @@ describe('provider adapters', () => {
     expect(calls).toBe(2);
   });
 
+  it('cancels failed upstream response bodies before retry or surfacing the error', async () => {
+    let cancelled = false;
+    const mailer = new ResendMailer({
+      baseUrl,
+      apiKey: 'test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response(
+            new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('{"error":"upstream"}'));
+              },
+              cancel() {
+                cancelled = true;
+              },
+            }),
+            { status: 503 },
+          ),
+        ),
+    });
+    await expect(
+      mailer.send({
+        from: 'Family <noreply@example.invalid>',
+        to: ['reader@example.invalid'],
+        subject: 'Subject',
+        text: 'Body',
+        idempotencyKey: 'cancel-failed-body',
+      }),
+    ).rejects.toMatchObject({ status: 503, retryable: true });
+    expect(cancelled).toBe(true);
+  });
+
   it('rejects provider responses that exceed bounded memory budgets', async () => {
     const oversizedJson = new ResendMailer({
       baseUrl,

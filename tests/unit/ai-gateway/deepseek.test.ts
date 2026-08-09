@@ -47,4 +47,30 @@ describe('DeepSeek provider response boundaries', () => {
       providerRequestId: 'request-1',
     });
   });
+
+  it('cancels failed upstream response bodies before retry or surfacing the error', async () => {
+    let cancelled = false;
+    const provider = new DeepSeekProvider({
+      apiKey: 'sk-test-key',
+      maxAttempts: 1,
+      fetchImpl: () =>
+        Promise.resolve(
+          new Response(
+            new ReadableStream<Uint8Array>({
+              start(controller) {
+                controller.enqueue(new TextEncoder().encode('{"error":"upstream"}'));
+              },
+              cancel() {
+                cancelled = true;
+              },
+            }),
+            { status: 503 },
+          ),
+        ),
+    });
+    await expect(provider.complete(request)).rejects.toThrow(
+      'DeepSeek request failed with status 503',
+    );
+    expect(cancelled).toBe(true);
+  });
 });

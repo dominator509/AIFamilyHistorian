@@ -133,6 +133,15 @@ async function readBoundedJson(response: Response, provider: string): Promise<un
   }
 }
 
+async function discardResponseBody(response: Response): Promise<void> {
+  if (!response.body) return;
+  try {
+    await response.body.cancel();
+  } catch {
+    // Failed upstream responses are already unusable; cleanup is best effort.
+  }
+}
+
 const circuitStates = new WeakMap<object, CircuitState>();
 
 function circuitState(options: ProviderAdapterOptions): CircuitState {
@@ -214,6 +223,7 @@ async function request(options: ProviderAdapterOptions, input: RequestOptions): 
           state.openUntil = 0;
           return response;
         }
+        await discardResponseBody(response);
         const retryable = response.status === 429 || response.status >= 500;
         lastFailureRetryable = retryable;
         lastError = new ProviderAdapterError(

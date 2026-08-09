@@ -405,3 +405,7 @@ Generated archive resource GET and POST routes now call `assertCurrentArchiveMem
 ### ADR-109: Reject ambiguous multi-archive privacy and billing mutations
 
 The API now resolves archive scope explicitly for privacy requests and billing mutations. A principal with exactly one archive retains the compatibility default; a principal with multiple archives must supply `archiveId`, which is then checked against current archive permission and membership authority. This prevents silent mutation of `archiveIds[0]` and aligns the route contract with the blueprint’s authenticated archive-scope invariant.
+
+### ADR-110: Cancel failed provider response bodies
+
+HTTP provider adapters and the DeepSeek adapter now cancel non-success response bodies before retrying or surfacing an upstream error. Failed response payloads are not needed for the public error contract, and leaving their streams open can retain connections or buffers during repeated provider failures. Cancellation is best effort and never masks the original retryable/non-retryable provider error; successful responses continue through the existing bounded JSON/audio readers.
