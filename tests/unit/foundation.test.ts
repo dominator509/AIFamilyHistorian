@@ -12,8 +12,10 @@ import {
   transcriptInputSchema,
 } from '../../packages/contracts/src/index.js';
 import {
+  MAX_OUTBOX_PAYLOAD_BYTES,
   MAX_PROVIDER_CALLBACK_PAYLOAD_BYTES,
   serializeProviderCallbackPayload,
+  serializeOutboxPayload,
 } from '../../apps/api/src/archive-service.js';
 
 describe('foundation contracts', () => {
@@ -116,5 +118,17 @@ describe('foundation contracts', () => {
     cyclic.self = cyclic;
     expect(() => serializeProviderCallbackPayload(cyclic)).toThrow(/serializable/u);
     expect(serializeProviderCallbackPayload({ ok: true })).toBe('{"ok":true}');
+  });
+
+  it('bounds durable outbox payloads before queue persistence', () => {
+    expect(() =>
+      serializeOutboxPayload('aggregate-1', { body: 'x'.repeat(MAX_OUTBOX_PAYLOAD_BYTES) }),
+    ).toThrow(/size limit/u);
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() => serializeOutboxPayload('aggregate-1', cyclic)).toThrow(/serializable/u);
+    expect(serializeOutboxPayload('aggregate-1', { kind: 'privacy.request' })).toBe(
+      '{"aggregateId":"aggregate-1","payload":{"kind":"privacy.request"}}',
+    );
   });
 });
