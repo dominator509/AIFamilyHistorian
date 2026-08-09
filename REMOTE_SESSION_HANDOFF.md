@@ -233,6 +233,8 @@ HARDENING-96 checkpoint: the current pushed source passed the real internal inte
 
 HARDENING-97 checkpoint: generated archive resource GET/POST routes now enforce current archive membership inside the route after permission checks, closing a partial-authority fail-open seam. Focused authorization (11/11), unit (27/106), integration (13/41), E2E (3/11), and all 16 live-fire proofs passed; typecheck, lint, format, security, and build prerequisites remain green.
 
+HARDENING-98 checkpoint: privacy and billing mutations now reject ambiguous scope for multi-archive principals instead of silently selecting `archiveIds[0]`; explicit `archiveId` is checked against current permission and membership authority. Focused scope authorization (13/13), unit (27/108), integration (13/41), E2E (3/11), typecheck, lint, format, and security checks passed.
+
 ## Final operator checklist
 
 1. Implement and verify remaining worker fulfillment families (privacy, export, transcription, narration synthesis, and deletion), then run hosted-equivalent object-storage and provider fixtures through `worker-runtime`.

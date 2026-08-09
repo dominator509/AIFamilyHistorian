@@ -152,6 +152,21 @@ async function assertCurrentArchivePermission(
   if (!current) throw new ApiProblem('PERMISSION_DENIED', 'Archive permission is no longer valid');
 }
 
+function resolveArchiveScope(
+  value: SessionPrincipal,
+  requestedArchiveId: string | undefined,
+  resource: string,
+): string {
+  const archiveId =
+    requestedArchiveId ?? (value.archiveIds.length === 1 ? value.archiveIds[0] : undefined);
+  if (!archiveId)
+    throw new ApiProblem(
+      'VALIDATION_FAILED',
+      `${resource} archive scope is required when multiple archives are available`,
+    );
+  return archiveId;
+}
+
 function idempotencyKey(request: FastifyRequest): string {
   const value = request.headers['idempotency-key'];
   if (Array.isArray(value))
@@ -521,9 +536,8 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
 
   app.post('/v1/privacy-requests', async (request, reply) => {
     const input = privacyRequestInputSchema.parse(request.body);
-    const archiveId =
-      input.archiveId ?? principal(request, dependencies.sessionSecret).archiveIds[0];
-    if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
+    const session = principal(request, dependencies.sessionSecret);
+    const archiveId = resolveArchiveScope(session, input.archiveId, 'Privacy request');
     const value = await authorizeArchive(
       request,
       dependencies.sessionSecret,
@@ -546,19 +560,23 @@ export function registerV1Routes(app: FastifyInstance, dependencies: RouteDepend
   });
 
   app.post('/v1/billing', async (request, reply) => {
+    const input = billingInputSchema.parse(request.body);
     const value = principal(request, dependencies.sessionSecret);
-    if (!value.permissions.includes('billing:write'))
-      throw new ApiProblem('PERMISSION_DENIED', 'Billing permission is required');
-    const archiveId = value.archiveIds[0];
-    if (!archiveId) throw new ApiProblem('PERMISSION_DENIED', 'An archive scope is required');
-    await assertCurrentArchivePermission(dependencies, value, archiveId, 'billing:write');
+    const archiveId = resolveArchiveScope(value, input.archiveId, 'Billing');
+    await authorizeArchive(
+      request,
+      dependencies.sessionSecret,
+      archiveId,
+      'billing:write',
+      dependencies,
+    );
     await assertCurrentArchiveMembership(dependencies, value, archiveId);
     const result = await dependencies.service.create(
       { organizationId: value.organizationId, familyArchiveId: archiveId },
       value.userId,
       idempotencyKey(request),
       '/v1/billing',
-      { kind: 'billing', input: billingInputSchema.parse(request.body) },
+      { kind: 'billing', input },
     );
     return reply
       .status(201)

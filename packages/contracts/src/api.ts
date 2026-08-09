@@ -112,6 +112,7 @@ export const privacyRequestInputSchema = z.object({
   requesterReference: z.string().min(1).max(500),
 });
 export const billingInputSchema = z.object({
+  archiveId: uuidSchema.optional(),
   planCode: z.enum(['concierge', 'self_service', 'family', 'institutional']),
   status: z.enum(['trialing', 'active', 'past_due', 'cancelled']),
 });

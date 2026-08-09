@@ -401,3 +401,7 @@ The opt-in Compose worker connects to the real internal MinIO service over Docke
 ### ADR-108: Revalidate membership inside generated resource routes
 
 Generated archive resource GET and POST routes now call `assertCurrentArchiveMembership` after the current permission check. The global request hook normally performs the same check, but route-local enforcement prevents a partially configured application (permission checker present, membership checker absent) from serving or mutating archive resources. Missing or unavailable membership authority fails closed with a retryable `PROVIDER_UNAVAILABLE` response.
+
+### ADR-109: Reject ambiguous multi-archive privacy and billing mutations
+
+The API now resolves archive scope explicitly for privacy requests and billing mutations. A principal with exactly one archive retains the compatibility default; a principal with multiple archives must supply `archiveId`, which is then checked against current archive permission and membership authority. This prevents silent mutation of `archiveIds[0]` and aligns the route contract with the blueprint’s authenticated archive-scope invariant.

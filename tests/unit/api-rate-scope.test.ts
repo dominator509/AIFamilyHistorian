@@ -442,6 +442,100 @@ describe('API principal and archive rate scopes', () => {
     }
   });
 
+  it('rejects ambiguous billing scope for a multi-archive principal', async () => {
+    const firstArchiveId = '01900000-0000-7000-8000-000000000104';
+    const secondArchiveId = '01900000-0000-7000-8000-000000000105';
+    const token = issueSessionToken('x'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000106',
+      organizationId: '01900000-0000-7000-8000-000000000107',
+      archiveIds: [firstArchiveId, secondArchiveId],
+      permissions: ['billing:write'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    let created = false;
+    const app = await createApp({
+      service: {
+        ready: () => Promise.resolve(true),
+        create: () => {
+          created = true;
+          return Promise.resolve({
+            response: { id: firstArchiveId, status: 'accepted' },
+            replayed: false,
+          });
+        },
+      } as never,
+      sessionSecret: 'x'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionMembershipChecker: () => Promise.resolve(true),
+      sessionPermissionChecker: () => Promise.resolve(true),
+    });
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/billing',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'idempotency-key': 'ambiguous-billing-scope',
+        },
+        payload: { planCode: 'family', status: 'trialing' },
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+      expect(created).toBe(false);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('rejects ambiguous privacy scope for a multi-archive principal', async () => {
+    const firstArchiveId = '01900000-0000-7000-8000-000000000108';
+    const secondArchiveId = '01900000-0000-7000-8000-000000000109';
+    const token = issueSessionToken('y'.repeat(32), {
+      userId: '01900000-0000-7000-8000-000000000110',
+      organizationId: '01900000-0000-7000-8000-000000000111',
+      archiveIds: [firstArchiveId, secondArchiveId],
+      permissions: ['privacy:write'],
+      expiresAt: Math.floor(Date.now() / 1000) + 60,
+    });
+    let created = false;
+    const app = await createApp({
+      service: {
+        ready: () => Promise.resolve(true),
+        create: () => {
+          created = true;
+          return Promise.resolve({
+            response: { id: firstArchiveId, status: 'accepted' },
+            replayed: false,
+          });
+        },
+      } as never,
+      sessionSecret: 'y'.repeat(32),
+      rateLimiter: {
+        consume: () => ({ allowed: true, limit: 120, remaining: 119, retryAfterSeconds: 0 }),
+      },
+      sessionMembershipChecker: () => Promise.resolve(true),
+      sessionPermissionChecker: () => Promise.resolve(true),
+    });
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/privacy-requests',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'idempotency-key': 'ambiguous-privacy-scope',
+        },
+        payload: { requestType: 'access', requesterReference: 'subject-ref' },
+      });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+      expect(created).toBe(false);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('fails closed as retryable when request-time membership lookup is unavailable', async () => {
     const archiveId = '01900000-0000-7000-8000-000000000098';
     const token = issueSessionToken('v'.repeat(32), {
