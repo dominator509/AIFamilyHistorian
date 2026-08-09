@@ -340,3 +340,6 @@
 2026-08-09T03:15:00Z | codex | HARDENING-66 | SECURITY_FINDING | assertQuotaAvailable_compared_Date_parse_NaN_values_and_could_fail_open_on_invalid_grace_or_current_time
 2026-08-09T03:16:00Z | codex | HARDENING-66 | FIX_APPLIED | billing_quota_now_and_grace_end_times_are_required_to_be_finite_before_expiry_evaluation
 2026-08-09T03:17:00Z | codex | HARDENING-66 | LOCAL_VERIFICATION | billing_focus3_tests_passed; full_unit24_files_93_tests_passed; build_security_typecheck_lint_format_secret_scan_passed
+2026-08-09T03:25:00Z | codex | HARDENING-67 | SECURITY_FINDING | Stripe_signature_verification_allowed_invalid_nowSeconds_or_excessive_tolerance_to_bypass_freshness_comparison
+2026-08-09T03:26:00Z | codex | HARDENING-67 | FIX_APPLIED | webhook_clock_and_tolerance_are_bounded_before_timestamp_freshness_evaluation
+2026-08-09T03:27:00Z | codex | HARDENING-67 | LOCAL_VERIFICATION | provider_focus4_tests_passed; full_unit24_files_93_tests_passed; build_security_typecheck_lint_format_secret_scan_passed

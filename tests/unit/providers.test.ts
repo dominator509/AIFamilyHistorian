@@ -126,6 +126,18 @@ describe('provider adapters', () => {
     expect(() =>
       stripe.verifyWebhookSignature(payload, `t=${timestamp},v1=${signature}`, 'wrong', timestamp),
     ).toThrow(ProviderAdapterError);
+    expect(() =>
+      stripe.verifyWebhookSignature(payload, `t=${timestamp},v1=${signature}`, secret, Number.NaN),
+    ).toThrow('Stripe webhook clock settings are invalid');
+    expect(() =>
+      stripe.verifyWebhookSignature(
+        payload,
+        `t=${timestamp},v1=${signature}`,
+        secret,
+        timestamp,
+        86_401,
+      ),
+    ).toThrow('Stripe webhook clock settings are invalid');
   });
 
   it('rejects unsafe provider endpoints and unbounded retry settings', async () => {

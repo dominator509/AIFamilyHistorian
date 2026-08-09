@@ -31,6 +31,14 @@ export function verifyStripeWebhookSignature(
 ): void {
   if (!webhookSecret.trim())
     throw new ProviderAdapterError('Stripe webhook secret is required', 'stripe');
+  if (
+    !Number.isSafeInteger(nowSeconds) ||
+    nowSeconds < 0 ||
+    !Number.isSafeInteger(toleranceSeconds) ||
+    toleranceSeconds < 0 ||
+    toleranceSeconds > 86_400
+  )
+    throw new ProviderAdapterError('Stripe webhook clock settings are invalid', 'stripe');
   const values = new Map(
     signatureHeader
       .split(',')
