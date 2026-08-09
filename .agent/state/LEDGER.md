@@ -372,3 +372,4 @@
 2026-08-09T05:10:00Z | codex | HARDENING-73 | SECURITY_FINDING | ObjectStorage_readBytes_materialized_unbounded_provider_body_into_heap; public_storage_primitive_could_enable_memory_exhaustion_if_reused_by_export_or_download_paths
 2026-08-09T05:11:00Z | codex | HARDENING-73 | FIX_APPLIED | readBytes_streams_chunks_and_enforces_256MiB_MAX_IN_MEMORY_OBJECT_BYTES; oversized_body_raises_ObjectStorageLimitError_before_materialization
 2026-08-09T05:12:00Z | codex | HARDENING-73 | LOCAL_VERIFICATION | typecheck_lint_format_unit26_files_101_tests_build_security_secret_scan_live_fire16_passed; internal_MinIO_storage_regression3_tests_passed; host_test_integration_exit1_ECONNREFUSED_35432_36379_39000_no_success_inferred
+2026-08-09T05:18:00Z | codex | HARDENING-73 | RELEASE_REASSESSMENT | preflight_and_production-readiness-check_exit1; same_15_external_and_legal_requirements_unresolved; no_release_gate_weakened
