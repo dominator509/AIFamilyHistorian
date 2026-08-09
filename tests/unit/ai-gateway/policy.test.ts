@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   canonicalJson,
+  CanonicalJsonError,
+  MAX_CANONICAL_JSON_BYTES,
+  MAX_CANONICAL_JSON_DEPTH,
   enforceOutboundPolicy,
   ProviderPolicyError,
   sanitizeOutboundValue,
@@ -54,6 +57,19 @@ describe('AI outbound policy', () => {
     expect(canonicalJson({ z: 1, a: { y: 2, b: 3 } })).toBe(
       canonicalJson({ a: { b: 3, y: 2 }, z: 1 }),
     );
+  });
+
+  it('rejects cyclic, deeply nested, non-finite, and oversized canonical input', () => {
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() => canonicalJson(cyclic)).toThrowError(CanonicalJsonError);
+    expect(() => canonicalJson(Number.NaN)).toThrowError(/non-finite/u);
+
+    let nested: unknown = 'leaf';
+    for (let index = 0; index <= MAX_CANONICAL_JSON_DEPTH; index += 1) nested = { nested };
+    expect(() => canonicalJson(nested)).toThrowError(/nesting depth/u);
+
+    expect(() => canonicalJson('x'.repeat(MAX_CANONICAL_JSON_BYTES))).toThrowError(/maximum size/u);
   });
 
   it('sanitizes nested structured values before serialization', () => {

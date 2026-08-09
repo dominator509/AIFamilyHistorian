@@ -425,3 +425,7 @@ The deterministic PDF renderer now emits a minimal tagged-document structure: th
 ### ADR-114: Bound Redis AI cache envelopes
 
 The Redis AI result-cache adapter now enforces a 16 MiB UTF-8 serialized-envelope ceiling on both reads and writes. Oversized or malformed reads are evicted before parsing, and oversized/non-serializable writes fail deterministically before contacting Redis. This limits cache-memory and parser exposure while preserving exact-result cache isolation and the provider-independent execution path.
+
+### ADR-115: Fail closed on unsafe AI canonicalization
+
+The AI gateway canonical JSON serializer now rejects cycles, unsupported JSON values, non-finite numbers, nesting deeper than 32 levels, and UTF-8 output larger than 16 MiB. Canonical input is used for prompt-injection inspection, cache keys, stable prefixes, and dynamic provider payloads, so ambiguous or unbounded values must fail before provider dispatch rather than relying on `JSON.stringify` coercion or risking recursive exhaustion.
