@@ -505,3 +505,7 @@ Portable export libraries now cap entries at 10,000, evidence IDs per entry at 1
 ### ADR-134: Bound provenance chain aggregation
 
 Provenance chain verification and manifest construction now cap event count at 10,000 and serialized manifest materialization at 16 MiB. Individual event canonicalization remains independently bounded, and the manifest builder now accumulates only within the aggregate ceiling before hashing.
+
+### ADR-135: Bound edition manifest contracts
+
+Edition manifests now cap keys at 256, key length at 200 characters, and serialized JSON at 512 KiB. The shared Zod contract performs cycle-safe serialization checks before JSONB persistence, so direct service callers cannot bypass the API body limit with malformed or oversized manifest objects.

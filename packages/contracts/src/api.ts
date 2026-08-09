@@ -79,9 +79,32 @@ export const eventInputSchema = z.object({
   visibility: visibilitySchema.default('owner_only'),
 });
 export const chapterInputSchema = z.object({ title: z.string().min(1).max(500) });
+export const MAX_EDITION_MANIFEST_KEYS = 256;
+export const MAX_EDITION_MANIFEST_KEY_CHARS = 200;
+export const MAX_EDITION_MANIFEST_BYTES = 512 * 1024;
+export const editionManifestSchema = z
+  .record(z.string().min(1).max(MAX_EDITION_MANIFEST_KEY_CHARS), z.unknown())
+  .superRefine((manifest, context) => {
+    if (Object.keys(manifest).length > MAX_EDITION_MANIFEST_KEYS) {
+      context.addIssue({ code: 'custom', message: 'edition manifest has too many keys' });
+      return;
+    }
+    let encoded: string;
+    try {
+      encoded = JSON.stringify(manifest);
+    } catch {
+      context.addIssue({ code: 'custom', message: 'edition manifest must be JSON serializable' });
+      return;
+    }
+    if (
+      encoded === undefined ||
+      new TextEncoder().encode(encoded).byteLength > MAX_EDITION_MANIFEST_BYTES
+    )
+      context.addIssue({ code: 'custom', message: 'edition manifest exceeds the maximum size' });
+  });
 export const editionInputSchema = z.object({
   editionHash: z.string().regex(/^[a-f0-9]{64}$/u),
-  manifest: z.record(z.string(), z.unknown()),
+  manifest: editionManifestSchema,
 });
 export const rightsInputSchema = z.object({
   subjectType: z.string().min(1).max(100),

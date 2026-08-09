@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   completeUploadInputSchema,
+  editionInputSchema,
+  MAX_EDITION_MANIFEST_BYTES,
+  MAX_EDITION_MANIFEST_KEYS,
   factInputSchema,
   healthStatusSchema,
 } from '../../packages/contracts/src/index.js';
@@ -38,5 +41,30 @@ describe('foundation contracts', () => {
         ),
       }),
     ).toThrow();
+  });
+
+  it('bounds edition manifests before JSONB persistence', () => {
+    expect(() =>
+      editionInputSchema.parse({
+        editionHash: 'a'.repeat(64),
+        manifest: Object.fromEntries(
+          Array.from({ length: MAX_EDITION_MANIFEST_KEYS + 1 }, (_, index) => [
+            String(index),
+            true,
+          ]),
+        ),
+      }),
+    ).toThrow();
+    expect(() =>
+      editionInputSchema.parse({
+        editionHash: 'a'.repeat(64),
+        manifest: { text: 'x'.repeat(MAX_EDITION_MANIFEST_BYTES) },
+      }),
+    ).toThrow(/maximum size/u);
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() =>
+      editionInputSchema.parse({ editionHash: 'a'.repeat(64), manifest: cyclic }),
+    ).toThrow(/serializable/u);
   });
 });
