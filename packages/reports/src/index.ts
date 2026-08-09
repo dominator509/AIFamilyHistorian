@@ -1,18 +1,22 @@
 import { z } from 'zod';
 
+export const MAX_READINESS_ITEMS = 256;
+export const MAX_READINESS_LABEL_CHARS = 256;
+export const MAX_READINESS_REASON_CHARS = 2_048;
+
 const reportItemSchema = z.object({
   id: z.uuid(),
-  label: z.string().min(1),
+  label: z.string().min(1).max(MAX_READINESS_LABEL_CHARS),
   status: z.enum(['ready', 'blocked']),
-  reason: z.string().min(1).optional(),
+  reason: z.string().min(1).max(MAX_READINESS_REASON_CHARS).optional(),
 });
 
 export const releaseReadinessReportSchema = z.object({
   editionId: z.uuid(),
   editionHash: z.string().regex(/^[a-f0-9]{64}$/u),
-  rights: z.array(reportItemSchema).min(1),
-  consents: z.array(reportItemSchema).min(1),
-  citations: z.array(reportItemSchema).min(1),
+  rights: z.array(reportItemSchema).min(1).max(MAX_READINESS_ITEMS),
+  consents: z.array(reportItemSchema).min(1).max(MAX_READINESS_ITEMS),
+  citations: z.array(reportItemSchema).min(1).max(MAX_READINESS_ITEMS),
 });
 export type ReleaseReadinessReport = z.infer<typeof releaseReadinessReportSchema>;
 

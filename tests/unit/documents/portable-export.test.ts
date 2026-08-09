@@ -2,6 +2,9 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
   assertReleaseReady,
+  MAX_READINESS_ITEMS,
+  MAX_READINESS_LABEL_CHARS,
+  MAX_READINESS_REASON_CHARS,
   type ReleaseReadinessReport,
 } from '../../../packages/reports/src/index.js';
 import {
@@ -143,6 +146,44 @@ describe('portable documents and release reports', () => {
       ],
     };
     expect(() => assertReleaseReady(report)).toThrow(/too_small|array/u);
+  });
+
+  it('bounds readiness item text and category cardinality', () => {
+    const item = {
+      id: '01900000-0000-7000-8000-000000000004',
+      label: 'rights',
+      status: 'ready' as const,
+    };
+    const report: ReleaseReadinessReport = {
+      editionId: '01900000-0000-7000-8000-000000000003',
+      editionHash: 'a'.repeat(64),
+      rights: [item],
+      consents: [item],
+      citations: [item],
+    };
+    expect(() =>
+      assertReleaseReady({
+        ...report,
+        rights: [{ ...item, label: 'x'.repeat(MAX_READINESS_LABEL_CHARS + 1) }],
+      }),
+    ).toThrow(/too_big|max/u);
+    expect(() =>
+      assertReleaseReady({
+        ...report,
+        consents: [
+          { ...item, reason: 'x'.repeat(MAX_READINESS_REASON_CHARS + 1), status: 'blocked' },
+        ],
+      }),
+    ).toThrow(/too_big|max/u);
+    expect(() =>
+      assertReleaseReady({
+        ...report,
+        citations: Array.from({ length: MAX_READINESS_ITEMS + 1 }, (_, index) => ({
+          ...item,
+          id: `01900000-0000-7000-8000-${String(index + 100).padStart(12, '0')}`,
+        })),
+      }),
+    ).toThrow(/too_big|max/u);
   });
 
   it('bounds PDF and EPUB document materialization', () => {

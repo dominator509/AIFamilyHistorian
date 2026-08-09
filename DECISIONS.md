@@ -541,3 +541,7 @@ Annual preservation reviews now validate finding objects through an unknown-safe
 ### ADR-143: Enforce quotation offset fidelity
 
 Quotation source spans now require `endOffset - startOffset` to equal the quotation text length after safe-integer and ordering checks. This prevents a structurally valid but semantically inconsistent span from being persisted or used as provenance evidence; the live-fire cited-memoir fixture now derives offsets from the source text.
+
+### ADR-144: Bound publication readiness reports
+
+Publication readiness items now cap labels at 256 characters, reasons at 2,048 characters, and each rights, consent, or citation category at 256 items. The release gate remains fail-closed while preventing direct callers from creating oversized readiness diagnostics or unbounded review collections.
