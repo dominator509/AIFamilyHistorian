@@ -353,3 +353,7 @@ Privacy, export, and narration intake handlers now verify and lock their active 
 ### ADR-096: Gate production on hosted worker sandbox evidence
 
 The preflight table now requires `WORKER_SANDBOX_EVIDENCE_FILE` and verifies that the referenced attestation exists and is non-empty. Local Compose declarations prove development isolation only; production release must additionally retain current evidence for syscall, network-egress, cgroup/PID, read-only-root, and bounded-scratch enforcement. No placeholder artifact is created, so this gate remains unresolved until an operator supplies genuine staging or production-equivalent evidence.
+
+### ADR-097: Keep production-readiness status synchronized with evidence
+
+`PRODUCTION_READINESS.md` now distinguishes engineering continuation from production approval and records the current 16-blocker preflight result, the locally verified test counts, the newly enforced hosted sandbox attestation, and the remaining fulfillment/native-auth work. Historical checkpoint claims are not reused as current release evidence.
