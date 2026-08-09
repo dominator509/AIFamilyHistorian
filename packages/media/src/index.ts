@@ -169,7 +169,7 @@ export function buildMediaPipelinePlan(descriptor: MediaDescriptor): readonly Pi
     {
       name: 'malware-scan',
       tool: 'clamscan',
-      args: ['--fdpass', '--no-summary', media.objectKey],
+      args: ['--no-summary', media.objectKey],
       timeoutSeconds: 300,
       inputObjectKey: media.objectKey,
     },

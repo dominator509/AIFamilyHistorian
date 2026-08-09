@@ -49,6 +49,7 @@ describe('media pipeline boundaries', () => {
       'metadata-probe',
       'waveform-derivative',
     ]);
+    expect(plan[0]?.args).toEqual(['--no-summary', descriptor.objectKey]);
     for (const step of plan) {
       expect(step.args.join(' ')).not.toMatch(/[;&|`$]/u);
       expect(step.timeoutSeconds).toBeGreaterThan(0);

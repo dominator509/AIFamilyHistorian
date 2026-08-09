@@ -282,3 +282,7 @@
 2026-08-09T00:37:00Z | codex | HARDENING-50 | FIX_APPLIED | ApprovedPublicationEdition_requires_current_edition_hash_and_buildPublicationBundle_rejects_invalid_or_stale_readiness_hash
 2026-08-09T00:38:00Z | codex | HARDENING-50 | LOCAL_VERIFICATION | publishing_focus_3_tests_passed; full_unit24_files_83_tests_passed; typecheck_lint_format_passed
 2026-08-09T00:40:00Z | codex | HARDENING-50 | FINAL_VERIFICATION | build_ok_security_check_ok_secret_scan_ok_remote_equal_910434c
+2026-08-09T00:45:00Z | codex | HARDENING-51 | COMMAND_FAILED | aggregate_verify_exit_1_preflight_resend_probe_failed_and_15_unresolved_external_requirements; no_local_source_mutation
+2026-08-09T00:46:00Z | codex | HARDENING-51 | SECURITY_FINDING | worker_image_clamscan_rejected_pipeline_fdpass_argument_exit_2; installed_clamscan_accepts_no_summary_but_signature_database_is_absent
+2026-08-09T00:47:00Z | codex | HARDENING-51 | FIX_APPLIED | media_pipeline_clamscan_plan_removed_unsupported_fdpass_flag; unit_asserts_exact_supported_argv
+2026-08-09T00:48:00Z | codex | HARDENING-51 | LOCAL_VERIFICATION | media_unit8_tests_passed; typecheck_lint_format_passed; worker_clamscan_no_summary_reached_missing_database_fail_closed_error

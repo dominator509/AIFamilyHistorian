@@ -221,3 +221,7 @@ Narration intake now joins the authoritative voice-authorization row inside the 
 ### ADR-063: Bind publication readiness to the current edition hash
 
 The publication bundle contract now requires the authoritative current edition hash separately from the readiness report and rejects invalid or mismatched hashes before rendering. This prevents a readiness report for an older or unrelated edition revision from authorizing artifacts, while preserving the separate domain approval and rights gates.
+
+### ADR-064: Use the installed ClamAV client contract
+
+The media pipeline now invokes `clamscan` with only its supported `--no-summary` option. The prior `--fdpass` argument was rejected by the installed `clamscan` binary and would make every media scan fail before inspecting content. Signature-database availability remains a separate fail-closed worker release dependency; the image must not claim a successful malware scan without usable definitions.
