@@ -44,4 +44,17 @@ describe('observability redaction', () => {
       apiKey: '[SECRET_REDACTED]',
     });
   });
+
+  it('normalizes telemetry keys and preserves special object keys safely', () => {
+    const input = JSON.parse(
+      '{"Authorization":"provider-token-fixture","API_KEY":"ordinary-value","source_text":"private story","__proto__":"not-a-prototype"}',
+    ) as Record<string, unknown>;
+    const redacted = redactTelemetryValue(input) as Record<string, unknown>;
+    expect(redacted).toEqual(
+      JSON.parse(
+        '{"Authorization":"[SECRET_REDACTED]","API_KEY":"[SECRET_REDACTED]","source_text":"[CONTENT_REDACTED]","__proto__":"not-a-prototype"}',
+      ),
+    );
+    expect(Object.prototype.hasOwnProperty.call(redacted, '__proto__')).toBe(true);
+  });
 });

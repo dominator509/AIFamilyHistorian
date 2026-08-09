@@ -24,6 +24,11 @@ const SENSITIVE_KEYS = new Set([
   'dsn',
 ]);
 
+const normalizeTelemetryKey = (key: string): string =>
+  key.replace(/[^a-z0-9]/giu, '').toLowerCase();
+const NORMALIZED_CONTENT_KEYS = new Set([...CONTENT_KEYS].map(normalizeTelemetryKey));
+const NORMALIZED_SENSITIVE_KEYS = new Set([...SENSITIVE_KEYS].map(normalizeTelemetryKey));
+
 export interface TelemetryContext {
   readonly service: string;
   readonly environment: string;
@@ -53,8 +58,9 @@ export interface MetricSample {
 
 export function redactTelemetryValue(value: unknown, key?: string, depth = 0): unknown {
   if (depth > 8) return '[REDACTED_DEPTH]';
-  if (key && CONTENT_KEYS.has(key)) return '[CONTENT_REDACTED]';
-  if (key && SENSITIVE_KEYS.has(key)) return '[SECRET_REDACTED]';
+  const normalizedKey = key ? normalizeTelemetryKey(key) : undefined;
+  if (normalizedKey && NORMALIZED_CONTENT_KEYS.has(normalizedKey)) return '[CONTENT_REDACTED]';
+  if (normalizedKey && NORMALIZED_SENSITIVE_KEYS.has(normalizedKey)) return '[SECRET_REDACTED]';
   if (typeof value === 'string')
     return value
       .replaceAll(PRIVATE_KEY_PATTERN, '[SECRET_REDACTED]')
@@ -65,7 +71,12 @@ export function redactTelemetryValue(value: unknown, key?: string, depth = 0): u
   if (value && typeof value === 'object') {
     const result: Record<string, unknown> = {};
     for (const [childKey, childValue] of Object.entries(value))
-      result[childKey] = redactTelemetryValue(childValue, childKey, depth + 1);
+      Object.defineProperty(result, childKey, {
+        configurable: true,
+        enumerable: true,
+        value: redactTelemetryValue(childValue, childKey, depth + 1),
+        writable: true,
+      });
     return result;
   }
   return value;

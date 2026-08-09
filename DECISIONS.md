@@ -429,3 +429,7 @@ The Redis AI result-cache adapter now enforces a 16 MiB UTF-8 serialized-envelop
 ### ADR-115: Fail closed on unsafe AI canonicalization
 
 The AI gateway canonical JSON serializer now rejects cycles, unsupported JSON values, non-finite numbers, nesting deeper than 32 levels, and UTF-8 output larger than 16 MiB. Canonical input is used for prompt-injection inspection, cache keys, stable prefixes, and dynamic provider payloads, so ambiguous or unbounded values must fail before provider dispatch rather than relying on `JSON.stringify` coercion or risking recursive exhaustion.
+
+### ADR-116: Normalize telemetry redaction keys
+
+Telemetry redaction now compares normalized key forms, so casing and separators cannot bypass content or secret-field protections (`Authorization`, `API_KEY`, and `source_text` are treated like their canonical forms). Object output uses property definitions rather than assignment so a telemetry key named `__proto__` remains data and cannot mutate the result prototype.
