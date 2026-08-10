@@ -7,6 +7,7 @@ sh scripts/format-check.sh
 sh scripts/typecheck.sh
 sh scripts/test-unit.sh
 sh scripts/test-integration.sh
+corepack pnpm --filter @family-historian/database verify
 sh scripts/test-e2e.sh
 sh scripts/accessibility-check.sh
 sh scripts/build.sh

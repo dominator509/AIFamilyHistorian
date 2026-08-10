@@ -19,6 +19,7 @@ const [
   envExample,
   verifyWorkflow,
   releaseWorkflow,
+  verifyScript,
 ] = await Promise.all([
   readFile('apps/api/src/app.ts', 'utf8'),
   readFile('compose.yaml', 'utf8'),
@@ -36,6 +37,7 @@ const [
   readFile('.env.example', 'utf8'),
   readFile('.github/workflows/verify.yml', 'utf8'),
   readFile('.github/workflows/release.yml', 'utf8'),
+  readFile('scripts/verify.sh', 'utf8'),
 ]);
 const requiredControls = ['redact', 'bodyLimit', 'helmet', 'corsOrigins', 'credentials: false'];
 for (const control of requiredControls) {
@@ -127,6 +129,8 @@ for (const [name, workflow] of [
 }
 if (!releaseWorkflow.includes('flyctl deploy --config fly.worker.toml'))
   throw new Error('release workflow must deploy the dedicated worker manifest');
+if (!verifyScript.includes('corepack pnpm --filter @family-historian/database verify'))
+  throw new Error('canonical verification must run the database privilege verifier');
 if (
   !releaseWorkflow.includes('WORKER_IMAGE: ghcr.io/${{ github.repository }}-worker') ||
   !releaseWorkflow.includes('docker build --target worker-runtime --tag "$WORKER_IMAGE:') ||
