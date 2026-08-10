@@ -32,6 +32,7 @@ trap 'rm -f "$tmp"' EXIT
   echo 'SMTP_HOST=localhost'
   echo 'SMTP_PORT=11025'
   echo 'MAILPIT_HTTP_URL=http://localhost:18025'
+  echo 'LOCAL_TELEMETRY_HEALTH_URL=http://127.0.0.1:13134/'
   echo 'CORS_ALLOWED_ORIGINS='
   printf 'DATABASE_URL=postgresql://family_historian:%s@127.0.0.1:35432/family_historian\n' "$postgres_password"
   printf 'WORKER_DATABASE_URL=postgresql://family_historian_worker:%s@127.0.0.1:35432/family_historian\n' "$worker_postgres_password"

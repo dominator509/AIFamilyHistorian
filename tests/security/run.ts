@@ -195,6 +195,7 @@ for (const [name, content, controls] of [
     [
       'WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING=0',
       'WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256',
+      'LOCAL_TELEMETRY_HEALTH_URL=http://127.0.0.1:13134/',
     ],
   ],
   [
