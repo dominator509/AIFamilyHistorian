@@ -143,6 +143,15 @@ if (
   ].every((path) => releaseWorkflow.includes(path))
 )
   throw new Error('release workflow must materialize every canonical compliance evidence file');
+if (
+  ![
+    "printf 'WORKER_SANDBOX_EVIDENCE_FILE=%s\\n'",
+    "printf 'WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE=%s\\n'",
+    "printf 'LEGAL_APPROVAL_FILE=%s\\n'",
+    '>> .env',
+  ].every((control) => releaseWorkflow.includes(control))
+)
+  throw new Error('release workflow must persist ephemeral evidence paths before preflight');
 if (!verifyScript.includes('corepack pnpm --filter @family-historian/database verify'))
   throw new Error('canonical verification must run the database privilege verifier');
 if (

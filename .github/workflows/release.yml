@@ -101,6 +101,15 @@ jobs:
           printf '%s' "$INSURANCE_EVIDENCE_CONTENT" > "$INSURANCE_EVIDENCE_FILE"
           printf '%s' "$DPIA_APPROVAL_CONTENT" > "$DPIA_APPROVAL_FILE"
           printf '%s' "$RETENTION_APPROVAL_CONTENT" > "$RETENTION_APPROVAL_FILE"
+          {
+            printf 'WORKER_SANDBOX_EVIDENCE_FILE=%s\n' "$WORKER_SANDBOX_EVIDENCE_FILE"
+            printf 'WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE=%s\n' "$WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE"
+            printf 'LEGAL_APPROVAL_FILE=%s\n' "$LEGAL_APPROVAL_FILE"
+            printf 'VENDOR_RISK_APPROVAL_FILE=%s\n' "$VENDOR_RISK_APPROVAL_FILE"
+            printf 'INSURANCE_EVIDENCE_FILE=%s\n' "$INSURANCE_EVIDENCE_FILE"
+            printf 'DPIA_APPROVAL_FILE=%s\n' "$DPIA_APPROVAL_FILE"
+            printf 'RETENTION_APPROVAL_FILE=%s\n' "$RETENTION_APPROVAL_FILE"
+          } >> .env
           mkdir -p compliance/evidence
           printf '%s' "$LEGAL_APPROVAL_CONTENT" > compliance/evidence/counsel-approval.md
           printf '%s' "$VENDOR_RISK_APPROVAL_CONTENT" > compliance/evidence/deepseek-vendor-review.md

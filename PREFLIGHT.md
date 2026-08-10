@@ -30,7 +30,7 @@ This is the only interactive preparation step. Obtain every REQUIRED item, copy 
 
 Local tools required: git, awk, grep, sed, curl, jq, node 24, pnpm 10 through Corepack, Docker, PostgreSQL client 17, ffmpeg, ffprobe, exiftool, convert or magick, clamscan, OCRmyPDF, and Python 3.12 for local media utilities.
 
-Release CI keeps approval and sandbox evidence out of Git: it maps the `*_CONTENT` GitHub secrets and `WORKER_SANDBOX_EVIDENCE` into ephemeral runner files, materializes the seven canonical `compliance/evidence/*` paths required by the production-readiness script inside the ephemeral checkout, then runs the same bounded probes and production-readiness gate. Empty or missing secrets remain failures.
+Release CI keeps approval and sandbox evidence out of Git: it maps the `*_CONTENT` GitHub secrets and `WORKER_SANDBOX_EVIDENCE` into ephemeral runner files, persists those ephemeral paths into the generated `.env` before preflight sources it, materializes the seven canonical `compliance/evidence/*` paths required by the production-readiness script inside the ephemeral checkout, then runs the same bounded probes and production-readiness gate. Empty or missing secrets remain failures.
 
 The production-bound sandbox probe also sets `WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING=1` and requires the expected worker image digest, Fly app, and worker identity; an attestation that is validly signed for another deployment is rejected.
 
