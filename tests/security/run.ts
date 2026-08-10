@@ -13,6 +13,7 @@ const [
   workerSessionRevokeMigration,
   workerEvidenceProbe,
   workerEvidenceShell,
+  workerEnvGenerator,
   databaseVerify,
   deployment,
   envExample,
@@ -29,6 +30,7 @@ const [
   readFile('drizzle/0015_revoke_worker_session_access.sql', 'utf8'),
   readFile('scripts/probes/worker-sandbox-evidence.mjs', 'utf8'),
   readFile('scripts/probes/worker_sandbox_evidence.sh', 'utf8'),
+  readFile('scripts/generate-local-env.sh', 'utf8'),
   readFile('packages/database/src/verify.ts', 'utf8'),
   readFile('DEPLOYMENT.md', 'utf8'),
   readFile('.env.example', 'utf8'),
@@ -169,6 +171,11 @@ for (const [name, content, controls] of [
     ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE', 'createPublicKey', 'verify('],
   ],
   ['worker evidence shell', workerEvidenceShell, ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE']],
+  [
+    'local environment generator sandbox trust anchor',
+    workerEnvGenerator,
+    ['WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256'],
+  ],
   [
     'environment example',
     envExample,
