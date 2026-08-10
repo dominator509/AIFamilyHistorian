@@ -102,6 +102,11 @@ jobs:
           printf '%s' "$DPIA_APPROVAL_CONTENT" > "$DPIA_APPROVAL_FILE"
           printf '%s' "$RETENTION_APPROVAL_CONTENT" > "$RETENTION_APPROVAL_FILE"
           mkdir -p compliance/evidence
+          printf '%s' "$LEGAL_APPROVAL_CONTENT" > compliance/evidence/counsel-approval.md
+          printf '%s' "$VENDOR_RISK_APPROVAL_CONTENT" > compliance/evidence/deepseek-vendor-review.md
+          printf '%s' "$DPIA_APPROVAL_CONTENT" > compliance/evidence/dpia-approved.md
+          printf '%s' "$INSURANCE_EVIDENCE_CONTENT" > compliance/evidence/insurance-certificate.md
+          printf '%s' "$RETENTION_APPROVAL_CONTENT" > compliance/evidence/retention-schedule-approved.md
           printf '%s' "$DATA_REGION_EVIDENCE_CONTENT" > compliance/evidence/data-region-verification.md
           printf '%s' "$DATA_BROKER_EVIDENCE_CONTENT" > compliance/evidence/data-broker-determination.md
           python - <<'PY'

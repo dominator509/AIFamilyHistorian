@@ -131,6 +131,18 @@ for (const [name, workflow] of [
 }
 if (!releaseWorkflow.includes('flyctl deploy --config fly.worker.toml'))
   throw new Error('release workflow must deploy the dedicated worker manifest');
+if (
+  ![
+    'compliance/evidence/counsel-approval.md',
+    'compliance/evidence/deepseek-vendor-review.md',
+    'compliance/evidence/dpia-approved.md',
+    'compliance/evidence/insurance-certificate.md',
+    'compliance/evidence/retention-schedule-approved.md',
+    'compliance/evidence/data-region-verification.md',
+    'compliance/evidence/data-broker-determination.md',
+  ].every((path) => releaseWorkflow.includes(path))
+)
+  throw new Error('release workflow must materialize every canonical compliance evidence file');
 if (!verifyScript.includes('corepack pnpm --filter @family-historian/database verify'))
   throw new Error('canonical verification must run the database privilege verifier');
 if (
