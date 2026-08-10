@@ -97,10 +97,16 @@ try {
     worker.rolbypassrls
   )
     throw new Error('worker database role is not least privileged');
-  const workerQueuePrivilege = await pool.query<{ has_privilege: boolean }>(
-    "select has_table_privilege('family_historian_worker', 'job_outbox', 'SELECT,UPDATE') as has_privilege",
+  const workerQueuePrivilege = await pool.query<{
+    can_read: boolean;
+    can_update: boolean;
+  }>(
+    `select has_table_privilege('family_historian_worker', 'job_outbox', 'SELECT') as can_read,
+            has_table_privilege('family_historian_worker', 'job_outbox', 'UPDATE') as can_update`,
   );
-  if (workerQueuePrivilege.rows[0]?.has_privilege)
+  if (!workerQueuePrivilege.rows[0]?.can_read)
+    throw new Error('worker database role lacks scoped queue read access');
+  if (workerQueuePrivilege.rows[0]?.can_update)
     throw new Error('worker database role has direct queue privileges');
   const workerProcedurePrivilege = await pool.query<{ has_privilege: boolean }>(
     `select has_function_privilege(
