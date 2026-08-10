@@ -1,4 +1,4 @@
-import { createPublicKey, verify } from 'node:crypto';
+import { createHash, createPublicKey, verify } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -123,6 +123,18 @@ async function main() {
     publicKey = createPublicKey(publicKeyBytes);
   } catch {
     throw new Error('worker sandbox evidence: public key is invalid');
+  }
+  const expectedPublicKeySha256 = process.env.WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256;
+  if (expectedPublicKeySha256 !== undefined) {
+    if (!/^[0-9a-f]{64}$/iu.test(expectedPublicKeySha256))
+      throw new Error('worker sandbox evidence: expected public key fingerprint is invalid');
+    const actualPublicKeySha256 = createHash('sha256')
+      .update(publicKey.export({ type: 'spki', format: 'der' }))
+      .digest('hex');
+    if (actualPublicKeySha256 !== expectedPublicKeySha256.toLowerCase())
+      throw new Error(
+        'worker sandbox evidence: public key fingerprint does not match trust anchor',
+      );
   }
   let signature;
   try {

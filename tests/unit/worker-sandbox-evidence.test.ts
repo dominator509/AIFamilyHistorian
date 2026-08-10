@@ -1,4 +1,4 @@
-import { generateKeyPairSync, sign } from 'node:crypto';
+import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -34,6 +34,9 @@ const valid = {
 const buildSignedPayload = signedAttestationPayload as unknown as (input: typeof valid) => string;
 const signedPayload = buildSignedPayload(valid);
 valid.signature = sign(null, Buffer.from(signedPayload, 'utf8'), privateKey).toString('base64url');
+const publicKeyFingerprint = createHash('sha256')
+  .update(publicKey.export({ type: 'spki', format: 'der' }))
+  .digest('hex');
 
 function runProbe(value: unknown): string {
   const directory = mkdtempSync(join(tmpdir(), 'worker-sandbox-evidence-'));
@@ -97,6 +100,42 @@ describe('worker sandbox attestation', () => {
           encoding: 'utf8',
         }),
       ).toThrow();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  it('requires the operator-pinned public-key fingerprint for production-bound evidence', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'worker-sandbox-key-fingerprint-'));
+    const filePath = join(directory, 'attestation.json');
+    const publicKeyPath = join(directory, 'attestation-public-key.pem');
+    writeFileSync(filePath, JSON.stringify(valid));
+    writeFileSync(publicKeyPath, publicKey.export({ type: 'spki', format: 'pem' }));
+    try {
+      const baseEnv = {
+        ...process.env,
+        WORKER_SANDBOX_EVIDENCE_NOW: String(now),
+        WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE: publicKeyPath,
+        WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING: '1',
+        WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST: valid.deployment_image_digest,
+        WORKER_SANDBOX_EVIDENCE_EXPECTED_APP: valid.deployment_app,
+        WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID: valid.deployment_worker_id,
+      };
+      expect(() =>
+        execFileSync('node', ['scripts/probes/worker-sandbox-evidence.mjs', filePath], {
+          env: { ...baseEnv, WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256: 'b'.repeat(64) },
+          encoding: 'utf8',
+        }),
+      ).toThrow();
+      expect(
+        execFileSync('node', ['scripts/probes/worker-sandbox-evidence.mjs', filePath], {
+          env: {
+            ...baseEnv,
+            WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256: publicKeyFingerprint,
+          },
+          encoding: 'utf8',
+        }),
+      ).toContain('structured attestation valid');
     } finally {
       rmSync(directory, { recursive: true, force: true });
     }

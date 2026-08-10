@@ -179,6 +179,7 @@ jobs:
           WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST: ${{ steps.publish-digests.outputs.worker_digest }}
           WORKER_SANDBOX_EVIDENCE_EXPECTED_APP: ${{ secrets.FLY_APP_STAGING }}
           WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID: worker-runtime
+          WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256: ${{ secrets.WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_SHA256 }}
         run: sh scripts/probes/worker_sandbox_evidence.sh
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Sign immutable image digests

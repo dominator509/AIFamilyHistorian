@@ -178,6 +178,7 @@ for (const [name, content, controls] of [
       'WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST',
       'WORKER_SANDBOX_EVIDENCE_EXPECTED_APP',
       'WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256',
     ],
   ],
   [
@@ -189,6 +190,7 @@ for (const [name, content, controls] of [
       'Bind sandbox evidence to the worker image and app',
       'WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING',
       'WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256',
     ],
   ],
 ] as const) {
