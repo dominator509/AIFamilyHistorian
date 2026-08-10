@@ -15,6 +15,7 @@ const [
   workerEvidenceShell,
   workerEnvGenerator,
   preflightScript,
+  gitignore,
   databaseVerify,
   deployment,
   envExample,
@@ -34,6 +35,7 @@ const [
   readFile('scripts/probes/worker_sandbox_evidence.sh', 'utf8'),
   readFile('scripts/generate-local-env.sh', 'utf8'),
   readFile('scripts/preflight.sh', 'utf8'),
+  readFile('.gitignore', 'utf8'),
   readFile('packages/database/src/verify.ts', 'utf8'),
   readFile('DEPLOYMENT.md', 'utf8'),
   readFile('.env.example', 'utf8'),
@@ -217,6 +219,7 @@ for (const [name, content, controls] of [
       'required when sandbox binding is enabled',
     ],
   ],
+  ['sensitive evidence gitignore', gitignore, ['compliance/evidence/*']],
   [
     'environment example',
     envExample,

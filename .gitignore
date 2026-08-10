@@ -28,6 +28,7 @@ test-results/
 credentials*.json
 service-account*.json
 secrets/
+compliance/evidence/*
 .cache/
 .turbo/
 .pnpm-store/
