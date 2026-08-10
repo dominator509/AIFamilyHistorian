@@ -14,6 +14,8 @@ import {
 
 if (!process.env.DATABASE_URL) process.loadEnvFile('.env');
 const pool = createPool();
+if (!process.env.WORKER_DATABASE_URL) throw new Error('WORKER_DATABASE_URL is required');
+const workerPool = createPool(process.env.WORKER_DATABASE_URL);
 const logger: WorkerLogger = {
   info: () => undefined,
   error: () => undefined,
@@ -40,7 +42,7 @@ describe('SQL outbox worker dispatcher', () => {
       ],
     );
     const dispatcher = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       handlers: new Map([
         [
@@ -48,7 +50,7 @@ describe('SQL outbox worker dispatcher', () => {
           async (jobContext) =>
             jobContext.withTenant(async (client) => {
               const result = await client.query<{ current_organization_id: string }>(
-                "select current_setting('app.current_organization_id') as current_organization_id",
+                'select current_organization_id() as current_organization_id',
               );
               expect(result.rows[0]?.current_organization_id).toBe(context.organizationId);
             }),
@@ -83,7 +85,7 @@ describe('SQL outbox worker dispatcher', () => {
       ],
     );
     const dispatcher = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       maxAttempts: 2,
       handlers: new Map([
@@ -133,7 +135,7 @@ describe('SQL outbox worker dispatcher', () => {
       [jobId, context.organizationId, context.familyArchiveId, jobType, { aggregateId: uuidV7() }],
     );
     const dispatcher = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       handlers: new Map(),
       jobTypes: [jobType],
@@ -172,7 +174,7 @@ describe('SQL outbox worker dispatcher', () => {
       release = resolve;
     });
     const dispatcher = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       handlers: new Map([
         [
@@ -218,7 +220,7 @@ describe('SQL outbox worker dispatcher', () => {
     );
     const observedTokens: string[] = [];
     const dispatcher = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       handlers: new Map([
         [
           jobType,
@@ -263,7 +265,7 @@ describe('SQL outbox worker dispatcher', () => {
       release = resolve;
     });
     const first = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       leaseMilliseconds: 1_500,
       handlers: new Map([
@@ -284,7 +286,7 @@ describe('SQL outbox worker dispatcher', () => {
     await enteredPromise;
     await new Promise((resolve) => setTimeout(resolve, 1_800));
     const second = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       leaseMilliseconds: 1_500,
       handlers: new Map([[jobType, () => Promise.resolve()]]),
@@ -325,7 +327,7 @@ describe('SQL outbox worker dispatcher', () => {
         ],
       );
     const dispatcher = new OutboxDispatcher({
-      pool,
+      pool: workerPool,
       logger,
       handlers: new Map([[jobType, () => Promise.resolve()]]),
       jobTypes: [jobType],

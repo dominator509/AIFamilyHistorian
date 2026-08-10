@@ -100,8 +100,25 @@ try {
   const workerQueuePrivilege = await pool.query<{ has_privilege: boolean }>(
     "select has_table_privilege('family_historian_worker', 'job_outbox', 'SELECT,UPDATE') as has_privilege",
   );
-  if (!workerQueuePrivilege.rows[0]?.has_privilege)
-    throw new Error('worker database role lacks queue privileges');
+  if (workerQueuePrivilege.rows[0]?.has_privilege)
+    throw new Error('worker database role has direct queue privileges');
+  const workerProcedurePrivilege = await pool.query<{ has_privilege: boolean }>(
+    `select has_function_privilege(
+       'family_historian_worker',
+       'worker_claim_job(integer,text[],uuid[],uuid)',
+       'EXECUTE'
+     ) and has_function_privilege(
+       'family_historian_worker',
+       'worker_set_scope(uuid,uuid)',
+       'EXECUTE'
+     ) and has_function_privilege(
+       'family_historian_worker',
+       'worker_complete_job(uuid,uuid)',
+       'EXECUTE'
+     ) as has_privilege`,
+  );
+  if (!workerProcedurePrivilege.rows[0]?.has_privilege)
+    throw new Error('worker database role lacks scoped queue procedures');
   const workerDataPrivilege = await pool.query<{ has_privilege: boolean }>(
     "select has_table_privilege('family_historian_worker', 'people', 'SELECT') as has_privilege",
   );

@@ -149,16 +149,7 @@ export class OutboxDispatcher {
     const client = await this.#pool.connect();
     try {
       await client.query('begin');
-      const filters: string[] = [];
-      const queryValues: unknown[] = [this.#leaseMilliseconds];
-      if (this.#jobTypes.length > 0) {
-        filters.push(`and job_type = any($${queryValues.length + 1}::text[])`);
-        queryValues.push(this.#jobTypes);
-      }
-      if (this.#archiveIds.length > 0) {
-        filters.push(`and family_archive_id = any($${queryValues.length + 1}::uuid[])`);
-        queryValues.push(this.#archiveIds);
-      }
+      const lockToken = uuidV7();
       const result = await client.query<{
         id: string;
         organization_id: string;
@@ -166,41 +157,22 @@ export class OutboxDispatcher {
         job_type: string;
         payload: unknown;
         attempt_count: number;
+        lock_token: string;
       }>(
-        `select id, organization_id, family_archive_id, job_type, payload, attempt_count
-           from job_outbox
-          where available_at <= now()
-            and (
-              (
-                status in ('queued', 'retryable_failed')
-                and (locked_at is null or locked_at < now() - ($1 * interval '1 millisecond'))
-              )
-              or (
-                status = 'running'
-                and locked_at < now() - ($1 * interval '1 millisecond')
-              )
-            )
-          ${filters.join('\n          ')}
-          order by created_at, id
-          for update skip locked
-          limit 1`,
-        queryValues,
+        `select id, organization_id, family_archive_id, job_type, payload, attempt_count, lock_token
+           from worker_claim_job($1::integer, $2::text[], $3::uuid[], $4::uuid[])`,
+        [
+          this.#leaseMilliseconds,
+          this.#jobTypes.length > 0 ? this.#jobTypes : null,
+          this.#archiveIds.length > 0 ? this.#archiveIds : null,
+          lockToken,
+        ],
       );
       const row = result.rows[0];
       if (!row) {
         await client.query('commit');
         return null;
       }
-      const lockToken = uuidV7();
-      const updated = await client.query(
-        `update job_outbox
-            set status = 'running', locked_at = now(), lock_token = $2, attempt_count = attempt_count + 1,
-                last_error_code = null
-          where id = $1
-          returning id`,
-        [row.id, lockToken],
-      );
-      if (updated.rowCount !== 1) throw new Error('worker job claim was lost');
       await client.query('commit');
       const claimedJob = Object.freeze({
         id: row.id,
@@ -209,7 +181,7 @@ export class OutboxDispatcher {
         jobType: row.job_type,
         payload: row.payload,
         attemptCount: row.attempt_count + 1,
-        lockToken,
+        lockToken: row.lock_token,
       });
       this.#logger.info(
         { jobId: claimedJob.id, jobType: claimedJob.jobType },
@@ -233,14 +205,9 @@ export class OutboxDispatcher {
     const client = await this.#pool.connect();
     try {
       await client.query('begin');
-      await client.query("select set_config('app.current_organization_id', $1, true)", [
-        job.organizationId,
-      ]);
-      await client.query("select set_config('app.current_archive_id', $1, true)", [
-        job.familyArchiveId ?? '',
-      ]);
-      await client.query('set local role family_historian_runtime');
+      await client.query('select worker_set_scope($1::uuid, $2::uuid)', [job.id, job.lockToken]);
       const result = await operation(client);
+      await client.query('select worker_clear_scope()');
       await client.query('commit');
       return result;
     } catch (error) {
@@ -252,13 +219,11 @@ export class OutboxDispatcher {
   }
 
   private async complete(job: OutboxJob): Promise<void> {
-    const result = await this.#pool.query(
-      `update job_outbox
-          set status = 'completed', completed_at = now(), locked_at = null, lock_token = null, last_error_code = null
-        where id = $1 and status = 'running' and lock_token = $2`,
+    const result = await this.#pool.query<{ updated: boolean }>(
+      'select worker_complete_job($1::uuid, $2::uuid) as updated',
       [job.id, job.lockToken],
     );
-    if (result.rowCount !== 1) throw new Error('worker completion update was lost');
+    if (!result.rows[0]?.updated) throw new Error('worker completion update was lost');
   }
 
   private startLeaseHeartbeat(job: OutboxJob): { stop: () => void } {
@@ -294,30 +259,22 @@ export class OutboxDispatcher {
   }
 
   private async renewLease(job: OutboxJob): Promise<void> {
-    const result = await this.#pool.query(
-      `update job_outbox
-          set locked_at = now()
-        where id = $1 and status = 'running' and lock_token = $2`,
+    const result = await this.#pool.query<{ updated: boolean }>(
+      'select worker_renew_job($1::uuid, $2::uuid) as updated',
       [job.id, job.lockToken],
     );
-    if (result.rowCount !== 1) throw new Error('worker lease renewal update was lost');
+    if (!result.rows[0]?.updated) throw new Error('worker lease renewal update was lost');
   }
 
   private async fail(job: OutboxJob, failure: { code: string; retryable: boolean }): Promise<void> {
     const terminal = !failure.retryable || job.attemptCount >= this.#maxAttempts;
     const status = terminal ? 'terminal_failed' : 'retryable_failed';
     const delaySeconds = Math.min(300, 2 ** Math.max(0, job.attemptCount - 1));
-    const result = await this.#pool.query(
-      `update job_outbox
-          set status = $2::job_status,
-              available_at = now() + ($3 * interval '1 second'),
-              locked_at = null,
-              lock_token = null,
-              last_error_code = $4
-        where id = $1 and status = 'running' and lock_token = $5`,
-      [job.id, status, delaySeconds, failure.code.slice(0, 120), job.lockToken],
+    const result = await this.#pool.query<{ updated: boolean }>(
+      'select worker_fail_job($1::uuid, $2::uuid, $3::job_status, $4::integer, $5::text) as updated',
+      [job.id, job.lockToken, status, delaySeconds, failure.code.slice(0, 120)],
     );
-    if (result.rowCount !== 1) throw new Error('worker failure update was lost');
+    if (!result.rows[0]?.updated) throw new Error('worker failure update was lost');
   }
 
   private failure(error: unknown): { code: string; retryable: boolean } {
