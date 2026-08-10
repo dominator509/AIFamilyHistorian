@@ -32,6 +32,8 @@ Local tools required: git, awk, grep, sed, curl, jq, node 24, pnpm 10 through Co
 
 Release CI keeps approval and sandbox evidence out of Git: it maps the `*_CONTENT` GitHub secrets and `WORKER_SANDBOX_EVIDENCE` into ephemeral runner files, then runs the same bounded probes and production-readiness gate. Empty or missing secrets remain failures.
 
+The production-bound sandbox probe also sets `WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING=1` and requires the expected worker image digest, Fly app, and worker identity; an attestation that is validly signed for another deployment is rejected.
+
 The sandbox signature is Ed25519 over canonical JSON containing `schema_version`, `issuer`, `subject`, `evidence_id`, `issued_at`, `expires_at`, and the required control booleans in the probe-defined order; `signature` and `signature_algorithm` are excluded from the signed payload. The public key is trusted operator configuration and is never taken from the evidence document.
 
 PREFLIGHT-TABLE-BEGIN

@@ -175,6 +175,7 @@ jobs:
           printf 'worker_digest=%s\n' "$worker_digest" >> "$GITHUB_OUTPUT"
       - name: Bind sandbox evidence to the worker image and app
         env:
+          WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING: '1'
           WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST: ${{ steps.publish-digests.outputs.worker_digest }}
           WORKER_SANDBOX_EVIDENCE_EXPECTED_APP: ${{ secrets.FLY_APP_STAGING }}
           WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID: worker-runtime
