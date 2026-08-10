@@ -14,6 +14,7 @@ const [
   workerEvidenceProbe,
   workerEvidenceShell,
   workerEnvGenerator,
+  preflightScript,
   databaseVerify,
   deployment,
   envExample,
@@ -32,6 +33,7 @@ const [
   readFile('scripts/probes/worker-sandbox-evidence.mjs', 'utf8'),
   readFile('scripts/probes/worker_sandbox_evidence.sh', 'utf8'),
   readFile('scripts/generate-local-env.sh', 'utf8'),
+  readFile('scripts/preflight.sh', 'utf8'),
   readFile('packages/database/src/verify.ts', 'utf8'),
   readFile('DEPLOYMENT.md', 'utf8'),
   readFile('.env.example', 'utf8'),
@@ -178,7 +180,20 @@ for (const [name, content, controls] of [
   [
     'local environment generator sandbox trust anchor',
     workerEnvGenerator,
-    ['WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256'],
+    [
+      'WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING=0',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256',
+    ],
+  ],
+  [
+    'preflight sandbox binding requirements',
+    preflightScript,
+    [
+      'WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256',
+      'required when sandbox binding is enabled',
+    ],
   ],
   [
     'environment example',

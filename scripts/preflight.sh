@@ -37,5 +37,18 @@ while IFS='|' read -r var req probe; do
     fi
   fi
 done < "$TMP"
+if [ "${WORKER_SANDBOX_EVIDENCE_REQUIRE_BINDING:-0}" = 1 ]; then
+  for var in \
+    WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST \
+    WORKER_SANDBOX_EVIDENCE_EXPECTED_APP \
+    WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID \
+    WORKER_SANDBOX_EVIDENCE_EXPECTED_PUBLIC_KEY_SHA256; do
+    eval "val=\${$var:-}"
+    if [ -z "$val" ]; then
+      echo "preflight: unresolved $var (required when sandbox binding is enabled)" >&2
+      failures=$((failures + 1))
+    fi
+  done
+fi
 [ "$failures" -eq 0 ] || { echo "preflight: FAIL - $failures unresolved requirements" >&2; exit 1; }
 echo "preflight: ok"
