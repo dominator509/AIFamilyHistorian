@@ -154,6 +154,11 @@ if (
   ].every((control) => releaseWorkflow.includes(control))
 )
   throw new Error('release workflow must persist ephemeral evidence paths before preflight');
+if (
+  !releaseWorkflow.includes('Validate immutable release tag') ||
+  !releaseWorkflow.includes('^v[0-9]+\\.[0-9]+\\.[0-9]+([.-][0-9A-Za-z.-]+)?$')
+)
+  throw new Error('release workflow must validate release tag syntax before publishing');
 if (!verifyScript.includes('corepack pnpm --filter @family-historian/database verify'))
   throw new Error('canonical verification must run the database privilege verifier');
 if (
