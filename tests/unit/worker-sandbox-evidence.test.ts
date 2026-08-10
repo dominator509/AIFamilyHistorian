@@ -13,6 +13,9 @@ const valid = {
   issuer: 'operations.example',
   subject: 'family-historian-worker-staging',
   evidence_id: 'attestation-2026-08-09',
+  deployment_image_digest: `sha256:${'a'.repeat(64)}`,
+  deployment_app: 'family-historian-worker-staging',
+  deployment_worker_id: 'worker-runtime',
   signature: '',
   signature_algorithm: 'ed25519',
   issued_at: '2026-08-09T17:00:00.000Z',
@@ -72,5 +75,30 @@ describe('worker sandbox attestation', () => {
 
   it('rejects a tampered signature', () => {
     expect(() => runProbe({ ...valid, subject: 'tampered-worker' })).toThrow();
+  });
+
+  it('rejects evidence that is validly signed for another deployed workload', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'worker-sandbox-binding-'));
+    const filePath = join(directory, 'attestation.json');
+    const publicKeyPath = join(directory, 'attestation-public-key.pem');
+    writeFileSync(filePath, JSON.stringify(valid));
+    writeFileSync(publicKeyPath, publicKey.export({ type: 'spki', format: 'pem' }));
+    try {
+      expect(() =>
+        execFileSync('node', ['scripts/probes/worker-sandbox-evidence.mjs', filePath], {
+          env: {
+            ...process.env,
+            WORKER_SANDBOX_EVIDENCE_NOW: String(now),
+            WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE: publicKeyPath,
+            WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST: `sha256:${'b'.repeat(64)}`,
+            WORKER_SANDBOX_EVIDENCE_EXPECTED_APP: 'family-historian-worker-production',
+            WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID: 'worker-runtime',
+          },
+          encoding: 'utf8',
+        }),
+      ).toThrow();
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });

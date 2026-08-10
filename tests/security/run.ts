@@ -159,11 +159,25 @@ for (const [name, content, controls] of [
     ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE', 'createPublicKey', 'verify('],
   ],
   ['worker evidence shell', workerEvidenceShell, ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE']],
-  ['environment example', envExample, ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE']],
+  [
+    'environment example',
+    envExample,
+    [
+      'WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_APP',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID',
+    ],
+  ],
   [
     'release workflow sandbox key wiring',
     releaseWorkflow,
-    ['WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY', 'worker-sandbox-attestation-public-key.pem'],
+    [
+      'WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY',
+      'worker-sandbox-attestation-public-key.pem',
+      'Bind sandbox evidence to the worker image and app',
+      'WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST',
+    ],
   ],
 ] as const) {
   for (const control of controls) {

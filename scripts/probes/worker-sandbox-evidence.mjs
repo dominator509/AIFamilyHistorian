@@ -37,6 +37,9 @@ export function signedAttestationPayload(input) {
     issuer: input.issuer,
     subject: input.subject,
     evidence_id: input.evidence_id,
+    deployment_image_digest: input.deployment_image_digest,
+    deployment_app: input.deployment_app,
+    deployment_worker_id: input.deployment_worker_id,
     issued_at: input.issued_at,
     expires_at: input.expires_at,
     controls: Object.fromEntries(
@@ -45,13 +48,28 @@ export function signedAttestationPayload(input) {
   });
 }
 
-export function validateWorkerSandboxAttestation(input, now = Date.now()) {
+export function validateWorkerSandboxAttestation(input, now = Date.now(), expected = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input))
     throw new Error('worker sandbox evidence: root must be an object');
   if (input.schema_version !== 'worker-sandbox-attestation/v1')
     throw new Error('worker sandbox evidence: unsupported schema_version');
-  for (const field of ['issuer', 'subject', 'evidence_id', 'signature', 'signature_algorithm'])
+  for (const field of [
+    'issuer',
+    'subject',
+    'evidence_id',
+    'deployment_image_digest',
+    'deployment_app',
+    'deployment_worker_id',
+    'signature',
+    'signature_algorithm',
+  ])
     assertBoundedString(input[field], field);
+  if (!/^sha256:[0-9a-f]{64}$/u.test(input.deployment_image_digest))
+    throw new Error('worker sandbox evidence: deployment_image_digest is invalid');
+  for (const [field, expectedValue] of Object.entries(expected)) {
+    if (expectedValue && input[field] !== expectedValue)
+      throw new Error(`worker sandbox evidence: ${field} does not match the deployed workload`);
+  }
   assertBoundedString(input.issued_at, 'issued_at');
   assertBoundedString(input.expires_at, 'expires_at');
   const issuedAt = Date.parse(input.issued_at);
@@ -90,7 +108,11 @@ async function main() {
   const nowOverride = process.env.WORKER_SANDBOX_EVIDENCE_NOW;
   const now = nowOverride ? Number(nowOverride) : Date.now();
   if (!Number.isFinite(now)) throw new Error('worker sandbox evidence: clock override is invalid');
-  validateWorkerSandboxAttestation(parsed, now);
+  validateWorkerSandboxAttestation(parsed, now, {
+    deployment_image_digest: process.env.WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST,
+    deployment_app: process.env.WORKER_SANDBOX_EVIDENCE_EXPECTED_APP,
+    deployment_worker_id: process.env.WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID,
+  });
   const publicKeyPath = process.env.WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE;
   if (!publicKeyPath) throw new Error('worker sandbox evidence: public key file is required');
   const publicKeyBytes = await readFile(publicKeyPath);

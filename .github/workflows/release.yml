@@ -89,6 +89,8 @@ jobs:
           printf '%s' "$WORKER_SANDBOX_EVIDENCE" > "$WORKER_SANDBOX_EVIDENCE_FILE"
           export WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE="$RUNNER_TEMP/worker-sandbox-attestation-public-key.pem"
           printf '%s' "$WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY" > "$WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE"
+          printf 'WORKER_SANDBOX_EVIDENCE_FILE=%s\n' "$WORKER_SANDBOX_EVIDENCE_FILE" >> "$GITHUB_ENV"
+          printf 'WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE=%s\n' "$WORKER_SANDBOX_EVIDENCE_PUBLIC_KEY_FILE" >> "$GITHUB_ENV"
           export LEGAL_APPROVAL_FILE="$RUNNER_TEMP/legal-approval"
           export VENDOR_RISK_APPROVAL_FILE="$RUNNER_TEMP/vendor-risk-approval"
           export INSURANCE_EVIDENCE_FILE="$RUNNER_TEMP/insurance-evidence"
@@ -171,6 +173,12 @@ jobs:
           [[ "$worker_digest" =~ ^sha256:[0-9a-f]{64}$ ]]
           printf 'api_digest=%s\n' "$api_digest" >> "$GITHUB_OUTPUT"
           printf 'worker_digest=%s\n' "$worker_digest" >> "$GITHUB_OUTPUT"
+      - name: Bind sandbox evidence to the worker image and app
+        env:
+          WORKER_SANDBOX_EVIDENCE_EXPECTED_IMAGE_DIGEST: ${{ steps.publish-digests.outputs.worker_digest }}
+          WORKER_SANDBOX_EVIDENCE_EXPECTED_APP: ${{ secrets.FLY_APP_STAGING }}
+          WORKER_SANDBOX_EVIDENCE_EXPECTED_WORKER_ID: worker-runtime
+        run: sh scripts/probes/worker_sandbox_evidence.sh
       - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Sign immutable image digests
         env:

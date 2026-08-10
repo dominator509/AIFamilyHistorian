@@ -52,6 +52,7 @@
 - HARDENING-203 updates release CI to capture registry SHA-256 digests for the API and worker images and deploy staging by digest, with static security assertions and manual deployment instructions updated accordingly. Typecheck, build, format, security, secret-scan, and diff checks passed; image signing/provenance remains explicitly deferred as a separate external release gate.
 - HARDENING-204 adds keyless Sigstore signing for both published image digests and staging-time certificate/issuer verification, with immutable action pinning and static security assertions. Typecheck, build, format, security, secret-scan, and diff checks passed; actual GitHub OIDC, registry, and staging proof remains external.
 - HARDENING-205 adds the same Cosign certificate/issuer verification to the documented manual production deployment path and fails the static security harness if either production image is not signature-verified. Format, security, secret-scan, and diff checks passed; production OIDC/registry evidence remains external.
+- HARDENING-206 binds sandbox attestations to the expected image digest, Fly app, and worker identity, and verifies those bindings in the release preflight after the worker digest is captured. Unit sandbox coverage proves a valid signature for another workload is rejected; format, security, secret-scan, and diff checks passed. Hosted enforcement remains external.
 
 ### Current security scan
 
@@ -64,7 +65,7 @@
 
 - Project: AI Family Historian
 - Repository: `C:\dev\AIFamilyHistorian`
-- Latest implementation continuation: `HARDENING-205`; both staging CI and the documented manual production path verify captured API/worker digests with keyless Sigstore identity and issuer checks, while generic authoring inputs cannot mint `public_approved` without the owner-controlled publication workflow and consent authorization is ordered by decision time with deterministic tie-breaking. Earlier provider, queue, idempotency, audit, provenance, session, storage, AI, and fail-closed bounds remain active.
+- Latest implementation continuation: `HARDENING-206`; sandbox evidence is now bound to the exact worker image digest, Fly app, and worker identity in the release gate, while both staging CI and the documented manual production path verify captured API/worker digests with keyless Sigstore identity and issuer checks. Generic authoring inputs cannot mint `public_approved` without the owner-controlled publication workflow and consent authorization is ordered by decision time with deterministic tie-breaking. Earlier provider, queue, idempotency, audit, provenance, session, storage, AI, and fail-closed bounds remain active.
 - Latest AI gateway continuation: `8e0d34a` (`HARDENING-53`); malformed cached provenance and usage envelopes are now rejected and recomputed.
 - Latest authorization/worker continuation: `782d57a` (`HARDENING-54`); archive permissions are revalidated against current grants and stale media quarantine failures are lease-fenced.
 - Latest session-isolation continuation: `1e86c88` (`HARDENING-55`); session inventory and revoke-all are organization-scoped, with targeted revoke organization matching.
