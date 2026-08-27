@@ -2,8 +2,10 @@
 set -eu
 : "${SENTRY_DSN:?}"
 : "${SENTRY_AUTH_TOKEN:?}"
-sentry_origin=$(SENTRY_DSN="$SENTRY_DSN" node -p "new URL(process.env.SENTRY_DSN).origin")
-export PROBE_URL="$sentry_origin/api/0/"
+# A Sentry DSN points at an event-ingest host, which does not serve the
+# authenticated management API. Validate the auth token against Sentry's
+# global API host instead of appending /api/0/ to the DSN origin.
+export PROBE_URL='https://sentry.io/api/0/'
 export PROBE_SECRET_ENV=SENTRY_AUTH_TOKEN
 export PROBE_HEADER_NAME=Authorization
 export PROBE_HEADER_PREFIX='Bearer '
