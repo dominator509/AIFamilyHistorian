@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 .envrc
+.serena/
 node_modules/
 .next/
 dist/
