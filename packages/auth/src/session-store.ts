@@ -9,10 +9,12 @@ export interface SessionMetadata {
 export const MAX_SESSION_DEVICE_LABEL_CHARS = 256;
 export const MAX_SESSION_USER_AGENT_CHARS = 2_048;
 export const MAX_SESSION_IP_ADDRESS_CHARS = 128;
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
 
 function hasControlCharacter(value: string): boolean {
-  return CONTROL_CHARACTER_PATTERN.test(value);
+  return [...value].some((character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return code <= 0x1f || code === 0x7f;
+  });
 }
 
 export function validateSessionMetadata(metadata: SessionMetadata = {}): SessionMetadata {
