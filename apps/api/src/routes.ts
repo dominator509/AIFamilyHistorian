@@ -57,7 +57,13 @@ interface RouteDependencies {
 
 const STRIPE_EVENT_ID_MAX_CHARS = 256;
 const STRIPE_EVENT_TYPE_MAX_CHARS = 200;
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
+
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return code <= 0x1f || code === 0x7f;
+  });
+}
 
 const stripeWebhookEventSchema = z.object({
   id: z
@@ -68,7 +74,7 @@ const stripeWebhookEventSchema = z.object({
     .string()
     .min(1)
     .max(STRIPE_EVENT_TYPE_MAX_CHARS)
-    .refine((value) => !CONTROL_CHARACTER_PATTERN.test(value), 'event type contains controls'),
+    .refine((value) => !hasControlCharacter(value), 'event type contains controls'),
   data: z.object({ object: z.record(z.string(), z.unknown()) }),
 });
 

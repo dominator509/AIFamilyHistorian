@@ -41,11 +41,11 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
+      - run: corepack enable
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.4.1
           cache: pnpm
-      - run: corepack enable
       - run: sh scripts/install.sh
       - name: Verify with configured nonproduction providers
         env:

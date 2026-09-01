@@ -23,7 +23,13 @@ export const MAX_PROVENANCE_MANIFEST_BYTES = 16 * 1024 * 1024;
 export const MAX_PROVENANCE_TYPE_CHARS = 256;
 export const MAX_CLAIM_EVIDENCE_SPANS = 1_000;
 export const MAX_CLAIM_TEXT_CHARS = 1_000_000;
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001F\u007F]/u;
+
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const code = character.codePointAt(0) ?? 0;
+    return code <= 0x1f || code === 0x7f;
+  });
+}
 
 export interface EvidenceSpan {
   readonly sourceId: EntityId;
@@ -140,7 +146,7 @@ function assertSafeType(value: string, label: string): void {
     typeof value !== 'string' ||
     value.length === 0 ||
     value.length > MAX_PROVENANCE_TYPE_CHARS ||
-    CONTROL_CHARACTER_PATTERN.test(value)
+    hasControlCharacter(value)
   )
     throw new ProvenanceError(`${label} is invalid`);
 }
